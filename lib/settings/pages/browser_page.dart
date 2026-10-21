@@ -5,7 +5,6 @@ import 'package:flutter/widgets.dart';
 
 import '../../browser/browser_bridge.dart';
 import '../../browser/browser_tools.dart' show BrowserHistory;
-import '../../browser/extension_store.dart';
 import '../../ide/ide_button.dart';
 import '../../ide/ide_dialog.dart';
 import '../../l10n/l10n.dart';
@@ -160,30 +159,7 @@ class BrowserSettingsPage extends StatelessWidget {
               ],
             ),
         ],
-        SettingsGroup(
-          title: l10n.browserSettingsInstall,
-          children: [
-            SettingsRow(
-              label: l10n.browserSettingsStore,
-              description: l10n.browserSettingsStoreDescription,
-              trailing: IdeButton(
-                label: l10n.browserSettingsStoreOpen,
-                icon: Codicons.linkExternal,
-                onPressed: () => unawaited(ExtensionStore.openPage()),
-              ),
-            ),
-            SettingsRow(
-              label: l10n.browserSettingsUnpacked,
-              description: l10n.browserSettingsUnpackedDescription,
-              trailing: IdeButton(
-                label: l10n.browserSettingsUnpackedDownload,
-                icon: Codicons.cloudDownload,
-                secondary: true,
-                onPressed: () => unawaited(ExtensionStore.openZip()),
-              ),
-            ),
-          ],
-        ),
+
       ],
     );
   }

@@ -33,7 +33,7 @@
 	<array>
 		<dict>
 			<key>CFBundleURLName</key>
-			<string>dev.baocode.desktop</string>
+			<string>top.javaxiaowu.morningmist</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>baocode</string>
@@ -77,7 +77,7 @@
 	     Without this string it refuses at once, with no dialog and no
 	     entry under Privacy & Security → Automation. -->
 	<key>NSAppleEventsUsageDescription</key>
-	<string>A program run in BaoCode wants to control another app.</string>
+	<string>A program run in Morning Mist wants to control another app.</string>
 	<key>NSHumanReadableCopyright</key>
 	<string>$(PRODUCT_COPYRIGHT)</string>
 	<key>NSMainNibFile</key>
@@ -85,7 +85,7 @@
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
 	<key>NSLocalNetworkUsageDescription</key>
-	<string>BaoCode lets the phones paired with it find it on the local network.</string>
+	<string>Morning Mist lets the phones paired with it find it on the local network.</string>
 	<key>NSBonjourServices</key>
 	<array>
 		<string>_baocode._tcp</string>

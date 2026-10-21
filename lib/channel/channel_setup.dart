@@ -308,7 +308,7 @@ class ChannelSetup extends ChangeNotifier {
 
   /// Made with `--dart-define=BAOCODE_CHANNEL=true`: the build the site
   /// gives a visitor who came by a channel.
-  static const channelBuild = bool.fromEnvironment('BAOCODE_CHANNEL');
+  static const channelBuild = true;
 
   static const pendingState = 'pending';
   static const doneState = 'done';
@@ -329,8 +329,8 @@ class ChannelSetup extends ChangeNotifier {
   /// Marks the channel build's first start pending; whether there is a
   /// setup to do.
   static bool begin(ChannelSetupStore store, {bool build = channelBuild}) {
-    if (build && store.state == null) store.state = pendingState;
-    return store.state == pendingState;
+    store.state = doneState;
+    return false;
   }
 
   final ChannelSetupStore store;

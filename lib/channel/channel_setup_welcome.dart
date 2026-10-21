@@ -174,7 +174,7 @@ class _ChannelSetupWelcomeState extends State<ChannelSetupWelcome>
     if (account.signedIn) {
       unawaited(account.settle());
     } else {
-      unawaited(account.signIn(title: _gate.channel?.info.name ?? 'BaoCode'));
+      unawaited(account.signIn(title: _gate.channel?.info.name ?? 'Morning Mist'));
     }
   }
 
@@ -229,7 +229,7 @@ class _ChannelSetupWelcomeState extends State<ChannelSetupWelcome>
                     ? null
                     : _DoneChip(l10n.channelSetupDoneTitle),
                 title: welcome?.title ?? l10n.channelWelcomeTitle(name),
-                lead: welcome?.text ?? l10n.channelWelcomeText(name),
+                lead: welcome?.text ?? '',
               ),
             ),
           ),

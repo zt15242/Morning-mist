@@ -1,9 +1,8 @@
 import 'dart:async';
-import 'dart:ui' show AppExitResponse, AppExitType;
+import 'dart:ui' show AppExitResponse;
 
-import 'package:flutter/foundation.dart' show kDebugMode, kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show ServicesBinding;
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:path/path.dart' as p;
@@ -62,7 +61,6 @@ import 'models/model_providers.dart';
 import 'models/model_runtime.dart';
 import 'models/model_welcome.dart';
 import 'network/network_proxy.dart';
-import 'notifications/attention_host.dart';
 import 'notifications/attention_settings.dart';
 import 'platform/memory_budget.dart';
 import 'platform/app_platform.dart';
@@ -106,10 +104,6 @@ import 'theme/pixel_snapped_text_scaler.dart';
 import 'theme/ui_zoom.dart';
 import 'theme/workbench_theme.dart';
 import 'update/update_controller.dart';
-import 'update/update_platform.dart';
-import 'update/update_service.dart';
-import 'update/update_settings.dart';
-import 'update/update_store.dart';
 import 'update/version.dart';
 import 'window/app_windows.dart';
 import 'window/code_args.dart';
@@ -378,7 +372,7 @@ Future<void> main(List<String> arguments) async {
       // Claude Code's skills are the installed app's: a build run from the
       // source, often on a data folder of its own (`BAOCODE_DATA_DIR`),
       // would point the user's agents at its stashes.
-      installSkill: !kDebugMode,
+      installSkill: false,
       // The user's GitHub and GitLab accounts: their tokens in the
       // keychain, the rest in the global storage.
       accounts: ForgeAccounts.current = ForgeAccounts(
@@ -503,30 +497,7 @@ Future<void> main(List<String> arguments) async {
 /// `update.mode` says, from baocode.dev, installed as the app quits. None
 /// where the build does not update itself.
 UpdateController? _startUpdates(SettingsFiles files) {
-  final platform = platformUpdates(
-    updatesDirectory: DataDirectory.current.updatesDir,
-  );
-  if (platform == null) return null;
-  final service = UpdateService(
-    current: currentAppVersion,
-    platform: platform.platform,
-    manifestUrl: platform.manifestUrl,
-    backend: platform.backend,
-    installer: platform.installer,
-    mode: () => UpdateMode.parse(files.settings[UpdateMode.settingKey]),
-    settingsChanges: files.settings,
-    store: GlobalUpdateStore(files.storage),
-  )..start();
-  return UpdateController(
-    service: service,
-    // As the Data Folder page's Quit Now goes, but asked as any quit is.
-    quit: () async {
-      if (AppPlatform.isWindows) return ChannelAttentionHost.instance.quit();
-      await ServicesBinding.instance.exitApplication(AppExitType.cancelable);
-    },
-    openUrl: (url) => openExternal('$url'),
-    openFile: openExternal,
-  );
+  return null;
 }
 
 /// The channel build's first start (lib/channel/): to set up while it is
@@ -822,7 +793,7 @@ class _BaoCodeAppState extends State<BaoCodeApp> {
   /// A window's app: its own navigator, dialogs, overlay and focus; what
   /// it shows built anew as its folder changes.
   Widget _app(AppWindow window) => MaterialApp(
-    title: 'BaoCode',
+    title: 'Morning Mist',
     debugShowCheckedModeBanner: false,
     theme: buildAppTheme(),
     scrollBehavior: const BaoScrollBehavior(),

@@ -79,7 +79,7 @@ class ChannelGate extends ChangeNotifier {
   /// The account on its site, once there is one.
   ChannelAccount? get account => _account;
 
-  bool get _setUp => _setup?.done ?? setupStore.state == ChannelSetup.doneState;
+  bool get _setUp => true;
 
   ChannelStage get stage {
     if (!_setUp) return ChannelStage.setup;
@@ -104,24 +104,46 @@ class ChannelGate extends ChangeNotifier {
   /// Reads the channel's entry, in [language] (`zh`, `en`), once set up:
   /// what was kept, at once (done then), then the site's ([fetched]), kept
   /// in its place.
+  static final defaultEntry = (
+    id: 'morning_mist',
+    json: {
+      'name': {'zh': 'Morning Mist', 'en': 'Morning Mist'},
+      'account': {
+        'type': 'sub2api',
+        'url': 'https://api.javaxiaowu.top',
+        'apiUrl': 'https://api.javaxiaowu.top',
+        'protocol': 'anthropic',
+      },
+      'welcome': {
+        'title': {'zh': 'Morning Mist', 'en': 'Morning Mist'},
+        'text': {
+          'zh': '',
+          'en': '',
+        },
+        'button': {'zh': '登录', 'en': 'Sign In'},
+      },
+    },
+    logo: null,
+  );
+
+  /// Reads the channel's entry, in [language] (`zh`, `en`), once set up:
+  /// what was kept, at once (done then), then the site's ([fetched]), kept
+  /// in its place.
   Future<void> find(String language) async {
     _language = language;
-    if (!_setUp || _finding || _asked) return;
+    if (_finding || _asked) return;
     _asked = true;
-    final told = setupStore.attribution;
-    final id = told?.source == 'channel' ? told?.value : null;
-    if (id == null) {
-      _found = true;
-      notifyListeners();
-      return;
-    }
     _finding = true;
     _offline = false;
     notifyListeners();
-    if (accountStore.entry case final kept? when kept.id == id) {
-      await _take(kept, language);
+    try {
+      accountStore.entry = defaultEntry;
+      await _take(defaultEntry, language);
+      _found = true;
+    } finally {
+      _finding = false;
+      notifyListeners();
     }
-    fetched = _fetch(id, language);
   }
 
   /// [find] once more: the site not read, or the channel not listed, the
@@ -129,7 +151,7 @@ class ChannelGate extends ChangeNotifier {
   Future<void> retry() async {
     if (_finding) return;
     _asked = false;
-    await find(_language ?? 'en');
+    await find(_language ?? 'zh');
   }
 
   /// [ChannelStage.unavailable]: asks the browser where the user came from
@@ -151,26 +173,7 @@ class ChannelGate extends ChangeNotifier {
   /// be).
   Future<void> fetched = Future.value();
 
-  Future<void> _fetch(String id, String language) async {
-    try {
-      final entry = await fetch(id);
-      accountStore.entry = entry;
-      if (entry == null) {
-        _drop();
-      } else {
-        await _take(entry, language);
-      }
-      _found = true;
-    } on Object catch (error) {
-      debugPrint('Channel $id not read: $error');
-      // What was kept, if anything.
-      _offline = _channel == null;
-      _found = _channel != null;
-    } finally {
-      _finding = false;
-      notifyListeners();
-    }
-  }
+
 
   /// [entry] as the channel; its account, on a site of its own.
   Future<void> _take(ChannelEntry entry, String language) async {

@@ -209,15 +209,17 @@ class WelcomeHeading extends StatelessWidget {
             fontWeight: FontWeight.w600,
           ),
         ),
-        const SizedBox(height: 6),
-        Text(
-          lead,
-          style: TextStyle(
-            color: AppColors.textMuted,
-            fontSize: 13,
-            height: 1.5,
+        if (lead.isNotEmpty) ...[
+          const SizedBox(height: 6),
+          Text(
+            lead,
+            style: TextStyle(
+              color: AppColors.textMuted,
+              fontSize: 13,
+              height: 1.5,
+            ),
           ),
-        ),
+        ],
       ],
     ),
   );

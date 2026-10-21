@@ -52,7 +52,7 @@ import 'dart:io';
 /// Where the .app flutter leaves behind goes, and where the disk image is
 /// written. Under build/, which the repository already ignores and flutter
 /// clean already removes.
-const _bundleRelative = 'build/macos/Build/Products/Release/BaoCode.app';
+const _bundleRelative = 'build/macos/Build/Products/Release/Morning Mist.app';
 const _installersRelative = 'build/installers';
 
 /// Where each architecture's app is made of the universal one.
@@ -78,7 +78,7 @@ const _browserHost = 'baocode-browser-host';
 /// failed late still leaves an .app behind that looks complete — these are
 /// what tell the difference.
 const _required = [
-  'Contents/MacOS/BaoCode',
+  'Contents/MacOS/Morning Mist',
   'Contents/Info.plist',
   'Contents/Frameworks/FlutterMacOS.framework',
   'Contents/Frameworks/App.framework',
@@ -203,7 +203,7 @@ Future<void> main(List<String> arguments) async {
   final made = <File>[];
   for (final MapEntry(key: lipoArch, value: arch) in _architectures.entries) {
     _step('Making the $arch app');
-    final app = Directory('${root.path}/$_thinRelative/$arch/BaoCode.app');
+    final app = Directory('${root.path}/$_thinRelative/$arch/Morning Mist.app');
     if (app.parent.existsSync()) app.parent.deleteSync(recursive: true);
     app.parent.createSync(recursive: true);
     await _run('ditto', ['--arch', lipoArch, bundle.path, app.path], root.path);
@@ -215,7 +215,7 @@ Future<void> main(List<String> arguments) async {
 
     _step('Making the $arch disk image');
     final dmg = File(
-      '${installers.path}/BaoCode-${version.marketing}-$arch$edition.dmg',
+      '${installers.path}/Morning-Mist-${version.marketing}-$arch$edition.dmg',
     );
     // A window with the app, an arrow and an Applications shortcut to drag
     // it onto, on the background tool/dmg_background.swift draws (the
@@ -224,7 +224,7 @@ Future<void> main(List<String> arguments) async {
     if (dmg.existsSync()) dmg.deleteSync();
     await _run(createDmg, [
       '--volname',
-      'BaoCode ${version.marketing}',
+      'Morning Mist ${version.marketing}',
       '--background',
       '${root.path}/$_dmgBackgroundRelative',
       '--window-size',
@@ -233,11 +233,11 @@ Future<void> main(List<String> arguments) async {
       '--icon-size',
       '128',
       '--icon',
-      'BaoCode.app',
+      'Morning Mist.app',
       '165',
       '145',
       '--hide-extension',
-      'BaoCode.app',
+      'Morning Mist.app',
       '--app-drop-link',
       '495',
       '145',
@@ -268,7 +268,7 @@ Future<void> main(List<String> arguments) async {
     // permissions and extended attributes, which a framework's signature
     // depends on).
     final zip = File(
-      '${installers.path}/BaoCode-${version.marketing}-mac-$arch$edition.zip',
+      '${installers.path}/Morning-Mist-${version.marketing}-mac-$arch$edition.zip',
     );
     if (zip.existsSync()) zip.deleteSync();
     await _run('ditto', [
@@ -302,7 +302,7 @@ Future<void> main(List<String> arguments) async {
     final mb = (file.lengthSync() / (1024 * 1024)).toStringAsFixed(1);
     stdout.writeln('  ${file.path}  ($mb MB)');
   }
-  final base = '${installers.path}/BaoCode-${version.marketing}';
+  final base = '${installers.path}/Morning-Mist-${version.marketing}';
   stdout.writeln();
   if (servers.isEmpty) {
     stdout
@@ -515,7 +515,7 @@ String _bundleRemote(Directory remote, Directory target) {
 /// The executables in [app]: its own, the browser's host, the Finder
 /// extension's, and each framework's.
 List<String> _executables(Directory app) => [
-  '${app.path}/Contents/MacOS/BaoCode',
+  '${app.path}/Contents/MacOS/Morning Mist',
   '${app.path}/Contents/MacOS/$_browserHost',
   '${app.path}/Contents/PlugIns/FinderExtension.appex/Contents/MacOS/'
       'FinderExtension',

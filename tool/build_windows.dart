@@ -211,7 +211,7 @@ Future<void> main(List<String> arguments) async {
 
   _step('Done');
   final installer = File(
-    '${installers.path}\\BaoCode-${version.marketing}-setup'
+    '${installers.path}\\Morning-Mist-${version.marketing}-setup'
     '${channel ? '-channel' : ''}.exe',
   );
   for (final file in [installer, ...servers]) {

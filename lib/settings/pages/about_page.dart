@@ -56,7 +56,7 @@ class AboutSettingsPage extends StatelessWidget {
                     textBaseline: TextBaseline.alphabetic,
                     children: [
                       Text(
-                        'BaoCode',
+                        'Morning Mist',
                         style: TextStyle(
                           color: AppColors.textPrimary,
                           fontSize: 17,

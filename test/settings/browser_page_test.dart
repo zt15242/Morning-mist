@@ -53,10 +53,7 @@ void main() {
         ),
       );
       await tester.pump();
-      expect(find.text('Chrome Web Store'), findsOneWidget);
-      expect(find.text('Install Manually (Developer Mode)'), findsOneWidget);
-      expect(find.text('Open Store'), findsOneWidget);
-      expect(find.text('Download Zip'), findsOneWidget);
+
       if (!Platform.isMacOS) return;
 
       // Never connected: it says to get the extension.

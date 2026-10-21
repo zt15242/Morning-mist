@@ -179,7 +179,7 @@ abstract class AppLocalizations {
   /// No description provided for @languageSettingsDescription.
   ///
   /// In en, this message translates to:
-  /// **'The language of BaoCode\'s menus, views and messages. Changes apply at once.'**
+  /// **'The language of Morning Mist\'s menus, views and messages. Changes apply at once.'**
   String get languageSettingsDescription;
 
   /// Follow System, with the language the system's resolves to, named in its own language.
@@ -2765,7 +2765,7 @@ abstract class AppLocalizations {
   /// No description provided for @menuAboutBaoCode.
   ///
   /// In en, this message translates to:
-  /// **'About BaoCode'**
+  /// **'About Morning Mist'**
   String get menuAboutBaoCode;
 
   /// Tooltip.
@@ -2843,19 +2843,19 @@ abstract class AppLocalizations {
   /// No description provided for @browserNotConnected.
   ///
   /// In en, this message translates to:
-  /// **'No browser is connected. Add BaoCode\'s extension to Chrome (or Edge, Brave, Arc) and agents can use the tabs you share with them.'**
+  /// **'No browser is connected. Add Morning Mist\'s extension to Chrome (or Edge, Brave, Arc) and agents can use the tabs you share with them.'**
   String get browserNotConnected;
 
   /// No description provided for @browserNoSharedTab.
   ///
   /// In en, this message translates to:
-  /// **'No tab is shared yet. Ask an agent to open a page, or click BaoCode in the browser toolbar to share the tab in front.'**
+  /// **'No tab is shared yet. Ask an agent to open a page, or click Morning Mist in the browser toolbar to share the tab in front.'**
   String get browserNoSharedTab;
 
   /// No description provided for @browserOtherApp.
   ///
   /// In en, this message translates to:
-  /// **'Another BaoCode is connected to the browser.'**
+  /// **'Another Morning Mist is connected to the browser.'**
   String get browserOtherApp;
 
   /// No description provided for @browserSharedTabs.
@@ -2879,7 +2879,7 @@ abstract class AppLocalizations {
   /// No description provided for @browserDetached.
   ///
   /// In en, this message translates to:
-  /// **'The browser stopped letting BaoCode see this tab.'**
+  /// **'The browser stopped letting Morning Mist see this tab.'**
   String get browserDetached;
 
   /// No description provided for @browserReconnect.
@@ -2903,7 +2903,7 @@ abstract class AppLocalizations {
   /// No description provided for @browserWatchHint.
   ///
   /// In en, this message translates to:
-  /// **'Do it in the BaoCode tab of your browser. When you\'re done, click Done here or the BaoCode button in the browser\'s toolbar.'**
+  /// **'Do it in the Morning Mist tab of your browser. When you\'re done, click Done here or the Morning Mist button in the browser\'s toolbar.'**
   String get browserWatchHint;
 
   /// No description provided for @browserWatchSteps.
@@ -5966,7 +5966,7 @@ abstract class AppLocalizations {
   /// **'Who the commits and pull requests an agent writes credit. Applies to agents started after a change; Claude Code only for now.'**
   String get generalSettingsCommitAttributionDescription;
 
-  /// Settings → General → Claude Code row: what runs Claude Code sessions, BaoCode's built-in core (written in Dart) or the Claude Code CLI.
+  /// Settings → General → Claude Code row: what runs Claude Code sessions, Morning Mist's built-in core (written in Dart) or the Claude Code CLI.
   ///
   /// In en, this message translates to:
   /// **'Core'**
@@ -5975,10 +5975,10 @@ abstract class AppLocalizations {
   /// No description provided for @generalSettingsClaudeCoreDescription.
   ///
   /// In en, this message translates to:
-  /// **'Claude Code CLI: Anthropic\'s own program, with this machine\'s sign-in and setup; pick it to use a Claude subscription. Built-in: comes with BaoCode, and uses only the models added in Settings → Models. The CLI is the default when Claude Code is installed here, the built-in core otherwise. Changes apply to new sessions.'**
+  /// **'Claude Code CLI: Anthropic\'s own program, with this machine\'s sign-in and setup; pick it to use a Claude subscription. Built-in: comes with Morning Mist, and uses only the models added in Settings → Models. The CLI is the default when Claude Code is installed here, the built-in core otherwise. Changes apply to new sessions.'**
   String get generalSettingsClaudeCoreDescription;
 
-  /// Claude Code core choice: BaoCode's own agent core, written in Dart and run inside the app.
+  /// Claude Code core choice: Morning Mist's own agent core, written in Dart and run inside the app.
   ///
   /// In en, this message translates to:
   /// **'Built-in'**
@@ -6215,7 +6215,7 @@ abstract class AppLocalizations {
   /// No description provided for @trayShow.
   ///
   /// In en, this message translates to:
-  /// **'Show BaoCode'**
+  /// **'Show Morning Mist'**
   String get trayShow;
 
   /// Tray menu header over the agents waiting on the user.
@@ -6239,7 +6239,7 @@ abstract class AppLocalizations {
   /// No description provided for @trayQuit.
   ///
   /// In en, this message translates to:
-  /// **'Quit BaoCode'**
+  /// **'Quit Morning Mist'**
   String get trayQuit;
 
   /// Notification: the agent waits on the user.
@@ -8448,7 +8448,7 @@ abstract class AppLocalizations {
   /// No description provided for @kbUnknownContextKeys.
   ///
   /// In en, this message translates to:
-  /// **'{count, plural, =1{BaoCode does not know the context key {keys}: this keybinding never applies.} other{BaoCode does not know the context keys {keys}: this keybinding never applies.}}'**
+  /// **'{count, plural, =1{Morning Mist does not know the context key {keys}: this keybinding never applies.} other{Morning Mist does not know the context keys {keys}: this keybinding never applies.}}'**
   String kbUnknownContextKeys(int count, String keys);
 
   /// No description provided for @kbChangeFailed.
@@ -8586,7 +8586,7 @@ abstract class AppLocalizations {
   /// No description provided for @kbCannotReadKey.
   ///
   /// In en, this message translates to:
-  /// **'BaoCode cannot read the key “{key}”: this keybinding never applies.'**
+  /// **'Morning Mist cannot read the key “{key}”: this keybinding never applies.'**
   String kbCannotReadKey(String key);
 
   /// No description provided for @kbNotSupported.
@@ -8598,7 +8598,7 @@ abstract class AppLocalizations {
   /// No description provided for @kbNotSupportedHover.
   ///
   /// In en, this message translates to:
-  /// **'BaoCode does not have this command: the keybinding is kept, but does nothing.'**
+  /// **'Morning Mist does not have this command: the keybinding is kept, but does nothing.'**
   String get kbNotSupportedHover;
 
   /// No description provided for @kbPressKeys.
@@ -8688,37 +8688,37 @@ abstract class AppLocalizations {
   /// No description provided for @dataDirAlreadyHolds.
   ///
   /// In en, this message translates to:
-  /// **'The folder already holds BaoCode data'**
+  /// **'The folder already holds Morning Mist data'**
   String get dataDirAlreadyHolds;
 
   /// No description provided for @dataDirMoveBack.
   ///
   /// In en, this message translates to:
-  /// **'Move BaoCode\'s data back to the default folder?'**
+  /// **'Move Morning Mist\'s data back to the default folder?'**
   String get dataDirMoveBack;
 
   /// No description provided for @dataDirMoveHere.
   ///
   /// In en, this message translates to:
-  /// **'Move BaoCode\'s data to this folder?'**
+  /// **'Move Morning Mist\'s data to this folder?'**
   String get dataDirMoveHere;
 
   /// No description provided for @dataDirUseAsIsDetail.
   ///
   /// In en, this message translates to:
-  /// **'After a restart BaoCode uses the data there as it is; nothing is copied, and the current folder keeps yours.'**
+  /// **'After a restart Morning Mist uses the data there as it is; nothing is copied, and the current folder keeps yours.'**
   String get dataDirUseAsIsDetail;
 
   /// No description provided for @dataDirCopyDetail.
   ///
   /// In en, this message translates to:
-  /// **'BaoCode copies its settings, keybindings, language servers and state there, and uses that folder after a restart.'**
+  /// **'Morning Mist copies its settings, keybindings, language servers and state there, and uses that folder after a restart.'**
   String get dataDirCopyDetail;
 
   /// No description provided for @dataDirOtherFiles.
   ///
   /// In en, this message translates to:
-  /// **'The folder holds other files: they stay, beside BaoCode\'s own.'**
+  /// **'The folder holds other files: they stay, beside Morning Mist\'s own.'**
   String get dataDirOtherFiles;
 
   /// No description provided for @dataDirUseItsData.
@@ -8760,13 +8760,13 @@ abstract class AppLocalizations {
   /// No description provided for @dataDirRestartTitle.
   ///
   /// In en, this message translates to:
-  /// **'Restart BaoCode to use the new data folder'**
+  /// **'Restart Morning Mist to use the new data folder'**
   String get dataDirRestartTitle;
 
   /// No description provided for @dataDirRestartDetail.
   ///
   /// In en, this message translates to:
-  /// **'BaoCode keeps using {current} until it restarts. The next start uses {next}, and offers to remove what is left in the old one.'**
+  /// **'Morning Mist keeps using {current} until it restarts. The next start uses {next}, and offers to remove what is left in the old one.'**
   String dataDirRestartDetail(String current, String next);
 
   /// No description provided for @dataDirTheNewFolder.
@@ -8778,7 +8778,7 @@ abstract class AppLocalizations {
   /// No description provided for @quitConfirmMessage.
   ///
   /// In en, this message translates to:
-  /// **'Quit BaoCode?'**
+  /// **'Quit Morning Mist?'**
   String get quitConfirmMessage;
 
   /// No description provided for @quitConfirmDetail.
@@ -8838,7 +8838,7 @@ abstract class AppLocalizations {
   /// No description provided for @dataDirDescription.
   ///
   /// In en, this message translates to:
-  /// **'Where BaoCode keeps your settings, keybindings, language servers and its own state. Other programs keep files there too (the web view\'s caches); BaoCode never moves or removes those.'**
+  /// **'Where Morning Mist keeps your settings, keybindings, language servers and its own state. Other programs keep files there too (the web view\'s caches); Morning Mist never moves or removes those.'**
   String get dataDirDescription;
 
   /// No description provided for @dataDirCurrentFolder.
@@ -8886,19 +8886,19 @@ abstract class AppLocalizations {
   /// No description provided for @dataDirSettingUnreadable.
   ///
   /// In en, this message translates to:
-  /// **'BaoCode\'s data folder setting cannot be read'**
+  /// **'Morning Mist\'s data folder setting cannot be read'**
   String get dataDirSettingUnreadable;
 
   /// No description provided for @dataDirCannotWrite.
   ///
   /// In en, this message translates to:
-  /// **'BaoCode cannot write to its data folder'**
+  /// **'Morning Mist cannot write to its data folder'**
   String get dataDirCannotWrite;
 
   /// No description provided for @dataDirUnavailable.
   ///
   /// In en, this message translates to:
-  /// **'BaoCode\'s data folder is not available'**
+  /// **'Morning Mist\'s data folder is not available'**
   String get dataDirUnavailable;
 
   /// No description provided for @dataDirWhereEnv.
@@ -8910,7 +8910,7 @@ abstract class AppLocalizations {
   /// No description provided for @dataDirWhereFixPointer.
   ///
   /// In en, this message translates to:
-  /// **'Fix or delete {file} and try again; BaoCode changes it only if you choose another folder.'**
+  /// **'Fix or delete {file} and try again; Morning Mist changes it only if you choose another folder.'**
   String dataDirWhereFixPointer(String file);
 
   /// No description provided for @dataDirWherePointer.
@@ -8946,13 +8946,13 @@ abstract class AppLocalizations {
   /// No description provided for @dataDirRemoveOldTitle.
   ///
   /// In en, this message translates to:
-  /// **'Remove the data BaoCode left in its previous folder?'**
+  /// **'Remove the data Morning Mist left in its previous folder?'**
   String get dataDirRemoveOldTitle;
 
   /// No description provided for @dataDirRemoveOldDetail.
   ///
   /// In en, this message translates to:
-  /// **'BaoCode now keeps its data in {current}. Only its own items are removed from the previous folder ({items}); the folder and everything else in it stay.'**
+  /// **'Morning Mist now keeps its data in {current}. Only its own items are removed from the previous folder ({items}); the folder and everything else in it stay.'**
   String dataDirRemoveOldDetail(String current, String items);
 
   /// No description provided for @dataDirRemove.
@@ -8976,7 +8976,7 @@ abstract class AppLocalizations {
   /// No description provided for @dataDirRemoveOldInUseDetail.
   ///
   /// In en, this message translates to:
-  /// **'Files in {items} are in use, perhaps by another program. Everything else was removed; BaoCode offers to remove the rest the next time it starts.'**
+  /// **'Files in {items} are in use, perhaps by another program. Everything else was removed; Morning Mist offers to remove the rest the next time it starts.'**
   String dataDirRemoveOldInUseDetail(String items);
 
   /// No description provided for @impTitle.
@@ -9306,7 +9306,7 @@ abstract class AppLocalizations {
   /// No description provided for @shellCommandOccupied.
   ///
   /// In en, this message translates to:
-  /// **'{path} already runs another app\'s \'{name}\' command. Replace it with BaoCode\'s?'**
+  /// **'{path} already runs another app\'s \'{name}\' command. Replace it with Morning Mist\'s?'**
   String shellCommandOccupied(String path, String name);
 
   /// No description provided for @shellCommandReplace.
@@ -9336,7 +9336,7 @@ abstract class AppLocalizations {
   /// No description provided for @generalSettingsMainWindowDescription.
   ///
   /// In en, this message translates to:
-  /// **'What BaoCode opens to: the agents, or the IDE windows (as Restore Windows says), never both. By default, wherever it was left when it last quit.'**
+  /// **'What Morning Mist opens to: the agents, or the IDE windows (as Restore Windows says), never both. By default, wherever it was left when it last quit.'**
   String get generalSettingsMainWindowDescription;
 
   /// No description provided for @generalSettingsMainWindowLabel.
@@ -9444,7 +9444,7 @@ abstract class AppLocalizations {
   /// No description provided for @claudePathInUseDownloaded.
   ///
   /// In en, this message translates to:
-  /// **'In use: Claude Code {version}, downloaded by BaoCode'**
+  /// **'In use: Claude Code {version}, downloaded by Morning Mist'**
   String claudePathInUseDownloaded(String version);
 
   /// No description provided for @claudePathMissing.
@@ -9726,7 +9726,7 @@ abstract class AppLocalizations {
   /// No description provided for @generalSettingsShellCommandDescription.
   ///
   /// In en, this message translates to:
-  /// **'Open files and folders in BaoCode from a terminal: \'code <path>\'. Installed at {location}.'**
+  /// **'Open files and folders in Morning Mist from a terminal: \'code <path>\'. Installed at {location}.'**
   String generalSettingsShellCommandDescription(String location);
 
   /// No description provided for @generalSettingsShellCommandInstalled.
@@ -10260,7 +10260,7 @@ abstract class AppLocalizations {
   /// No description provided for @modelsFeaturedNote.
   ///
   /// In en, this message translates to:
-  /// **'These sites are officially listed by BaoCode'**
+  /// **'These sites are officially listed by Morning Mist'**
   String get modelsFeaturedNote;
 
   /// No description provided for @modelsFeaturedNoteHow.
@@ -10374,7 +10374,7 @@ abstract class AppLocalizations {
   /// No description provided for @modelsImportInvalidDetail.
   ///
   /// In en, this message translates to:
-  /// **'It needs a base URL (http or https) and a protocol BaoCode knows. Ask the site for a new link, or add the upstream by hand in Settings → Models.'**
+  /// **'It needs a base URL (http or https) and a protocol Morning Mist knows. Ask the site for a new link, or add the upstream by hand in Settings → Models.'**
   String get modelsImportInvalidDetail;
 
   /// No description provided for @modelsAddProvider.
@@ -10950,7 +10950,7 @@ abstract class AppLocalizations {
   /// No description provided for @modelsRoleSubagentDescription.
   ///
   /// In en, this message translates to:
-  /// **'CLAUDE_CODE_SUBAGENT_MODEL: the model every subagent runs on, over the one its definition or the agent\'s call names (but inherit). It may be another upstream\'s: BaoCode\'s local proxy sends its requests there.'**
+  /// **'CLAUDE_CODE_SUBAGENT_MODEL: the model every subagent runs on, over the one its definition or the agent\'s call names (but inherit). It may be another upstream\'s: Morning Mist\'s local proxy sends its requests there.'**
   String get modelsRoleSubagentDescription;
 
   /// Under a role that picks another upstream's model, once that upstream or model is gone.
@@ -11406,7 +11406,7 @@ abstract class AppLocalizations {
   /// No description provided for @updatesSettingsDescription.
   ///
   /// In en, this message translates to:
-  /// **'BaoCode looks for new versions on baocode.dev.'**
+  /// **'Morning Mist looks for new versions on api.javaxiaowu.top.'**
   String get updatesSettingsDescription;
 
   /// No description provided for @updateCurrentVersion.
@@ -11442,37 +11442,37 @@ abstract class AppLocalizations {
   /// No description provided for @updateUpToDate.
   ///
   /// In en, this message translates to:
-  /// **'BaoCode is up to date.'**
+  /// **'Morning Mist is up to date.'**
   String get updateUpToDate;
 
   /// No description provided for @updateAvailable.
   ///
   /// In en, this message translates to:
-  /// **'BaoCode {version} is available.'**
+  /// **'Morning Mist {version} is available.'**
   String updateAvailable(String version);
 
   /// No description provided for @updateReady.
   ///
   /// In en, this message translates to:
-  /// **'BaoCode {version} has been downloaded. Restart to update.'**
+  /// **'Morning Mist {version} has been downloaded. Restart to update.'**
   String updateReady(String version);
 
   /// No description provided for @updateDownloading.
   ///
   /// In en, this message translates to:
-  /// **'Downloading BaoCode {version}…'**
+  /// **'Downloading Morning Mist {version}…'**
   String updateDownloading(String version);
 
   /// No description provided for @updateDownloadingProgress.
   ///
   /// In en, this message translates to:
-  /// **'Downloading BaoCode {version}… {percent}%'**
+  /// **'Downloading Morning Mist {version}… {percent}%'**
   String updateDownloadingProgress(String version, int percent);
 
   /// No description provided for @updateMandatory.
   ///
   /// In en, this message translates to:
-  /// **'This version of BaoCode is no longer supported. Update to {version} to keep using it.'**
+  /// **'This version of Morning Mist is no longer supported. Update to {version} to keep using it.'**
   String updateMandatory(String version);
 
   /// No description provided for @updateRestartNow.
@@ -11502,7 +11502,7 @@ abstract class AppLocalizations {
   /// No description provided for @updateFailed.
   ///
   /// In en, this message translates to:
-  /// **'Couldn\'t update BaoCode: {error}'**
+  /// **'Couldn\'t update Morning Mist: {error}'**
   String updateFailed(String error);
 
   /// No description provided for @updateCheckFailed.
@@ -11520,13 +11520,13 @@ abstract class AppLocalizations {
   /// No description provided for @updateUnsupported.
   ///
   /// In en, this message translates to:
-  /// **'This build of BaoCode doesn\'t update itself.'**
+  /// **'This build of Morning Mist doesn\'t update itself.'**
   String get updateUnsupported;
 
   /// No description provided for @updateManual.
   ///
   /// In en, this message translates to:
-  /// **'BaoCode can\'t update itself here ({reason}). Download the new version from baocode.dev.'**
+  /// **'Morning Mist can\'t update itself here ({reason}). Download the new version from api.javaxiaowu.top.'**
   String updateManual(String reason);
 
   /// No description provided for @updateOpenDownloadPage.
@@ -11538,7 +11538,7 @@ abstract class AppLocalizations {
   /// No description provided for @updateUnfinished.
   ///
   /// In en, this message translates to:
-  /// **'BaoCode {version} wasn\'t installed: this is still {current}. Try again from Settings > Updates, or download it from baocode.dev.'**
+  /// **'Morning Mist {version} wasn\'t installed: this is still {current}. Try again from Settings > Updates, or download it from api.javaxiaowu.top.'**
   String updateUnfinished(String version, String current);
 
   /// No description provided for @updateShowLog.
@@ -11568,7 +11568,7 @@ abstract class AppLocalizations {
   /// No description provided for @updateModeDescription.
   ///
   /// In en, this message translates to:
-  /// **'Whether BaoCode looks for new versions by itself (update.mode).'**
+  /// **'Whether Morning Mist looks for new versions by itself (update.mode).'**
   String get updateModeDescription;
 
   /// The update mode dropdown, as read out.
@@ -11604,7 +11604,7 @@ abstract class AppLocalizations {
   /// No description provided for @diagnosticsDescription.
   ///
   /// In en, this message translates to:
-  /// **'Send BaoCode\'s error logs to its developers to help track down a problem. Nothing is sent until you upload.'**
+  /// **'Send Morning Mist\'s error logs to its developers to help track down a problem. Nothing is sent until you upload.'**
   String get diagnosticsDescription;
 
   /// No description provided for @diagnosticsUpload.
@@ -11676,7 +11676,7 @@ abstract class AppLocalizations {
   /// No description provided for @diagnosticsUploadedDetail.
   ///
   /// In en, this message translates to:
-  /// **'Give this ID to BaoCode\'s developers so they can find these logs.'**
+  /// **'Give this ID to Morning Mist\'s developers so they can find these logs.'**
   String get diagnosticsUploadedDetail;
 
   /// No description provided for @diagnosticsOmittedDumps.
@@ -12240,13 +12240,13 @@ abstract class AppLocalizations {
   /// No description provided for @generalSettingsContextMenuDescription.
   ///
   /// In en, this message translates to:
-  /// **'Adds \"Open with BaoCode\" (a new agent) and \"Open with Fast Ide\" (a new IDE window) to the context menu of files, folders and a folder\'s background.'**
+  /// **'Adds \"Open with Morning Mist\" (a new agent) and \"Open with Fast Ide\" (a new IDE window) to the context menu of files, folders and a folder\'s background.'**
   String get generalSettingsContextMenuDescription;
 
   /// No description provided for @generalSettingsContextMenuMacNote.
   ///
   /// In en, this message translates to:
-  /// **'Finder\'s own setting is in System Settings\' extensions, where the BaoCode extension can also be turned on and off.'**
+  /// **'Finder\'s own setting is in System Settings\' extensions, where the Morning Mist extension can also be turned on and off.'**
   String get generalSettingsContextMenuMacNote;
 
   /// No description provided for @generalSettingsContextMenuOn.
@@ -12489,7 +12489,7 @@ abstract class AppLocalizations {
   /// **'Installing Claude Code on {host}… {percent}%'**
   String remoteInstallingClaudeProgress(String host, int percent);
 
-  /// Shown over the chat while Claude Code is downloaded into BaoCode's data folder, the user having none that runs (or only one too old), before the agent starts.
+  /// Shown over the chat while Claude Code is downloaded into Morning Mist's data folder, the user having none that runs (or only one too old), before the agent starts.
   ///
   /// In en, this message translates to:
   /// **'Downloading Claude Code… {percent}%'**
@@ -12540,7 +12540,7 @@ abstract class AppLocalizations {
   /// No description provided for @tipsSetupTitle.
   ///
   /// In en, this message translates to:
-  /// **'Set Up BaoCode'**
+  /// **'Set Up Morning Mist'**
   String get tipsSetupTitle;
 
   /// No description provided for @tipsSetupCount.
@@ -12594,7 +12594,7 @@ abstract class AppLocalizations {
   /// No description provided for @tipsUpdated.
   ///
   /// In en, this message translates to:
-  /// **'BaoCode was updated to {version}. New: {features}.'**
+  /// **'Morning Mist was updated to {version}. New: {features}.'**
   String tipsUpdated(String version, String features);
 
   /// No description provided for @tipsListSeparator.
@@ -12618,7 +12618,7 @@ abstract class AppLocalizations {
   /// No description provided for @tipContextMenuBody.
   ///
   /// In en, this message translates to:
-  /// **'Open files and folders in BaoCode from their context menu.'**
+  /// **'Open files and folders in Morning Mist from their context menu.'**
   String get tipContextMenuBody;
 
   /// No description provided for @tipShellCommandTitle.
@@ -12630,7 +12630,7 @@ abstract class AppLocalizations {
   /// No description provided for @tipShellCommandBody.
   ///
   /// In en, this message translates to:
-  /// **'Open folders in BaoCode from a terminal: {name} <path>.'**
+  /// **'Open folders in Morning Mist from a terminal: {name} <path>.'**
   String tipShellCommandBody(String name);
 
   /// No description provided for @tipImportKeybindingsTitle.
@@ -12660,19 +12660,19 @@ abstract class AppLocalizations {
   /// No description provided for @cmdStarOnGitHub.
   ///
   /// In en, this message translates to:
-  /// **'Star BaoCode on GitHub'**
+  /// **'Star Morning Mist on GitHub'**
   String get cmdStarOnGitHub;
 
   /// No description provided for @starPromptMessage.
   ///
   /// In en, this message translates to:
-  /// **'Enjoying BaoCode?'**
+  /// **'Enjoying Morning Mist?'**
   String get starPromptMessage;
 
   /// No description provided for @starPromptDetail.
   ///
   /// In en, this message translates to:
-  /// **'BaoCode is free and open source. If it helps you, a star on GitHub helps other people find it.'**
+  /// **'Morning Mist is free and open source. If it helps you, a star on GitHub helps other people find it.'**
   String get starPromptDetail;
 
   /// No description provided for @starPromptStar.
@@ -12888,7 +12888,7 @@ abstract class AppLocalizations {
   /// No description provided for @networkSettingsDescription.
   ///
   /// In en, this message translates to:
-  /// **'How BaoCode and the Claude Code it starts reach the internet.'**
+  /// **'How Morning Mist and the Claude Code it starts reach the internet.'**
   String get networkSettingsDescription;
 
   /// No description provided for @networkProxy.
@@ -12900,7 +12900,7 @@ abstract class AppLocalizations {
   /// No description provided for @networkProxyDescription.
   ///
   /// In en, this message translates to:
-  /// **'The proxy for BaoCode and Claude Code (http.proxyMode). System Proxy follows the system\'s settings, such as Clash\'s system proxy. New sessions take a change; restart a running one for it.'**
+  /// **'The proxy for Morning Mist and Claude Code (http.proxyMode). System Proxy follows the system\'s settings, such as Clash\'s system proxy. New sessions take a change; restart a running one for it.'**
   String get networkProxyDescription;
 
   /// The proxy dropdown, as read out.
@@ -12996,7 +12996,7 @@ abstract class AppLocalizations {
   /// No description provided for @networkProxyStatusAutoConfig.
   ///
   /// In en, this message translates to:
-  /// **'Direct: the system sets its proxy with an auto-config (PAC) file, which BaoCode doesn\'t follow. Turn on Clash\'s system proxy, or enter the address manually.'**
+  /// **'Direct: the system sets its proxy with an auto-config (PAC) file, which Morning Mist doesn\'t follow. Turn on Clash\'s system proxy, or enter the address manually.'**
   String get networkProxyStatusAutoConfig;
 
   /// No description provided for @networkProxyRefresh.
@@ -13140,7 +13140,7 @@ abstract class AppLocalizations {
   /// No description provided for @extsCapabilityPartialDetail.
   ///
   /// In en, this message translates to:
-  /// **'Its themes apply; the rest of it does nothing in BaoCode.'**
+  /// **'Its themes apply; the rest of it does nothing in Morning Mist.'**
   String get extsCapabilityPartialDetail;
 
   /// No description provided for @extsEngineIncompatible.
@@ -13506,7 +13506,7 @@ abstract class AppLocalizations {
   /// No description provided for @extsCapabilityUnsupportedDetail.
   ///
   /// In en, this message translates to:
-  /// **'It has no color or file icon theme: BaoCode only uses themes from extensions.'**
+  /// **'It has no color or file icon theme: Morning Mist only uses themes from extensions.'**
   String get extsCapabilityUnsupportedDetail;
 
   /// No description provided for @extsFindingCode.
@@ -13686,7 +13686,7 @@ abstract class AppLocalizations {
   /// No description provided for @mobileSettingsDescription.
   ///
   /// In en, this message translates to:
-  /// **'Follow and drive this computer\'s agents from BaoCode on your phone, over the local network or the internet. What goes between them is end-to-end encrypted.'**
+  /// **'Follow and drive this computer\'s agents from Morning Mist on your phone, over the local network or the internet. What goes between them is end-to-end encrypted.'**
   String get mobileSettingsDescription;
 
   /// No description provided for @mobileAllow.
@@ -13794,7 +13794,7 @@ abstract class AppLocalizations {
   /// No description provided for @mobileRelayDescription.
   ///
   /// In en, this message translates to:
-  /// **'Reach this computer through BaoCode\'s relay when none of its addresses can be reached. Coming later.'**
+  /// **'Reach this computer through Morning Mist\'s relay when none of its addresses can be reached. Coming later.'**
   String get mobileRelayDescription;
 
   /// No description provided for @mobileRelayUnavailable.
@@ -13812,7 +13812,7 @@ abstract class AppLocalizations {
   /// No description provided for @mobilePairDescription.
   ///
   /// In en, this message translates to:
-  /// **'Scan the code with BaoCode on the phone (Me → Paired computers → Pair a computer), or pick this computer under Nearby Computers there.'**
+  /// **'Scan the code with Morning Mist on the phone (Me → Paired computers → Pair a computer), or pick this computer under Nearby Computers there.'**
   String get mobilePairDescription;
 
   /// No description provided for @mobilePairShow.
@@ -14670,7 +14670,7 @@ abstract class AppLocalizations {
   /// No description provided for @stashImplement.
   ///
   /// In en, this message translates to:
-  /// **'Implement in BaoCode'**
+  /// **'Implement in Morning Mist'**
   String get stashImplement;
 
   /// No description provided for @stashImplementHow.
@@ -14868,7 +14868,7 @@ abstract class AppLocalizations {
   /// No description provided for @stashSettingsDirectoryRestart.
   ///
   /// In en, this message translates to:
-  /// **'Takes effect after BaoCode restarts.'**
+  /// **'Takes effect after Morning Mist restarts.'**
   String get stashSettingsDirectoryRestart;
 
   /// Opens the list of every stash beside the one written in, in the stash panel.
@@ -15108,7 +15108,7 @@ abstract class AppLocalizations {
   /// No description provided for @accountsSignOutDetail.
   ///
   /// In en, this message translates to:
-  /// **'The token is deleted from this computer. To revoke BaoCode\'s access altogether, revoke it in your {forge} settings too.'**
+  /// **'The token is deleted from this computer. To revoke Morning Mist\'s access altogether, revoke it in your {forge} settings too.'**
   String accountsSignOutDetail(String forge);
 
   /// No description provided for @accountsRevoke.
@@ -15174,7 +15174,7 @@ abstract class AppLocalizations {
   /// No description provided for @accountsBrowserDetail.
   ///
   /// In en, this message translates to:
-  /// **'Enter this code on {host} to let BaoCode access your account:'**
+  /// **'Enter this code on {host} to let Morning Mist access your account:'**
   String accountsBrowserDetail(String host);
 
   /// No description provided for @accountsCopyAndOpen.
@@ -15546,7 +15546,7 @@ abstract class AppLocalizations {
   /// No description provided for @stashWelcomeAgent.
   ///
   /// In en, this message translates to:
-  /// **'Click Implement in BaoCode, or mention it in a conversation; the conversation and the stash stay linked.'**
+  /// **'Click Implement in Morning Mist, or mention it in a conversation; the conversation and the stash stay linked.'**
   String get stashWelcomeAgent;
 
   /// No description provided for @stashWelcomeTrackTitle.
@@ -15666,7 +15666,7 @@ abstract class AppLocalizations {
   /// No description provided for @browserSettingsNotRunningDescription.
   ///
   /// In en, this message translates to:
-  /// **'Open a browser with BaoCode\'s extension: it connects automatically.'**
+  /// **'Open a browser with Morning Mist\'s extension: it connects automatically.'**
   String get browserSettingsNotRunningDescription;
 
   /// No description provided for @browserSettingsSandboxed.
@@ -15678,7 +15678,7 @@ abstract class AppLocalizations {
   /// No description provided for @browserSettingsSandboxedDescription.
   ///
   /// In en, this message translates to:
-  /// **'Their sandbox keeps BaoCode\'s helper from running. Install the browser from its own .deb or .rpm package instead, such as Google Chrome from google.com/chrome.'**
+  /// **'Their sandbox keeps Morning Mist\'s helper from running. Install the browser from its own .deb or .rpm package instead, such as Google Chrome from google.com/chrome.'**
   String get browserSettingsSandboxedDescription;
 
   /// A browser connected, by its name (Google Chrome, Microsoft Edge…).
@@ -15687,13 +15687,13 @@ abstract class AppLocalizations {
   /// **'{browser} connected'**
   String browserSettingsConnected(String browser);
 
-  /// A browser connected whose extension BaoCode cannot use: one too old, or newer than the app.
+  /// A browser connected whose extension Morning Mist cannot use: one too old, or newer than the app.
   ///
   /// In en, this message translates to:
   /// **'{browser}: extension version doesn\'t match'**
   String browserSettingsIncompatible(String browser);
 
-  /// The version of BaoCode's extension in a connected browser.
+  /// The version of Morning Mist's extension in a connected browser.
   ///
   /// In en, this message translates to:
   /// **'Extension {version}'**
@@ -15708,7 +15708,7 @@ abstract class AppLocalizations {
   /// No description provided for @browserSettingsAppOld.
   ///
   /// In en, this message translates to:
-  /// **'The extension is newer than this BaoCode. Update BaoCode.'**
+  /// **'The extension is newer than this Morning Mist. Update Morning Mist.'**
   String get browserSettingsAppOld;
 
   /// No description provided for @browserSettingsInstall.
@@ -15768,7 +15768,7 @@ abstract class AppLocalizations {
   /// No description provided for @browserHistoryDescription.
   ///
   /// In en, this message translates to:
-  /// **'What the tabs shared with BaoCode do is kept as it happens, no recording needed: the pages, the requests, console errors and warnings. Agents look back at it when you ask (“it failed when I saved”). Kept on this computer; cookies and tokens are not.'**
+  /// **'What the tabs shared with Morning Mist do is kept as it happens, no recording needed: the pages, the requests, console errors and warnings. Agents look back at it when you ask (“it failed when I saved”). Kept on this computer; cookies and tokens are not.'**
   String get browserHistoryDescription;
 
   /// No description provided for @browserHistoryDetailed.
@@ -15834,7 +15834,7 @@ abstract class AppLocalizations {
   /// No description provided for @browserWelcomeLead.
   ///
   /// In en, this message translates to:
-  /// **'With BaoCode\'s extension, agents open pages, read them, click and type in your own Chrome, signed in as you are.'**
+  /// **'With Morning Mist\'s extension, agents open pages, read them, click and type in your own Chrome, signed in as you are.'**
   String get browserWelcomeLead;
 
   /// No description provided for @browserWelcomeSharedTitle.
@@ -15846,7 +15846,7 @@ abstract class AppLocalizations {
   /// No description provided for @browserWelcomeShared.
   ///
   /// In en, this message translates to:
-  /// **'They work in the yellow BaoCode tab group alone; your other tabs stay yours.'**
+  /// **'They work in the yellow Morning Mist tab group alone; your other tabs stay yours.'**
   String get browserWelcomeShared;
 
   /// No description provided for @browserWelcomeWatchTitle.
@@ -15900,7 +15900,7 @@ abstract class AppLocalizations {
   /// No description provided for @browserWelcomeTry.
   ///
   /// In en, this message translates to:
-  /// **'Try telling an agent: “Open baocode.dev and look at the download page.”'**
+  /// **'Try telling an agent: “Open api.javaxiaowu.top and look at the download page.”'**
   String get browserWelcomeTry;
 
   /// No description provided for @browserWelcomeUnpacked.
@@ -15942,7 +15942,7 @@ abstract class AppLocalizations {
   /// No description provided for @modelWelcomeLead.
   ///
   /// In en, this message translates to:
-  /// **'BaoCode runs your agents on a model of your choosing. Add an upstream, a service with an API key, and its models are ready to use.'**
+  /// **'Morning Mist runs your agents on a model of your choosing. Add an upstream, a service with an API key, and its models are ready to use.'**
   String get modelWelcomeLead;
 
   /// No description provided for @modelWelcomeAnyTitle.
@@ -16296,7 +16296,7 @@ abstract class AppLocalizations {
   /// No description provided for @sshServerCoreBuiltinHint.
   ///
   /// In en, this message translates to:
-  /// **'BaoCode\'s own core: it runs on the upstreams of Settings → Models.'**
+  /// **'Morning Mist\'s own core: it runs on the upstreams of Settings → Models.'**
   String get sshServerCoreBuiltinHint;
 
   /// No description provided for @sshServerCoreCliHint.
@@ -16422,13 +16422,13 @@ abstract class AppLocalizations {
   /// No description provided for @channelSetupTitle.
   ///
   /// In en, this message translates to:
-  /// **'Welcome to BaoCode'**
+  /// **'Welcome to Morning Mist'**
   String get channelSetupTitle;
 
   /// No description provided for @channelSetupLead.
   ///
   /// In en, this message translates to:
-  /// **'Finish your first-time setup on baocode.dev. It takes about 10 seconds.'**
+  /// **'Finish your first-time setup on api.javaxiaowu.top. It takes about 10 seconds.'**
   String get channelSetupLead;
 
   /// No description provided for @channelSetupStepTitle.
@@ -16440,7 +16440,7 @@ abstract class AppLocalizations {
   /// No description provided for @channelSetupStep.
   ///
   /// In en, this message translates to:
-  /// **'BaoCode opens baocode.dev in your browser. Once the page says it\'s done, BaoCode continues on its own.'**
+  /// **'Morning Mist opens api.javaxiaowu.top in your browser. Once the page says it\'s done, Morning Mist continues on its own.'**
   String get channelSetupStep;
 
   /// No description provided for @channelSetupWaitingTitle.
@@ -16452,7 +16452,7 @@ abstract class AppLocalizations {
   /// No description provided for @channelSetupWaiting.
   ///
   /// In en, this message translates to:
-  /// **'Once the page says it\'s done, BaoCode continues on its own. Closed the page by mistake? Open it again.'**
+  /// **'Once the page says it\'s done, Morning Mist continues on its own. Closed the page by mistake? Open it again.'**
   String get channelSetupWaiting;
 
   /// No description provided for @channelSetupOpenFailedTitle.
@@ -16464,7 +16464,7 @@ abstract class AppLocalizations {
   /// No description provided for @channelSetupOpenFailed.
   ///
   /// In en, this message translates to:
-  /// **'Copy this address and open it in your browser. Once the page says it\'s done, BaoCode continues on its own.'**
+  /// **'Copy this address and open it in your browser. Once the page says it\'s done, Morning Mist continues on its own.'**
   String get channelSetupOpenFailed;
 
   /// No description provided for @channelSetupAddressCopied.
@@ -16476,7 +16476,7 @@ abstract class AppLocalizations {
   /// No description provided for @channelSetupOffline.
   ///
   /// In en, this message translates to:
-  /// **'Can\'t reach baocode.dev. You need to be online to finish setup.'**
+  /// **'Can\'t reach api.javaxiaowu.top. You need to be online to finish setup.'**
   String get channelSetupOffline;
 
   /// No description provided for @channelSetupRetry.
@@ -16530,7 +16530,7 @@ abstract class AppLocalizations {
   /// No description provided for @channelSetupLinkOther.
   ///
   /// In en, this message translates to:
-  /// **'That link is for another BaoCode install. Use the page this BaoCode opened.'**
+  /// **'That link is for another Morning Mist install. Use the page this Morning Mist opened.'**
   String get channelSetupLinkOther;
 
   /// No description provided for @channelSetupTrouble.
@@ -16560,7 +16560,7 @@ abstract class AppLocalizations {
   /// No description provided for @channelSetupPrivate.
   ///
   /// In en, this message translates to:
-  /// **'The page only tells BaoCode where you heard of it, like a video or a website.'**
+  /// **'The page only tells Morning Mist where you heard of it, like a video or a website.'**
   String get channelSetupPrivate;
 
   /// No description provided for @channelSetupFindingTitle.
@@ -16578,13 +16578,13 @@ abstract class AppLocalizations {
   /// No description provided for @channelSetupSiteOfflineTitle.
   ///
   /// In en, this message translates to:
-  /// **'Can\'t reach baocode.dev'**
+  /// **'Can\'t reach api.javaxiaowu.top'**
   String get channelSetupSiteOfflineTitle;
 
   /// No description provided for @channelSetupSiteOffline.
   ///
   /// In en, this message translates to:
-  /// **'BaoCode needs to be online to read your channel. Check your connection and retry.'**
+  /// **'Morning Mist needs to be online to read your channel. Check your connection and retry.'**
   String get channelSetupSiteOffline;
 
   /// No description provided for @channelSetupUnavailableTitle.
@@ -16596,7 +16596,7 @@ abstract class AppLocalizations {
   /// No description provided for @channelSetupUnavailable.
   ///
   /// In en, this message translates to:
-  /// **'The channel this installer came from doesn\'t have accounts set up yet. If you downloaded it through another channel, confirm where you came from in your browser; otherwise contact whoever gave you the installer, or download the standard edition from baocode.dev.'**
+  /// **'The channel this installer came from doesn\'t have accounts set up yet. If you downloaded it through another channel, confirm where you came from in your browser; otherwise contact whoever gave you the installer, or download the standard edition from api.javaxiaowu.top.'**
   String get channelSetupUnavailable;
 
   /// No description provided for @channelSetupConfirmAgain.
@@ -16674,7 +16674,7 @@ abstract class AppLocalizations {
   /// No description provided for @channelAccountSignOutDetail.
   ///
   /// In en, this message translates to:
-  /// **'You\'ll need to sign in to {channel} again to keep using BaoCode.'**
+  /// **'You\'ll need to sign in to {channel} again to keep using Morning Mist.'**
   String channelAccountSignOutDetail(String channel);
 
   /// No description provided for @channelAccountOpenSite.

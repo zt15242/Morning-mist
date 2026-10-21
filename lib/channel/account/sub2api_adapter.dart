@@ -25,6 +25,7 @@ class Sub2ApiAdapter extends AccountAdapter {
   final Random _random;
   String? _access;
   DateTime _accessUntil = DateTime.fromMillisecondsSinceEpoch(0);
+  final _rawKeys = <String, String>{};
 
   Uri _url(String path, [Map<String, String>? query]) =>
       site.url.replace(path: '/api/v1$path', queryParameters: query);
@@ -34,7 +35,12 @@ class Sub2ApiAdapter extends AccountAdapter {
     final token = await window.evaluate(
       "localStorage.getItem('refresh_token')",
     );
-    return token is String && token.isNotEmpty ? token : null;
+    if (token is String && token.isNotEmpty) return token;
+    final auth = await window.evaluate(
+      "localStorage.getItem('auth_token')",
+    );
+    if (auth is String && auth.isNotEmpty) return auth;
+    return null;
   }
 
   /// An access token good for a minute more, traded for if need be.
@@ -134,19 +140,23 @@ class Sub2ApiAdapter extends AccountAdapter {
     return [
       for (final item in _items(data))
         if (item case {'id': final num id, 'key': final String key})
-          AccountKey(
-            id: '${id.toInt()}',
-            name: switch (item['name']) {
-              final String name when name.trim().isNotEmpty => name.trim(),
-              _ => '#${id.toInt()}',
-            },
-            masked: AccountKey.mask(key),
-            platform: switch (item['group']) {
-              {'platform': final String platform} when platform.isNotEmpty =>
-                platform,
-              _ => null,
-            },
-          ),
+          () {
+            final idStr = '${id.toInt()}';
+            _rawKeys[idStr] = key;
+            return AccountKey(
+              id: idStr,
+              name: switch (item['name']) {
+                final String name when name.trim().isNotEmpty => name.trim(),
+                _ => '#$idStr',
+              },
+              masked: AccountKey.mask(key),
+              platform: switch (item['group']) {
+                {'platform': final String platform} when platform.isNotEmpty =>
+                  platform,
+                _ => null,
+              },
+            );
+          }(),
     ];
   }
 
@@ -158,11 +168,18 @@ class Sub2ApiAdapter extends AccountAdapter {
 
   @override
   Future<String> reveal(AccountKey key) async {
-    final data = await _call('GET', '/keys/${key.id}');
-    return switch (data) {
-      {'key': final String whole} when whole.isNotEmpty => whole,
-      _ => throw const AccountError('no key'),
-    };
+    try {
+      final data = await _call('GET', '/keys/${key.id}');
+      if (data case {'key': final String whole} when whole.isNotEmpty) {
+        return whole;
+      }
+    } on Object {
+      // Fallback to cache if available
+    }
+    if (_rawKeys[key.id] case final cached? when cached.isNotEmpty && !cached.contains('…') && !cached.contains('***')) {
+      return cached;
+    }
+    throw const AccountError('no key');
   }
 
   @override

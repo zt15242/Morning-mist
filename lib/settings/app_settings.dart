@@ -25,7 +25,6 @@ import '../tips/feature_tips_controller.dart';
 import '../update/update_controller.dart';
 import '../workspace/workspace.dart';
 import 'app_locale.dart';
-import 'pages/about_page.dart';
 import 'pages/accounts_page.dart';
 import 'pages/appearance_page.dart';
 import 'pages/browser_page.dart';
@@ -34,16 +33,13 @@ import 'pages/customize_page.dart';
 import 'pages/data_dir_page.dart';
 import 'pages/general_page.dart';
 import 'pages/keybindings_page.dart';
-import 'pages/mobile_page.dart';
 import 'pages/models_page.dart';
 import 'pages/language_page.dart';
 import 'pages/network_page.dart';
 import 'pages/notifications_page.dart';
-import 'pages/settings_widgets.dart' show SettingsPage;
 import 'pages/ssh_page.dart';
 import 'pages/stash_hotkey_field.dart';
 import 'pages/stash_page.dart';
-import 'pages/updates_page.dart';
 import 'settings_dialog.dart';
 import 'user_settings.dart';
 
@@ -170,15 +166,6 @@ class AppSettings {
         return NetworkSettingsPage(settings: files?.settings);
       case SettingsSection.ssh:
         return SshSettingsPage(workspace: workspace);
-      case SettingsSection.mobile:
-        return switch (link) {
-          final link? => MobileSettingsPage(host: link),
-          null => SettingsPage(
-            title: context.l10n.settingsSectionMobile,
-            description: context.l10n.mobileSettingsDescription,
-            children: const [],
-          ),
-        };
       case SettingsSection.browser:
         return BrowserSettingsPage(settings: files?.settings);
       case SettingsSection.notifications:
@@ -215,14 +202,6 @@ class AppSettings {
                   ),
           ),
         );
-      case SettingsSection.updates:
-        return UpdatesSettingsPage(
-          updates: updates,
-          settings: files?.settings,
-          diagnostics: diagnostics,
-        );
-      case SettingsSection.about:
-        return const AboutSettingsPage();
       case SettingsSection.dataDirectory:
         return const DataDirectoryPage();
     }
