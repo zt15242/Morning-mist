@@ -488,8 +488,15 @@ String _bundleRemote(Directory remote, Directory target) {
   }
   if (target.existsSync()) target.deleteSync(recursive: true);
   target.createSync(recursive: true);
-  for (final name in ['VERSION', 'servers.json']) {
-    File('${remote.path}/$name').copySync('${target.path}/$name');
+  for (final entry in remote.listSync()) {
+    if (entry is File) {
+      final name = entry.uri.pathSegments.last;
+      if (name == 'VERSION' ||
+          name == 'servers.json' ||
+          name.startsWith('baocode-server-') && !name.endsWith('.gz')) {
+        entry.copySync('${target.path}/$name');
+      }
+    }
   }
   return File('${remote.path}/VERSION').readAsStringSync().trim();
 }

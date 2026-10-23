@@ -171,8 +171,15 @@ Future<void> main(List<String> arguments) async {
   // The builds an older run put there go.
   if (bundleRemote.existsSync()) bundleRemote.deleteSync(recursive: true);
   bundleRemote.createSync(recursive: true);
-  for (final name in ['VERSION', 'servers.json']) {
-    File('${remote.path}\\$name').copySync('${bundleRemote.path}\\$name');
+  for (final entry in remote.listSync()) {
+    if (entry is File) {
+      final name = entry.uri.pathSegments.last;
+      if (name == 'VERSION' ||
+          name == 'servers.json' ||
+          name.startsWith('baocode-server-') && !name.endsWith('.gz')) {
+        entry.copySync('${bundleRemote.path}\\$name');
+      }
+    }
   }
   _checkBundle(bundle, [r'remote\VERSION', r'remote\servers.json']);
   final remoteVersion = File('${remote.path}\\VERSION')

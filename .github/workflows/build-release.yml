@@ -15,8 +15,47 @@ permissions:
   contents: write
 
 jobs:
+  remote:
+    name: Build Remote Server
+    runs-on: macos-15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.47.7
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build Remote Server
+        run: |
+          softwareupdate --install-rosetta --agree-to-license > /dev/null 2>&1 || true
+          version=$(dart --version 2>&1 | sed -n 's/^Dart SDK version: \([^ ]*\) (\([a-z]*\)).*/\1 \2/p')
+          read -r dart channel <<< "$version"
+          echo "Dart $dart ($channel)"
+          curl -fsSL -o "$RUNNER_TEMP/dart-x64.zip" \
+            "https://storage.googleapis.com/dart-archive/channels/$channel/release/$dart/sdk/dartsdk-macos-x64-release.zip" || true
+          if [ -f "$RUNNER_TEMP/dart-x64.zip" ]; then
+            unzip -q "$RUNNER_TEMP/dart-x64.zip" -d "$RUNNER_TEMP/dart-x64"
+            dart run tool/build_remote_server.dart --out build/remote --macos-x64-dart "$RUNNER_TEMP/dart-x64/dart-sdk/bin/dart"
+          else
+            dart run tool/build_remote_server.dart --out build/remote
+          fi
+
+      - name: Upload Remote Server
+        uses: actions/upload-artifact@v4
+        with:
+          name: remote-server
+          path: build/remote
+
   macos:
     name: Build macOS DMG
+    needs: remote
     runs-on: macos-15
     steps:
       - name: Checkout repository
@@ -34,11 +73,11 @@ jobs:
           brew install create-dmg
           flutter pub get
 
-      - name: Prepare remote stub
-        run: |
-          mkdir -p build/remote
-          echo "1.5.0" > build/remote/VERSION
-          echo '{"version":"1.5.0","files":[]}' > build/remote/servers.json
+      - name: Download Remote Server
+        uses: actions/download-artifact@v4
+        with:
+          name: remote-server
+          path: build/remote
 
       - name: Build macOS Application and DMG
         run: dart run tool/build_macos.dart --remote-built
@@ -54,6 +93,7 @@ jobs:
 
   windows:
     name: Build Windows Setup EXE
+    needs: remote
     runs-on: windows-latest
     steps:
       - name: Checkout repository
@@ -72,12 +112,11 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Prepare remote stub
-        shell: bash
-        run: |
-          mkdir -p build/remote
-          echo "1.5.0" > build/remote/VERSION
-          echo '{"version":"1.5.0","files":[]}' > build/remote/servers.json
+      - name: Download Remote Server
+        uses: actions/download-artifact@v4
+        with:
+          name: remote-server
+          path: build/remote
 
       - name: Build Windows Application and Installer
         run: dart run tool/build_windows.dart --remote-built --stock-engine
