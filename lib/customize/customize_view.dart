@@ -988,6 +988,19 @@ class _ItemRow extends StatelessWidget {
                     ],
                   ),
                 ),
+                if (status?.status == McpProbeStatus.needsAuth) ...[
+                  const SizedBox(width: 6),
+                  _Button(
+                    label: l10n.mcpSignIn,
+                    primary: true,
+                    onTap: () {
+                      final target = _mcpUrl(status?.server ?? item.description);
+                      if (target != null) {
+                        unawaited(openExternal(target));
+                      }
+                    },
+                  ),
+                ],
                 const SizedBox(width: 8),
                 SidebarIconButton(
                   icon: Icons.more_horiz_rounded,
@@ -1384,6 +1397,20 @@ class _McpStatusPanel extends StatelessWidget {
                   style: TextStyle(color: AppColors.textFaint, fontSize: 12),
                 ),
               ),
+              if (status.status == McpProbeStatus.needsAuth)
+                Padding(
+                  padding: const EdgeInsets.only(right: 6),
+                  child: _Button(
+                    label: l10n.mcpSignIn,
+                    primary: true,
+                    onTap: () {
+                      final target = _mcpUrl(status.server);
+                      if (target != null) {
+                        unawaited(openExternal(target));
+                      }
+                    },
+                  ),
+                ),
               if (onTest case final onTest?)
                 _Button(
                   label: l10n.mcpTest,
@@ -1669,4 +1696,10 @@ class _NameDialogState extends State<_NameDialog> {
       ),
     );
   }
+}
+
+String? _mcpUrl(String? text) {
+  if (text == null) return null;
+  final match = RegExp(r'https?://[^\s,;]+').firstMatch(text);
+  return match?.group(0);
 }
