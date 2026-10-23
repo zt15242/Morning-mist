@@ -240,12 +240,18 @@ class _HostRow extends StatelessWidget {
       listenable: ssh,
       builder: (context, _) {
         final state = ssh.state;
+        final (errorMsg, errorDetail) = sshErrorText(ssh.error, l10n);
         final status = switch (state) {
           SshHostState.connected => l10n.sidebarHostConnected,
           SshHostState.connecting ||
           SshHostState.reconnecting => l10n.sidebarHostConnecting,
-          SshHostState.failed =>
-            sshErrorText(ssh.error, l10n).$1 ?? l10n.sidebarHostDisconnected,
+          SshHostState.failed => [
+            errorMsg ?? l10n.sidebarHostDisconnected,
+            if (errorDetail != null &&
+                errorDetail.isNotEmpty &&
+                !(errorMsg?.contains(errorDetail) ?? false))
+              errorDetail,
+          ].join(': '),
           SshHostState.idle => l10n.sidebarHostIdle,
         };
         final connecting =

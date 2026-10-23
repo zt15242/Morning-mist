@@ -436,7 +436,13 @@ class SshLauncher {
   String get probeScript =>
       '''
 printf 'BAOCODE-PROBE %s %s\\n' "\$(uname -s)" "\$(uname -m)"
-if [ -x '$serverPath' ]; then echo BAOCODE-PRESENT; fi
+if [ -s '$serverPath' ] && [ -x '$serverPath' ]; then
+  if '$serverPath' </dev/null >/dev/null 2>&1; then
+    echo BAOCODE-PRESENT
+  else
+    rm -f '$serverPath'
+  fi
+fi
 if command -v gzip >/dev/null 2>&1; then echo BAOCODE-GZIP; fi
 exit 0
 ''';
@@ -577,10 +583,14 @@ exit 0
         const Duration(seconds: 2),
         onTimeout: () => -1,
       );
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+      unawaited(_run(target, 'rm -f $serverPath', extra).catchError((Object _) => (exitCode: -1, stdout: '', stderr: '')));
+      final errOutput = stderr.where((l) => l.trim().isNotEmpty).join('\n').trim();
+      final reason = errOutput.isNotEmpty ? errOutput : '$error';
       throw _failure(
         code,
-        stderr.join('\n'),
-        fallback: 'The server on ${target.text} did not start: $error',
+        errOutput,
+        fallback: 'The server on ${target.text} did not start: $reason',
         cancelled: askpass?.cancelled ?? false,
       );
     } finally {
