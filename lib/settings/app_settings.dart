@@ -40,6 +40,7 @@ import 'pages/notifications_page.dart';
 import 'pages/ssh_page.dart';
 import 'pages/stash_hotkey_field.dart';
 import 'pages/stash_page.dart';
+import 'pages/updates_page.dart';
 import 'settings_dialog.dart';
 import 'user_settings.dart';
 
@@ -204,6 +205,12 @@ class AppSettings {
         );
       case SettingsSection.dataDirectory:
         return const DataDirectoryPage();
+      case SettingsSection.updates:
+        return UpdatesSettingsPage(
+          updates: updates,
+          settings: files?.settings,
+          diagnostics: diagnostics,
+        );
     }
   }
 

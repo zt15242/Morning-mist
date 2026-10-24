@@ -348,6 +348,46 @@ void main() {
       expect(upstream.protocol, ProviderProtocol.openaiResponses);
       expect(upstream.baseUrl, 'https://sub.example');
     });
+
+    test('Morning Mist lets the sub2api key group choose its protocol', () {
+      final account = ChannelInfo.parse(
+        ChannelGate.defaultEntry.json,
+        'zh',
+      )!.account!;
+      expect(account.protocol, isNull);
+    });
+
+    test('updates a kept key\'s protocol when its provider is stale', () async {
+      site = sub2apiSite();
+      store
+        ..credential = 'rt0'
+        ..state = {
+          'site': 'https://sub.example',
+          'key': {
+            'id': '3',
+            'name': 'codex',
+            'masked': 'sk-0123••••0123',
+            'platform': 'openai',
+          },
+        };
+      providers = ModelProviders.memory(
+        providers: [
+          ModelProvider(
+            id: ChannelAccount.providerId,
+            name: 'Example',
+            protocol: ProviderProtocol.anthropic,
+            baseUrl: 'https://sub.example',
+          ),
+        ],
+      );
+      final account = accountOf(_sub2api);
+      await account.load();
+      await account.settle();
+
+      expect(account.provider!.protocol, ProviderProtocol.openaiResponses);
+      expect(account.inUse!.platform, 'openai');
+      expect(account.needsProviderSync, isFalse);
+    });
   });
 
   group('ChannelGate', () {

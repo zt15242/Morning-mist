@@ -112,14 +112,10 @@ class ChannelGate extends ChangeNotifier {
         'type': 'sub2api',
         'url': 'https://api.javaxiaowu.top',
         'apiUrl': 'https://api.javaxiaowu.top',
-        'protocol': 'anthropic',
       },
       'welcome': {
         'title': {'zh': 'Morning Mist', 'en': 'Morning Mist'},
-        'text': {
-          'zh': '',
-          'en': '',
-        },
+        'text': {'zh': '', 'en': ''},
         'button': {'zh': '登录', 'en': 'Sign In'},
       },
     },
@@ -173,8 +169,6 @@ class ChannelGate extends ChangeNotifier {
   /// be).
   Future<void> fetched = Future.value();
 
-
-
   /// [entry] as the channel; its account, on a site of its own.
   Future<void> _take(ChannelEntry entry, String language) async {
     final info = ChannelInfo.parse(entry.json, language);
@@ -192,6 +186,7 @@ class ChannelGate extends ChangeNotifier {
     _found = true;
     notifyListeners();
     await account.load();
+    if (account.needsProviderSync) await account.settle();
   }
 
   void _drop() {

@@ -85,22 +85,24 @@ void main() {
       ]);
       expect(offer.secondary.single.label, l10n.updateReleaseNotes);
       offer.secondary.single.run();
-      expect(opened, [Uri.parse('https://baocode.dev/changelog#v1.2.0')]);
+      expect(opened, [
+        Uri.parse(
+          'https://github.com/zt15242/Morning-mist/releases/tag/v1.2.0',
+        ),
+      ]);
 
       offer.primary[2].run();
       expect(service.skippedVersion, '1.2.0');
     });
 
-    test('Release Notes opens the changelog in the app\'s language', () {
+    test('Release Notes opens the matching GitHub release', () {
       make();
       final version = AppVersion.parse('1.2.0+13');
       expect(
-        UpdateController.changelogUrl(version, 'zh'),
-        Uri.parse('https://baocode.dev/zh/changelog#v1.2.0'),
-      );
-      expect(
-        UpdateController.changelogUrl(version, 'en'),
-        Uri.parse('https://baocode.dev/changelog#v1.2.0'),
+        UpdateController.releaseUrl(version),
+        Uri.parse(
+          'https://github.com/zt15242/Morning-mist/releases/tag/v1.2.0',
+        ),
       );
     });
 
@@ -140,7 +142,7 @@ void main() {
       expect(opened, [ManualUpdateRequired.downloadPage]);
       expect(
         '${ManualUpdateRequired.downloadPage}',
-        'https://baocode.dev/download',
+        'https://github.com/zt15242/Morning-mist/releases/latest',
       );
     });
 

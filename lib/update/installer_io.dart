@@ -62,7 +62,7 @@ PlatformUpdates? platformUpdates({required String updatesDirectory}) {
     manifestUrl: manifestUrl,
     backend: IoUpdateBackend(
       directory: updatesDirectory,
-      userAgent: 'BaoCode/$currentAppVersion ($edition)',
+      userAgent: 'Morning-Mist/$currentAppVersion ($edition)',
     ),
     installer: installer,
   );

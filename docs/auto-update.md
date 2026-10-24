@@ -1,8 +1,8 @@
 # 自动更新
 
-BaoCode 的自动检查与升级：怎么工作、服务端约定、签名、出问题怎么查，以及以后改代码时要注意什么。版本号怎么定、怎么发版、CI 和 Cloudflare 怎么配，见 [release.md](release.md)。
+Morning Mist 的自动检查与升级：怎么工作、服务端约定、签名、出问题怎么查，以及以后改代码时要注意什么。版本号怎么定、怎么发版见 [release.md](release.md)。
 
-- 更新服务器：`https://dl.baocode.dev`（Cloudflare R2；`baocode.dev/releases/*` 302 到这里）
+- 更新清单与桌面安装包：GitHub Releases（`zt15242/Morning-mist`）；远程内核仍从 `https://dl.baocode.dev` 获取
 - 平台：macOS（Apple silicon 和 Intel 各一个包）、Windows（x64）
 - 代码：`lib/update/`，测试：`test/update/`，发布工具：`tool/release_manifest.dart`
 
@@ -33,13 +33,13 @@ BaoCode 的自动检查与升级：怎么工作、服务端约定、签名、出
 | macOS 替换 .app 并自动重启 | 已完成 |
 | 发布工具（签名 + 生成清单） | 已完成：`tool/release_manifest.dart` |
 | 版本号工具 | 已完成：`tool/bump_version.dart` |
-| CI 构建与发布 | 已完成：`.github/workflows/release.yml`，见 [release.md](release.md) |
+| CI 构建与发布 | `.github/workflows/build-release.yml` 生成签名清单并附到 GitHub Release |
 | macOS 打包（dmg + 更新用 zip） | 已完成：`tool/build_macos.dart` |
 | macOS 代码签名与公证 | 脚本已支持；**等 Apple 开发者账号**，见 [release.md 7.3](release.md#73-applemacos-签名与公证) |
-| dl.baocode.dev（R2） | **需要准备**：见 [release.md 7.1](release.md#71-cloudflare) |
+| GitHub Release 更新源 | 下一次桌面 Release 会附带 `latest.json`；已安装版本使用它检查更新 |
 | 真机端到端验证 | **未做**：见第 11 节 |
 
-签名密钥已经生成：私钥在 `~/.baocode-release/update-signing.key`（不在仓库里），公钥写在 `lib/update/update_signature.dart`。
+发布环境 secret `UPDATE_SIGNING_KEY` 保存签名私钥内容，公钥写在 `lib/update/update_signature.dart`。不要读取或更换这把私钥；已安装版本依赖当前公钥验签。
 
 ---
 
@@ -51,16 +51,16 @@ BaoCode 的自动检查与升级：怎么工作、服务端约定、签名、出
 
 | 值 | 界面名称 | 行为 |
 | --- | --- | --- |
-| `"default"`（默认，不写就是它） | 自动检查并下载 | 启动 30 秒后检查一次，之后每 6 小时检查一次；发现新版本就在后台下载，下载并校验完成后在主窗口弹出通知 |
+| `"default"`（默认，不写就是它） | 自动检查并下载 | 启动 10 秒后检查一次，之后每 5 分钟检查一次；发现新版本就在后台下载，下载并校验完成后在主窗口弹出通知 |
 | `"manual"` | 仅手动检查 | 不自动检查；只有执行“检查更新”时才检查；点“立即重启更新”时才下载 |
 | `"none"` | 关闭 | 完全不检查，手动检查也只会提示“更新已关闭” |
 
-修改后立即生效，不用重启：从 `none` / `manual` 切到 `default` 后，30 秒后开始第一次检查；切走后，定时检查停止。
+修改后立即生效，不用重启：从 `none` / `manual` 切到 `default` 后，10 秒后开始第一次检查；切走后，定时检查停止。
 
 ### 2.2 入口
 
 - **通知**：出现在主窗口右下角，常驻不自动消失。
-  - 普通更新：`BaoCode 1.2.0 已下载，重启即可完成更新。`，按钮有“立即重启更新”、“稍后”、“跳过此版本”；有更新日志时，齿轮菜单里还有“更新日志”（会打开设置页）。
+  - 普通更新：`Morning Mist 1.2.0 已下载，重启即可完成更新。`，按钮有“立即重启更新”、“稍后”、“跳过此版本”；有更新日志时，通知里还有“更新日志”（会打开对应 GitHub Release）。
   - 强制更新（当前版本低于 `minimumVersion`）：只有“立即重启更新”一个按钮。
 - **侧边栏底部的“更新”按钮**：在设置齿轮左边，蓝色胶囊样式，有更新待安装时一直显示，点击等同于“立即重启更新”，鼠标悬停时显示版本号。显示条件见 `UpdateService.pending`：已下载完成；`manual` 模式下已发现新版本；跳过的版本（不弹通知、不在后台下载，但按钮照常显示，点击时再下载）；或者是强制更新。已是最新时不显示。
 - **命令面板**：“检查更新...”（命令 id `update.checkForUpdate`），聊天布局和 IDE 都有，也可以绑定快捷键。
@@ -147,7 +147,7 @@ idle ──检查──▶ checking ──┬─▶ upToDate
 
 ### 4.1 检查
 
-1. GET `latest.json`：超时 30 秒，响应最大 1 MB，必须是 200。User-Agent 是 `BaoCode/<当前版本> (<平台>)`。
+1. GET `https://github.com/zt15242/Morning-mist/releases/latest/download/latest.json`：超时 30 秒，响应最大 1 MB，必须是 200。User-Agent 是 `Morning-Mist/<当前版本> (<平台>)`。
 2. 解析清单，下载链接必须符合 `UpdateUrlPolicy`（见 5.3）。
 3. 记录上次检查时间。
 4. 清单版本 ≤ 当前版本，或者没有本平台的条目 → 已是最新（upToDate）。
@@ -232,27 +232,23 @@ main.dart onExitRequested
 
 ## 5. 服务端约定
 
-### 5.1 目录布局
+### 5.1 Release 资产布局
 
 ```
-https://dl.baocode.dev/
-  releases/
-    latest.json                         ← 应用读取的清单
-    1.2.0/
-      BaoCode-1.2.0-setup.exe           ← Windows 更新 / 首次安装
-      BaoCode-1.2.0-mac-arm64.zip       ← macOS 更新（Apple silicon）
-      BaoCode-1.2.0-mac-x64.zip         ← macOS 更新（Intel）
-      BaoCode-1.2.0-arm64.dmg           ← macOS 首次安装（应用不读取）
-      BaoCode-1.2.0-x64.dmg
-    remote/
-      <VERSION>/                        ← 远程服务端，应用连远程主机时按需下载
-        baocode-server-linux-x64.gz        （见 docs/ssh-remote.md 第 9.3 节；
-        baocode-server-linux-arm64.gz       旧版本的目录要一直保留）
+https://github.com/zt15242/Morning-mist/releases/
+  latest/download/latest.json           ← 应用读取的签名清单
+  download/v1.2.0/
+    latest.json
+    Morning-Mist-1.2.0-setup.exe        ← Windows 更新 / 首次安装
+    Morning-Mist-1.2.0-mac-arm64.zip    ← macOS 更新（Apple silicon）
+    Morning-Mist-1.2.0-mac-x64.zip      ← macOS 更新（Intel）
+    Morning-Mist-1.2.0-arm64.dmg        ← macOS 首次安装（应用不读取）
+    Morning-Mist-1.2.0-x64.dmg
 ```
 
-下载页 `https://baocode.dev/download` 在官网上（`site/`），应用无法自己更新时会打开它。
+应用无法自行安装时，会打开 GitHub 的最新 Release 页面。
 
-`tool/release_manifest.dart` 按 `https://dl.baocode.dev/releases/<marketing 版本>/<文件名>` 生成链接。要改目录结构，就改工具里的 `_releasesBase`。
+`tool/release_manifest.dart` 按仓库的 `releases/download/v<marketing 版本>/<文件名>` 生成链接。`latest.json` 由发布工作流一同附加到 Release；GitHub 的 `releases/latest/download/latest.json` 会解析到最新版。
 
 ### 5.2 `latest.json` 格式
 
@@ -264,19 +260,19 @@ https://dl.baocode.dev/
   "minimumVersion": "1.0.0",
   "platforms": {
     "windows-x64": {
-      "url": "https://dl.baocode.dev/releases/1.2.0/BaoCode-1.2.0-setup.exe",
+      "url": "https://github.com/zt15242/Morning-mist/releases/download/v1.2.0/Morning-Mist-1.2.0-setup.exe?sha256=...",
       "size": 123456789,
       "sha256": "64 位十六进制",
       "signature": "base64，解码后 64 字节"
     },
     "macos-arm64": {
-      "url": "https://dl.baocode.dev/releases/1.2.0/BaoCode-1.2.0-mac-arm64.zip?sha256=0123456789abcdef",
+      "url": "https://github.com/zt15242/Morning-mist/releases/download/v1.2.0/Morning-Mist-1.2.0-mac-arm64.zip?sha256=0123456789abcdef",
       "size": 123456789,
       "sha256": "...",
       "signature": "..."
     },
     "macos-x64": {
-      "url": "https://dl.baocode.dev/releases/1.2.0/BaoCode-1.2.0-mac-x64.zip?sha256=fedcba9876543210",
+      "url": "https://github.com/zt15242/Morning-mist/releases/download/v1.2.0/Morning-Mist-1.2.0-mac-x64.zip?sha256=fedcba9876543210",
       "size": 123456789,
       "sha256": "...",
       "signature": "..."
@@ -305,32 +301,25 @@ https://dl.baocode.dev/
 
 允许：
 
-- `https://baocode.dev/...`、`https://<任意子域>.baocode.dev/...`（主机名不区分大小写）
+- `https://github.com/zt15242/Morning-mist/releases/download/v<版本>/Morning-Mist-<版本>-<平台>.<exe|zip|deb>`；版本、仓库和文件名前缀都必须匹配清单版本。
 
 拒绝：
 
 - `http://`、其他协议、相对路径
-- 带端口：`https://baocode.dev:8443/`
-- 带用户信息：`https://user@baocode.dev/`
-- 相似域名：`baocode.dev.evil.example`、`notbaocode.dev`
+- 其他仓库、`releases/latest` 路径、版本不匹配的资产名
+- 带端口或用户信息的 URL，以及非 GitHub Releases 域名
 
 例外：设置了 `BAOCODE_UPDATE_URL` 时，清单同源（协议 + 主机 + 端口）的链接也会被接受，方便本地测试。
 
-服务器可以把下载重定向到其他域名的 CDN（`HttpClient` 会自动跟随），因为下载内容由 SHA-256 和签名保证，不依赖域名。
+GitHub 下载可能重定向到资产存储域名；应用校验初始 URL 的仓库和路径，并对下载内容校验 SHA-256 与 Ed25519 签名。
 
 ### 5.4 对服务器的要求
 
-CI 上传时已经按下面这些设置好（见 [release.md 第 5 节](release.md#5-dlbaocodedev-上有什么)）：
-
-- **`latest.json` 不要缓存太久**：`Cache-Control: max-age=300`。CDN 缓存旧清单会导致新版本推送延迟；撤回某个版本时也要清 CDN 缓存。
-- **安装包可以长期缓存**（`immutable`，一年）：清单里的链接末尾带文件哈希（`?sha256=…`），文件换了链接就换了，所以同一个版本重新发布也不会拿到旧文件，见 [release.md 第 2 节](release.md#2-版本号)。
-- **建议支持 `Range` 请求**（回 206）：用于断点续传。不支持也没关系，应用会从头重新下载。
-- **返回 `Content-Length`**：不强制，但没有的话进度显示不准。
-- **上传顺序**：先上传安装包，**最后**上传 `latest.json`。
+桌面更新资产直接发布到 GitHub Releases，不需要配置 `dl.baocode.dev` 的桌面安装包路径或 CDN 缓存规则。发布时先上传版本化安装包，再上传 `latest.json`；安装包内容仍由完整 SHA-256 和 Ed25519 签名校验。下载服务支持 Range 时可以断点续传；不支持时应用会从头下载。
 
 ### 5.5 撤回一个版本
 
-把 `latest.json` 改回上一个版本的内容并重新上传（清掉 CDN 缓存）。已经更新到问题版本的用户不会被“降级”，因为应用只接受比当前版本高的版本。要让这些用户回到正常状态，需要发一个版本号更高的修复版。
+把 `latest.json` 改回上一个版本的内容，并用 `gh release upload <tag> latest.json --clobber` 上传到最新 GitHub Release。已经更新到问题版本的用户不会被“降级”，因为应用只接受比当前版本高的版本。要让这些用户回到正常状态，需要发一个版本号更高的修复版。
 
 ---
 
@@ -378,7 +367,7 @@ dart run tool/release_manifest.dart --generate-key <路径>
 
 - **不要**提交到仓库，不要放进网盘的同步目录明文保存，不要发到聊天工具里。
 - 离线备份至少两份，例如密码管理器一份、加密 U 盘一份。
-- **泄露的后果**：拿到私钥的人可以让所有已安装的 BaoCode 运行他们的程序（当然还需要能控制 dl.baocode.dev 或用户的网络）。
+- **泄露的后果**：拿到私钥的人可以给所有已安装版本签发恶意更新，并需要能发布或替换这个仓库的 Release 资产。
 - **丢失的后果**：已经安装的版本再也收不到自动更新，只能让用户手动去下载页重装。
 
 ### 6.4 轮换密钥
@@ -396,30 +385,30 @@ dart run tool/release_manifest.dart --generate-key <路径>
 
 ## 7. 发版步骤
 
-见 [release.md](release.md)：用 `tool/bump_version.dart` 改版本号，推送 `v<版本>` 标签，CI 构建、签名、上传到 `dl.baocode.dev`，`latest.json` 最后上传。CI 不可用时的手动步骤见 [release.md 第 9 节](release.md#9-不用-ci手动发布)。
+见 [release.md](release.md)：用 `tool/bump_version.dart` 改版本号并推送 `v<版本>` 标签；CI 构建桌面包、用 `release` 环境里的 `UPDATE_SIGNING_KEY` 签名清单，再把 `latest.json` 与安装包一起附到 GitHub Release。远程内核仍使用现有的 `dl.baocode.dev` 发布流程。
 
 ---
 
 ## 8. 本地测试
 
-不用发布到 dl.baocode.dev，就能在本机完整走一遍更新流程：
+不用创建 GitHub Release，就能在本机完整走一遍更新流程：
 
 ```sh
 # 1. 准备一个“更新版本”：版本号比要测试的那个构建高，签名后写到一个目录
-mkdir -p /tmp/rel && cp build/installers/BaoCode-1.2.0-mac-arm64.zip /tmp/rel/
+mkdir -p /tmp/rel && cp build/installers/Morning-Mist-1.2.0-mac-arm64.zip /tmp/rel/
 BAOCODE_UPDATE_SIGNING_KEY=~/.baocode-release/update-signing.key \
   dart run tool/release_manifest.dart --version 9.0.0 \
-  --macos-arm64 /tmp/rel/BaoCode-1.2.0-mac-arm64.zip --manifest /tmp/rel/latest.json
+  --macos-arm64 /tmp/rel/Morning-Mist-1.2.0-mac-arm64.zip --manifest /tmp/rel/latest.json
 
 # 2. 把 latest.json 里的 url 换成本地地址（同源的链接会被接受）
-sed -i '' 's#https://dl.baocode.dev/releases/9.0.0/#http://127.0.0.1:8080/#' /tmp/rel/latest.json
+sed -i '' 's#https://github.com/zt15242/Morning-mist/releases/download/v9.0.0/#http://127.0.0.1:8080/#' /tmp/rel/latest.json
 
 # 3. 起一个静态服务器
 cd /tmp/rel && python3 -m http.server 8080
 
 # 4. 让被测试的应用读本地清单
 BAOCODE_UPDATE_URL=http://127.0.0.1:8080/latest.json \
-  /Applications/BaoCode.app/Contents/MacOS/BaoCode
+  "/Applications/Morning Mist.app/Contents/MacOS/Morning Mist"
 ```
 
 - 改 url 不会让签名失效，因为签名内容里不包括 url。
@@ -436,10 +425,10 @@ flutter test test/update
 | 测试文件 | 覆盖 |
 | --- | --- |
 | `version_test.dart` | 版本解析和比较；`appVersionString` 和 pubspec 是否一致 |
-| `update_manifest_test.dart` | 字段缺失或错误、平台缺失、非 baocode.dev 的链接、同源例外、序列化往返 |
+| `update_manifest_test.dart` | 字段缺失或错误、平台缺失、非本仓库 Release 资产链接、同源例外、序列化往返 |
 | `update_signature_test.dart` | 签名往返；改版本号、换密钥、篡改签名都会验签失败；内置公钥格式正确 |
 | `update_io_test.dart` | 本地 HttpServer：下载、复用已下载的文件、SHA-256 / 签名 / 大小不对时拒绝、断点续传、服务器不支持 Range、只保留最新版本、清理旧版本 |
-| `update_service_test.dart` | 三种模式、30 秒和 6 小时的定时、模式切换、只提示一次、跳过、强制更新、下载去重、arm / disarm / 启动失败 |
+| `update_service_test.dart` | 三种模式、10 秒和 5 分钟的定时、模式切换、只提示一次、跳过、强制更新、下载去重、arm / disarm / 启动失败 |
 | `installer_test.dart` | Windows 的 Setup 参数、按注册表判断安装方式、没有 `unins000` 时的处理；macOS 的解压、bundle id、签名和 Team 检查、无法替换时转下载页、脚本内容（以及 `bash -n` 语法检查） |
 | `update_controller_test.dart` | 通知的按钮、强制更新只有一个按钮、跳过、重启、下载页、校验失败 |
 | `updates_page_test.dart` | 设置页显示、检查、重启、错误显示、`update.mode` 的读写 |
@@ -472,13 +461,13 @@ flutter test test/update
 
 ## 10. 故障排查
 
-**看日志**：应用用 `debugPrint` 输出以 `update:` 开头的日志。macOS 上从终端运行 `/Applications/BaoCode.app/Contents/MacOS/BaoCode` 就能看到；macOS 的替换过程看 `updates/install.log`。
+**看日志**：应用用 `debugPrint` 输出以 `update:` 开头的日志。macOS 上从终端运行 `"/Applications/Morning Mist.app/Contents/MacOS/Morning Mist"` 就能看到；macOS 的替换过程看 `updates/install.log`。
 
 | 现象 | 可能原因 | 处理 |
 | --- | --- | --- |
 | 设置页显示“此版本的 BaoCode 不支持自动更新” | 这是 debug 构建，或者不是 macOS / Windows | 用 release 构建；或者设置 `BAOCODE_UPDATE_URL` 测试 |
-| 一直显示“已是最新版本” | 清单版本不比当前高（build 号没递增）；清单里没有本平台的条目；CDN 还在返回旧清单 | 检查 `version` 和平台键；清 CDN 缓存 |
-| “检查更新失败：Invalid update manifest: …” | 清单格式有错；链接不在 baocode.dev 上 | 错误信息里会说明是哪个字段；用发布工具重新生成 |
+| 一直显示“已是最新版本” | 清单版本不比当前高（build 号没递增）；清单里没有本平台的条目；最新 GitHub Release 的 `latest.json` 仍是旧清单 | 检查 `version` 和平台键；检查最新 Release 附件 |
+| “检查更新失败：Invalid update manifest: …” | 清单格式有错；资产 URL 不属于仓库的版本化 Release 路径 | 错误信息里会说明是哪个字段；用发布工具重新生成 |
 | “检查更新失败：HTTP 404 / 超时” | 清单没上传，或者网络不通 | `curl` 一下清单地址 |
 | “更新失败：The download is N bytes, not M” | 上传的文件不完整，或者清单里写的不是这个文件的 size | 重新上传；或者对实际上传的文件重新签名 |
 | “更新失败：The download does not match its SHA-256” | 上传后文件被替换了，或者签名时用的不是同一个文件 | 对实际上传的文件重新运行发布工具 |
@@ -492,7 +481,7 @@ flutter test test/update
 | 点了“立即重启更新”，应用没退出 | 用户在退出确认框里点了取消；或者安装程序启动失败（会有通知） | 再点一次；看通知里的错误 |
 | Windows：应用退出了，但没装、也没重新打开 | 用户拒绝了 UAC；Setup 出错了 | 重新打开应用，会再次提示；可以手动运行 `updates\<版本>\` 下的 setup 看具体报错 |
 | macOS：应用退出了，但没有重新打开 | 看 `install.log`：等了 120 秒应用仍未退出，或者复制、改名失败（失败时会还原旧版） | 按日志处理；旧版本还在原位置 |
-| macOS：`/Applications` 里残留 `.baocode-old` / `.baocode-new` | 替换过程中被中断 | 确认 `BaoCode.app` 能正常打开后，手动删掉残留 |
+| macOS：`/Applications` 里残留 `.baocode-old` / `.baocode-new` | 替换过程中被中断 | 确认 `Morning Mist.app` 能正常打开后，手动删掉残留 |
 | 每次启动都重新下载 | `updates/` 不可写；或者下载完的文件校验不过 | 看日志 |
 
 ---
@@ -515,8 +504,8 @@ flutter test test/update
 
 ### macOS
 
-- [ ] 放在 `/Applications` 里的 release 构建：更新后几秒内新版本自动打开，`/Applications/BaoCode.app` 已经是新版本，没有残留的 `.baocode-*`
-- [ ] `install.log` 有记录；`xattr /Applications/BaoCode.app` 里没有 `com.apple.quarantine`
+- [ ] 放在 `/Applications` 里的 release 构建：更新后几秒内新版本自动打开，`/Applications/Morning Mist.app` 已经是新版本，没有残留的 `.baocode-*`
+- [ ] `install.log` 有记录；`xattr "/Applications/Morning Mist.app"` 里没有 `com.apple.quarantine`
 - [ ] 有未保存的文件或运行中的 agent 时，先弹确认框；取消后什么都不发生
 - [ ] 从 dmg 里直接运行，以及放在只读目录里时，提示去下载页
 - [ ] zip 里的 bundle id 不对时拒绝安装
@@ -526,9 +515,9 @@ flutter test test/update
 
 ## 12. 修改指南
 
-**改检查的时间**：改 `UpdateService` 的 `firstCheckDelay`（30 秒）和 `checkInterval`（6 小时）这两个默认值，然后同步改 `update_service_test.dart` 里对应的时间。
+**改检查的时间**：改 `UpdateService` 的 `firstCheckDelay`（10 秒）和 `checkInterval`（5 分钟）这两个默认值，然后同步改 `update_service_test.dart` 里对应的时间。
 
-**改域名或下载页**：域名在 `UpdateUrlPolicy.domain`；清单地址在 `defaultManifestUrl`；下载页在 `ManualUpdateRequired.downloadPage`；发布工具里的链接前缀在 `tool/release_manifest.dart` 的 `_releasesBase`，远程服务端的在 `tool/build_remote_server.dart` 的 `_downloadsBase`；CI 的上传地址在 `.github/workflows/release.yml`；`updates_page` 和文案里也提到了 baocode.dev。改完后跑 `flutter test test/update`。
+**改更新仓库或下载页**：仓库地址、清单地址和下载页在 `lib/update/update_manifest.dart`；允许的资产路径由 `UpdateUrlPolicy` 校验；发布工具的资产地址由 `tool/release_manifest.dart` 生成；CI 在 `.github/workflows/build-release.yml` 附加清单。远程服务端仍由 `tool/build_remote_server.dart` 上传到 `dl.baocode.dev`。改完后跑 `flutter test test/update`。
 
 **加一个平台**（比如 `windows-arm64`、Linux）：
 
@@ -568,4 +557,4 @@ flutter test test/update
 - **没有增量更新**：每次都下载完整的安装包。
 - **拒绝 UAC 之后**：应用已经退出，需要用户手动重新打开（下次启动会再提示更新）。
 - **macOS 的 /Applications 归 root 所有时**：当前用户能改名 .app 但删不掉旧版本的内容时，`.baocode-old` 可能会残留。
-- **服务端还没准备**：R2 存储桶、`dl.baocode.dev`、GitHub 的 `release` 环境，见 [release.md 第 7 节](release.md#7-第一次发布前的准备)。
+- **GitHub Release 还没准备**：确认仓库启用了 Releases，并在 GitHub `release` 环境配置 `UPDATE_SIGNING_KEY`；远程内核的 `dl.baocode.dev` 是另一条独立服务。

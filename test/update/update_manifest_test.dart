@@ -7,7 +7,9 @@ import 'package:baocode/update/version.dart';
 final _signature = base64.encode(List.filled(64, 7));
 
 Map<String, Object?> _asset({
-  String url = 'https://baocode.dev/releases/1.2.0/BaoCode-1.2.0-setup.exe',
+  String url =
+      'https://github.com/zt15242/Morning-mist/releases/download/v1.2.0/'
+      'Morning-Mist-1.2.0-setup.exe',
   Object? size = 1000,
   Object? sha256,
   Object? signature,
@@ -33,7 +35,9 @@ String _manifest({
       {
         'windows-x64': _asset(),
         'macos-arm64': _asset(
-          url: 'https://baocode.dev/releases/1.2.0/BaoCode-1.2.0-mac.zip',
+          url:
+              'https://github.com/zt15242/Morning-mist/releases/download/v1.2.0/'
+              'Morning-Mist-1.2.0-mac-arm64.zip',
         ),
       },
 });
@@ -60,32 +64,35 @@ void main() {
       final asset = manifest.assetFor('windows-x64')!;
       expect(asset.size, 1000);
       expect(asset.sha256, 'a' * 64);
-      expect(asset.fileName, 'BaoCode-1.2.0-setup.exe');
+      expect(asset.fileName, 'Morning-Mist-1.2.0-setup.exe');
       expect(manifest.platforms, containsAll(['windows-x64', 'macos-arm64']));
     });
 
     test('names a download by its path, whatever its query', () {
-      // tool/release_manifest.dart ends links in the file's hash, so a
-      // release redone is not served from the CDN's cache of the old one;
-      // and adds `downloads`, for the site, which the app has no use for.
+      // The signature is over the file contents, not its URL query. The
+      // extra downloads metadata is ignored by the app.
       final text = jsonEncode({
         ...jsonDecode(
           _manifest(
             platforms: {
               'windows-x64': _asset(
                 url:
-                    'https://dl.baocode.dev/releases/1.2.0/'
-                    'BaoCode-1.2.0-setup.exe?sha256=0123456789abcdef',
+                    'https://github.com/zt15242/Morning-mist/releases/download/'
+                    'v1.2.0/Morning-Mist-1.2.0-setup.exe'
+                    '?sha256=0123456789abcdef',
               ),
             },
           ),
         ),
         'downloads': {
-          'macos': {'url': 'https://dl.baocode.dev/x.dmg', 'size': 1},
+          'macos': {
+            'url': 'https://github.com/zt15242/Morning-mist/releases/latest',
+            'size': 1,
+          },
         },
       });
       final asset = UpdateManifest.parse(text).assetFor('windows-x64')!;
-      expect(asset.fileName, 'BaoCode-1.2.0-setup.exe');
+      expect(asset.fileName, 'Morning-Mist-1.2.0-setup.exe');
       expect(asset.url.query, 'sha256=0123456789abcdef');
     });
 
@@ -131,7 +138,9 @@ void main() {
           platforms: {
             'windows-x64': _asset(size: null),
             'macos-arm64': _asset(
-              url: 'https://baocode.dev/releases/1.2.0/BaoCode-1.2.0-mac.zip',
+              url:
+                  'https://github.com/zt15242/Morning-mist/releases/download/v1.2.0/'
+                  'Morning-Mist-1.2.0-mac-arm64.zip',
             ),
           },
         ),
@@ -160,20 +169,22 @@ void main() {
       }
     });
 
-    test('downloads have to be https links on baocode.dev', () {
+    test('downloads have to be assets from this GitHub repository', () {
       UpdateManifest at(String url) => UpdateManifest.parse(
         _manifest(platforms: {'windows-x64': _asset(url: url)}),
       );
       for (final url in [
-        'http://baocode.dev/releases/x.exe',
+        'http://github.com/zt15242/Morning-mist/releases/download/v1.2.0/Morning-Mist-1.2.0-setup.exe',
         'https://evil.example/x.exe',
-        'https://baocode.dev.evil.example/x.exe',
-        'https://notbaocode.dev/x.exe',
-        'https://baocode.dev:8443/x.exe',
-        'https://user@baocode.dev/x.exe',
-        'ftp://baocode.dev/x.exe',
+        'https://github.com.evil.example/zt15242/Morning-mist/releases/download/v1.2.0/Morning-Mist-1.2.0-setup.exe',
+        'https://github.com/other/Morning-mist/releases/download/v1.2.0/Morning-Mist-1.2.0-setup.exe',
+        'https://github.com/zt15242/other/releases/download/v1.2.0/Morning-Mist-1.2.0-setup.exe',
+        'https://github.com/zt15242/Morning-mist/releases/latest/download/Morning-Mist-1.2.0-setup.exe',
+        'https://github.com:8443/zt15242/Morning-mist/releases/download/v1.2.0/Morning-Mist-1.2.0-setup.exe',
+        'https://user@github.com/zt15242/Morning-mist/releases/download/v1.2.0/Morning-Mist-1.2.0-setup.exe',
+        'ftp://github.com/zt15242/Morning-mist/releases/download/v1.2.0/Morning-Mist-1.2.0-setup.exe',
         'file:///tmp/x.exe',
-        '/releases/x.exe',
+        '/releases/download/v1.2.0/Morning-Mist-1.2.0-setup.exe',
       ]) {
         expect(
           () => at(url).assetFor('windows-x64'),
@@ -182,9 +193,8 @@ void main() {
         );
       }
       for (final url in [
-        'https://baocode.dev/releases/x.exe',
-        'https://BAOCODE.dev/releases/x.exe',
-        'https://cdn.baocode.dev/x.exe',
+        'https://github.com/zt15242/Morning-mist/releases/download/v1.2.0/Morning-Mist-1.2.0-setup.exe',
+        'https://GITHUB.com/zt15242/Morning-mist/releases/download/v1.2.0/Morning-Mist-1.2.0-mac-arm64.zip',
       ]) {
         expect(at(url).assetFor('windows-x64'), isNotNull, reason: url);
       }
@@ -203,7 +213,10 @@ void main() {
         isNotNull,
       );
       expect(
-        at('https://baocode.dev/x.exe').assetFor('windows-x64'),
+        at(
+          'https://github.com/zt15242/Morning-mist/releases/download/'
+          'v1.2.0/Morning-Mist-1.2.0-setup.exe',
+        ).assetFor('windows-x64'),
         isNotNull,
       );
       expect(

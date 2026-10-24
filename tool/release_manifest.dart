@@ -1,15 +1,16 @@
 // Signs a release's installers and writes the manifest the app reads to
-// update itself (https://dl.baocode.dev/releases/latest.json; see
+// update itself (https://github.com/zt15242/Morning-mist/releases/latest/
+// download/latest.json; see
 // docs/auto-update.md). Run from anywhere in the repository:
 //
 //   dart run tool/release_manifest.dart \
-//     --windows build/installers/BaoCode-1.2.0-setup.exe \
-//     --macos-arm64 build/installers/BaoCode-1.2.0-mac-arm64.zip \
-//     --macos-x64 build/installers/BaoCode-1.2.0-mac-x64.zip \
-//     [--dmg-arm64 build/installers/BaoCode-1.2.0-arm64.dmg] \
-//     [--dmg-x64 build/installers/BaoCode-1.2.0-x64.dmg] \
-//     [--linux-x64 build/installers/BaoCode-1.2.0-linux-amd64.deb] \
-//     [--linux-arm64 build/installers/BaoCode-1.2.0-linux-arm64.deb] \
+//     --windows build/installers/Morning-Mist-1.2.0-setup.exe \
+//     --macos-arm64 build/installers/Morning-Mist-1.2.0-mac-arm64.zip \
+//     --macos-x64 build/installers/Morning-Mist-1.2.0-mac-x64.zip \
+//     [--dmg-arm64 build/installers/Morning-Mist-1.2.0-arm64.dmg] \
+//     [--dmg-x64 build/installers/Morning-Mist-1.2.0-x64.dmg] \
+//     [--linux-x64 build/installers/Morning-Mist-1.2.0-linux-amd64.deb] \
+//     [--linux-arm64 build/installers/Morning-Mist-1.2.0-linux-arm64.deb] \
 //     [--notes-en <text or file>] [--notes-zh <text or file>] \
 //     [--minimum-version 1.0.0] [--version 1.2.0+12] \
 //     [--manifest build/installers/latest.json]
@@ -32,10 +33,8 @@
 // the same version keeps the other platforms' entries, so the Windows and the
 // macOS installers can be signed on their own machines one after the other.
 //
-// Each link ends in `?sha256=<the file's first 16 hex digits>`: a file
-// published again under the same name (a release redone) is another address
-// to the CDN, which keeps downloads for a year, so no one is served the old
-// one. The app names a download by the path alone.
+// Each link ends in `?sha256=<the file's first 16 hex digits>` and points to
+// the matching GitHub Release tag. The app names a download by its path.
 //
 // Besides what the app reads, `downloads` gives the download page
 // (site/site.js) what it offers: the disk images (--dmg-arm64, --dmg-x64),
@@ -49,12 +48,13 @@ import 'package:baocode/update/update_signature.dart';
 import 'package:baocode/update/version.dart';
 import 'package:crypto/crypto.dart' as crypto;
 
-/// Where the downloads go: `<base>/<1.2.0>/<file>`.
-const _releasesBase = 'https://dl.baocode.dev/releases';
+/// GitHub Release assets, under the version's `v` tag.
+const _releasesBase = '$updateRepositoryUrl/releases/download';
 
 /// [name]'s link, for the file whose SHA-256 is [sha256].
 Uri _link(AppVersion version, String name, String sha256) => Uri.parse(
-  '$_releasesBase/${version.marketing}/$name?sha256=${sha256.substring(0, 16)}',
+  '$_releasesBase/v${version.marketing}/$name'
+  '?sha256=${sha256.substring(0, 16)}',
 );
 
 /// The Macs built for, each its own download (tool/build_macos.dart), and

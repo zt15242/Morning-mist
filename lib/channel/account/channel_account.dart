@@ -230,6 +230,15 @@ class ChannelAccount extends ChangeNotifier {
   /// The upstream the key in use is kept as, if it is.
   ModelProvider? get provider => providers.provider(providerId);
 
+  /// Whether the saved key and upstream disagree about the API protocol.
+  bool get needsProviderSync {
+    final key = _inUse;
+    if (!signedIn || key == null) return false;
+    final currentProvider = provider;
+    return currentProvider == null ||
+        currentProvider.protocol != _adapter.protocolFor(key);
+  }
+
   /// What was kept: the session and whose it is. Once.
   Future<void> load() async {
     if (_loaded) return;
@@ -343,7 +352,12 @@ class ChannelAccount extends ChangeNotifier {
     if (!signedIn) return;
     final keys = _keys ?? const [];
     final kept = keys.where((key) => key.id == _inUse?.id).firstOrNull;
-    if (kept != null && provider != null) return;
+    final currentProvider = provider;
+    if (kept != null &&
+        currentProvider != null &&
+        currentProvider.protocol == _adapter.protocolFor(kept)) {
+      return;
+    }
     final key = kept ?? keys.firstOrNull ?? await create(keyName);
     if (key != null) await use(key);
   }

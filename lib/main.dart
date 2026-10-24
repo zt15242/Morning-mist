@@ -104,6 +104,10 @@ import 'theme/pixel_snapped_text_scaler.dart';
 import 'theme/ui_zoom.dart';
 import 'theme/workbench_theme.dart';
 import 'update/update_controller.dart';
+import 'update/update_platform.dart';
+import 'update/update_service.dart';
+import 'update/update_settings.dart';
+import 'update/update_store.dart';
 import 'update/version.dart';
 import 'window/app_windows.dart';
 import 'window/code_args.dart';
@@ -432,7 +436,7 @@ Future<void> main(List<String> arguments) async {
       catalog: catalog,
       sync: sync,
       installs: VsCodeInstalls.current(),
-      updates: _startUpdates(files),
+      updates: _startUpdates(files, windows),
       diagnostics: DiagnosticsUploader.platform(),
       workspace: workspace,
       claudeStatus: localClaudeStatus,
@@ -494,10 +498,34 @@ Future<void> main(List<String> arguments) async {
 }
 
 /// The app's updates (lib/update/): looked for as settings.json's
-/// `update.mode` says, from baocode.dev, installed as the app quits. None
-/// where the build does not update itself.
-UpdateController? _startUpdates(SettingsFiles files) {
-  return null;
+/// `update.mode` says, from GitHub Releases, installed as the app quits.
+UpdateController? _startUpdates(SettingsFiles files, AppWindows windows) {
+  final updates = platformUpdates(
+    updatesDirectory: DataDirectory.current.updatesDir,
+  );
+  if (updates == null) return null;
+  final service = UpdateService(
+    current: currentAppVersion,
+    platform: updates.platform,
+    backend: updates.backend,
+    installer: updates.installer,
+    manifestUrl: updates.manifestUrl,
+    mode: () => UpdateMode.parse(files.settings[UpdateMode.settingKey]),
+    settingsChanges: files.settings,
+    store: GlobalUpdateStore(files.storage),
+  )..start();
+  return UpdateController(
+    service: service,
+    quit: () async {
+      windows.quitRequested();
+    },
+    openUrl: (url) async {
+      await openExternal('$url');
+    },
+    openFile: (path) async {
+      await openExternal(path);
+    },
+  );
 }
 
 /// The channel build's first start (lib/channel/): to set up while it is

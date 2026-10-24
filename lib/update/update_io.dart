@@ -20,7 +20,7 @@ class IoUpdateBackend implements UpdateBackend {
   IoUpdateBackend({
     required this.directory,
     HttpClient Function()? client,
-    this.userAgent = 'BaoCode',
+    this.userAgent = 'Morning-Mist',
     this.publicKey = updatePublicKey,
     this.timeout = const Duration(seconds: 30),
   }) : _client = client ?? HttpClient.new;

@@ -19,7 +19,10 @@ String manifestOf(
   'platforms': {
     for (final platform in platforms)
       platform: {
-        'url': 'https://baocode.dev/releases/$version/$platform.bin',
+        'url':
+            'https://github.com/zt15242/Morning-mist/releases/download/'
+            'v${AppVersion.parse(version).marketing}/'
+            'Morning-Mist-${AppVersion.parse(version).marketing}-$platform.zip',
         'size': 100,
         'sha256': 'a' * 64,
         'signature': base64.encode(List.filled(64, 1)),

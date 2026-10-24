@@ -7019,7 +7019,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get updatesSettingsDescription =>
-      'Morning Mist looks for new versions on api.javaxiaowu.top.';
+      'Morning Mist checks GitHub Releases for new versions.';
 
   @override
   String get updateCurrentVersion => 'Current Version';
@@ -7095,11 +7095,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get updateUnsupported =>
-      'This build of Morning Mist doesn\'t update itself.';
+      'This is a debug build. Automatic updates are available in installed release builds.';
 
   @override
   String updateManual(String reason) {
-    return 'Morning Mist can\'t update itself here ($reason). Download the new version from api.javaxiaowu.top.';
+    return 'Morning Mist can\'t update itself here ($reason). Download the new version from GitHub Releases.';
   }
 
   @override
@@ -7107,7 +7107,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String updateUnfinished(String version, String current) {
-    return 'Morning Mist $version wasn\'t installed: this is still $current. Try again from Settings > Updates, or download it from api.javaxiaowu.top.';
+    return 'Morning Mist $version wasn\'t installed: this is still $current. Try again from Settings > Updates, or download it from GitHub Releases.';
   }
 
   @override

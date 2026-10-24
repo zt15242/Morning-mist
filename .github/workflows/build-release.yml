@@ -9,7 +9,7 @@ on:
       create_release:
         description: 'Publish as GitHub Release?'
         type: boolean
-        default: true
+        default: false
 
 permissions:
   contents: write
@@ -131,9 +131,13 @@ jobs:
   release:
     name: Create GitHub Release
     needs: [macos, windows]
-    if: startsWith(github.ref, 'refs/tags/v') || github.event.inputs.create_release == true
+    if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && inputs.create_release)
     runs-on: ubuntu-latest
+    environment: release
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
@@ -145,13 +149,97 @@ jobs:
           find artifacts -type f \( -name "*.dmg" -o -name "*.exe" -o -name "*.zip" \) -exec cp {} release-assets/ \;
           ls -la release-assets/
 
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.47.7
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Sign update assets and generate manifest
+        env:
+          UPDATE_SIGNING_KEY: ${{ secrets.UPDATE_SIGNING_KEY }}
+        run: |
+          set -euo pipefail
+          test -n "$UPDATE_SIGNING_KEY" || {
+            echo "The release environment must provide UPDATE_SIGNING_KEY." >&2
+            exit 1
+          }
+          key_file="$RUNNER_TEMP/update-signing.key"
+          umask 077
+          printf '%s' "$UPDATE_SIGNING_KEY" > "$key_file"
+          export BAOCODE_UPDATE_SIGNING_KEY="$key_file"
+
+          find_one() {
+            local pattern="$1"
+            local -a matches
+            mapfile -t matches < <(find artifacts -type f -name "$pattern" -print)
+            if [[ "${#matches[@]}" -ne 1 ]]; then
+              echo "Expected one artifact matching $pattern, found ${#matches[@]}" >&2
+              exit 1
+            fi
+            printf '%s' "${matches[0]}"
+          }
+
+          version=$(sed -n 's/^version: *//p' pubspec.yaml)
+          marketing_version=${version%%+*}
+          windows=$(find_one 'Morning-Mist-*-setup.exe')
+          mac_arm64=$(find_one 'Morning-Mist-*-mac-arm64.zip')
+          mac_x64=$(find_one 'Morning-Mist-*-mac-x64.zip')
+          dmg_arm64=$(find_one 'Morning-Mist-*-arm64.dmg')
+          dmg_x64=$(find_one 'Morning-Mist-*-x64.dmg')
+          args=(
+            --windows "$windows"
+            --macos-arm64 "$mac_arm64"
+            --macos-x64 "$mac_x64"
+            --dmg-arm64 "$dmg_arm64"
+            --dmg-x64 "$dmg_x64"
+          )
+          if [[ -f "release-notes/$marketing_version.en.md" ]]; then
+            args+=(--notes-en "release-notes/$marketing_version.en.md")
+          fi
+          if [[ -f "release-notes/$marketing_version.zh.md" ]]; then
+            args+=(--notes-zh "release-notes/$marketing_version.zh.md")
+          fi
+          dart run tool/release_manifest.dart "${args[@]}"
+          cp build/installers/latest.json release-assets/latest.json
+
+      - name: Resolve release tag
+        id: release-tag
+        run: |
+          version=$(sed -n 's/^version: *//p' pubspec.yaml)
+          version=${version%%+*}
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            tag="$GITHUB_REF_NAME"
+            if [[ "$tag" != "v$version" ]]; then
+              echo "Tag $tag does not match pubspec version v$version" >&2
+              exit 1
+            fi
+          else
+            tag="v$version"
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
       - name: Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref_name || 'v1.5.0' }}
-          name: Morning Mist ${{ github.ref_name || 'v1.5.0' }}
+          tag_name: ${{ steps.release-tag.outputs.tag }}
+          name: Morning Mist ${{ steps.release-tag.outputs.tag }}
           draft: false
           prerelease: false
-          files: release-assets/*
+          overwrite_files: true
+          files: |
+            release-assets/*.dmg
+            release-assets/*.exe
+            release-assets/*.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish update manifest last
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ steps.release-tag.outputs.tag }}
+        run: gh release upload "$RELEASE_TAG" release-assets/latest.json --clobber

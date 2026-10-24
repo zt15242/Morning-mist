@@ -70,7 +70,8 @@ void main() {
     test("a wrong entry for this platform is a failed check", () async {
       final backend = FakeBackend(
         manifestOf('1.2.0').replaceFirst(
-          'https://baocode.dev/releases/1.2.0/windows-x64.bin',
+          'https://github.com/zt15242/Morning-mist/releases/download/'
+              'v1.2.0/Morning-Mist-1.2.0-windows-x64.zip',
           'https://evil.example/windows-x64.bin',
         ),
       );
@@ -318,7 +319,9 @@ void main() {
       await expectLater(service.prepare(), throwsStateError);
       await service.check(manual: true);
       final update = await service.prepare();
-      expect(installer.prepared, ['/updates/1.2.0/windows-x64.bin']);
+      expect(installer.prepared, [
+        '/updates/1.2.0/Morning-Mist-1.2.0-windows-x64.zip',
+      ]);
 
       // A quit cancelled installs nothing.
       service.arm(update);

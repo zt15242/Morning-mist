@@ -4925,7 +4925,7 @@
   "modelsAuxiliaryBuiltin": "Claude Code Haiku (this machine's setup)",
   "settingsSectionUpdates": "Updates",
   "updatesSettingsTitle": "Updates",
-  "updatesSettingsDescription": "Morning Mist looks for new versions on api.javaxiaowu.top.",
+  "updatesSettingsDescription": "Morning Mist checks GitHub Releases for new versions.",
   "updateCurrentVersion": "Current Version",
   "updateLastChecked": "Last checked {time}",
   "@updateLastChecked": {
@@ -5006,8 +5006,8 @@
     }
   },
   "updateDisabled": "Updates are turned off (update.mode is \"none\").",
-  "updateUnsupported": "This build of Morning Mist doesn't update itself.",
-  "updateManual": "Morning Mist can't update itself here ({reason}). Download the new version from api.javaxiaowu.top.",
+  "updateUnsupported": "This is a debug build. Automatic updates are available in installed release builds.",
+  "updateManual": "Morning Mist can't update itself here ({reason}). Download the new version from GitHub Releases.",
   "@updateManual": {
     "placeholders": {
       "reason": {
@@ -5016,7 +5016,7 @@
     }
   },
   "updateOpenDownloadPage": "Open Download Page",
-  "updateUnfinished": "Morning Mist {version} wasn't installed: this is still {current}. Try again from Settings > Updates, or download it from api.javaxiaowu.top.",
+  "updateUnfinished": "Morning Mist {version} wasn't installed: this is still {current}. Try again from Settings > Updates, or download it from GitHub Releases.",
   "@updateUnfinished": {
     "placeholders": {
       "version": {

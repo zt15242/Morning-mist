@@ -2,7 +2,8 @@
 // (English, baocode.dev/changelog) and site/zh/changelog.html (Chinese,
 // baocode.dev/zh/changelog). Every version with notes in
 // release-notes/<x.y.z>.<en|zh>.md, newest first, each at #v<x.y.z>, which
-// the app's update notification links to (UpdateController.changelogUrl).
+// the app's update notification previously linked to; release notes are now
+// attached to the corresponding GitHub Release.
 // A version without notes in a language shows its English ones there, as
 // the app does (UpdateManifest.notesFor). Run from anywhere in the
 // repository after writing a release's notes, and commit the pages with

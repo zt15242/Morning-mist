@@ -4,16 +4,22 @@ import 'dart:convert';
 
 import 'version.dart';
 
-/// Where the app looks for its next version: the release manifest
-/// dl.baocode.dev serves (docs/auto-update.md has its format).
-const defaultManifestUrl = 'https://dl.baocode.dev/releases/latest.json';
+/// The public repository hosting Morning Mist's signed releases.
+const updateRepositoryUrl = 'https://github.com/zt15242/Morning-mist';
+
+/// Where the app looks for its next version.
+const defaultManifestUrl =
+    '$updateRepositoryUrl/releases/latest/download/latest.json';
+
+/// Where users can download an update the app cannot install itself.
+const updateDownloadPageUrl = '$updateRepositoryUrl/releases/latest';
 
 /// The environment variable that points the app at another manifest, to
 /// try a release before it is published (a local server's, say).
 const manifestUrlVariable = 'BAOCODE_UPDATE_URL';
 
 /// A manifest that cannot be used: not JSON, a field missing or wrong, a
-/// download not on baocode.dev.
+/// download not attached to the Morning Mist GitHub repository.
 class UpdateManifestException implements Exception {
   const UpdateManifestException(this.message);
 
@@ -23,8 +29,8 @@ class UpdateManifestException implements Exception {
   String toString() => 'Invalid update manifest: $message';
 }
 
-/// Which download links a manifest may give: https on baocode.dev (or a
-/// subdomain of it), and [extraOrigins] besides — the origin of a manifest
+/// Which download links a manifest may give: signed release assets from
+/// Morning Mist's GitHub repository, and [extraOrigins] besides — the origin of a manifest
 /// [manifestUrlVariable] points at, so a release can be tried from where it
 /// is served before it is published.
 class UpdateUrlPolicy {
@@ -38,7 +44,9 @@ class UpdateUrlPolicy {
       ? const UpdateUrlPolicy()
       : UpdateUrlPolicy(extraOrigins: {manifest.origin});
 
-  static const domain = 'baocode.dev';
+  static const repositoryHost = 'github.com';
+  static const repositoryOwner = 'zt15242';
+  static const repositoryName = 'Morning-mist';
 
   final Set<String> extraOrigins;
 
@@ -49,11 +57,27 @@ class UpdateUrlPolicy {
         extraOrigins.contains(url.origin)) {
       return true;
     }
-    final host = url.host.toLowerCase();
-    return url.scheme == 'https' &&
-        !url.hasPort &&
-        url.userInfo.isEmpty &&
-        (host == domain || host.endsWith('.$domain'));
+    final segments = url.pathSegments;
+    if (url.scheme != 'https' ||
+        url.host.toLowerCase() != repositoryHost ||
+        url.hasPort ||
+        url.userInfo.isNotEmpty ||
+        segments.length != 6 ||
+        segments[0] != repositoryOwner ||
+        segments[1] != repositoryName ||
+        segments[2] != 'releases' ||
+        segments[3] != 'download') {
+      return false;
+    }
+    final version = AppVersion.tryParse(segments[4]);
+    if (version == null || segments[4] != 'v${version.marketing}') {
+      return false;
+    }
+    final name = segments[5];
+    return name.startsWith('Morning-Mist-${version.marketing}-') &&
+        (name.endsWith('.exe') ||
+            name.endsWith('.zip') ||
+            name.endsWith('.deb'));
   }
 }
 
@@ -220,7 +244,7 @@ class UpdateManifest {
     if (url == null) throw const UpdateManifestException('"url" is missing');
     if (!policy.allows(url)) {
       throw UpdateManifestException(
-        '"$url" is not an https link on ${UpdateUrlPolicy.domain}',
+        '"$url" is not an https release asset from $updateRepositoryUrl',
       );
     }
     final size = json['size'];

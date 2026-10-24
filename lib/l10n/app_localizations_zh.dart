@@ -6591,7 +6591,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get updatesSettingsDescription =>
-      'Morning Mist 会在 api.javaxiaowu.top 上检查新版本。';
+      'Morning Mist 会从 GitHub Releases 检查新版本。';
 
   @override
   String get updateCurrentVersion => '当前版本';
@@ -6664,11 +6664,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get updateDisabled => '更新已关闭（update.mode 为 \"none\"）。';
 
   @override
-  String get updateUnsupported => '此版本的 Morning Mist 不支持自动更新。';
+  String get updateUnsupported => '当前是调试构建，自动更新仅在安装包版本中可用。';
 
   @override
   String updateManual(String reason) {
-    return 'Morning Mist 无法在当前位置自动更新（$reason），请从 api.javaxiaowu.top 下载新版本。';
+    return 'Morning Mist 无法在当前位置自动更新（$reason），请从 GitHub Releases 下载新版本。';
   }
 
   @override
@@ -6676,7 +6676,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String updateUnfinished(String version, String current) {
-    return 'Morning Mist $version 没有装上，当前仍是 $current。可以在“设置 → 更新”里重试，或者从 api.javaxiaowu.top 下载安装。';
+    return 'Morning Mist $version 没有装上，当前仍是 $current。可以在“设置 → 更新”里重试，或者从 GitHub Releases 下载安装。';
   }
 
   @override
