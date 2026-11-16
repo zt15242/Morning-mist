@@ -30,15 +30,42 @@ class Sub2ApiAdapter extends AccountAdapter {
   Uri _url(String path, [Map<String, String>? query]) =>
       site.url.replace(path: '/api/v1$path', queryParameters: query);
 
+  /// Signs in with the site's API. Returns a temporary token when a second
+  /// factor is required; otherwise keeps the refresh credential.
+  Future<String?> signInWithPassword({
+    required String email,
+    required String password,
+    String? temporaryToken,
+    String? code,
+  }) async {
+    final data = _data(
+      await send(
+        'POST',
+        _url(temporaryToken == null ? '/auth/login' : '/auth/login/2fa'),
+        json: temporaryToken == null
+            ? {'email': email, 'password': password}
+            : {'temp_token': temporaryToken, 'totp_code': code},
+      ),
+    );
+    if (data case {'requires_2fa': true, 'temp_token': final String token}
+        when token.isNotEmpty) {
+      return token;
+    }
+    if (data case {'refresh_token': final String refresh}
+        when refresh.isNotEmpty) {
+      renewed(refresh);
+      return null;
+    }
+    throw const AccountError('The server did not return a refresh token.');
+  }
+
   @override
   Future<String?> signedIn(LoginWindow window) async {
     final token = await window.evaluate(
       "localStorage.getItem('refresh_token')",
     );
     if (token is String && token.isNotEmpty) return token;
-    final auth = await window.evaluate(
-      "localStorage.getItem('auth_token')",
-    );
+    final auth = await window.evaluate("localStorage.getItem('auth_token')");
     if (auth is String && auth.isNotEmpty) return auth;
     return null;
   }
@@ -176,7 +203,10 @@ class Sub2ApiAdapter extends AccountAdapter {
     } on Object {
       // Fallback to cache if available
     }
-    if (_rawKeys[key.id] case final cached? when cached.isNotEmpty && !cached.contains('…') && !cached.contains('***')) {
+    if (_rawKeys[key.id] case final cached?
+        when cached.isNotEmpty &&
+            !cached.contains('…') &&
+            !cached.contains('***')) {
       return cached;
     }
     throw const AccountError('no key');

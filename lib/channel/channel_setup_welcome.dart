@@ -16,6 +16,7 @@ import '../theme/codicons.dart';
 import '../theme/workbench_theme.dart' show themeColors;
 import '../tips/welcome_dialog.dart';
 import 'account/account_api.dart' show AccountBlocked;
+import 'account/native_login.dart';
 import 'channel_gate.dart';
 import 'channel_setup.dart';
 
@@ -75,6 +76,7 @@ class _ChannelSetupWelcomeState extends State<ChannelSetupWelcome>
   bool _pasting = false;
   ChannelLinkResult? _linkResult;
   bool _closing = false;
+  bool _loginDialogOpen = false;
 
   ChannelGate get _gate => widget.gate;
 
@@ -141,7 +143,7 @@ class _ChannelSetupWelcomeState extends State<ChannelSetupWelcome>
       unawaited(_gate.find(_language));
     }
     if (_welcoming && _hello.isDismissed) unawaited(_hello.forward());
-    if (_gate.ready && !_closing) {
+    if (_gate.ready && !_closing && !_loginDialogOpen) {
       _closing = true;
       Navigator.pop(context);
       _setup?.start();
@@ -177,13 +179,25 @@ class _ChannelSetupWelcomeState extends State<ChannelSetupWelcome>
 
   /// The login window on the channel's account site; or, signed in
   /// already, the account read and a key put to use once more.
-  void _signIn() {
+  void _signIn() async {
     final account = _gate.account;
     if (account == null || account.signingIn || account.busy) return;
     if (account.signedIn) {
       unawaited(account.settle());
     } else {
-      unawaited(account.signIn(title: _gate.channel?.info.name ?? 'Morning Mist'));
+      if (account.site.type == ChannelAccountType.sub2api) {
+        _loginDialogOpen = true;
+        try {
+          await showAccountLogin(context, account);
+        } finally {
+          _loginDialogOpen = false;
+          if (mounted) _changed();
+        }
+      } else {
+        unawaited(
+          account.signIn(title: _gate.channel?.info.name ?? 'Morning Mist'),
+        );
+      }
     }
   }
 

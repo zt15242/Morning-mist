@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 
 import '../../channel/account/account_api.dart';
 import '../../channel/account/channel_account.dart';
+import '../../channel/account/native_login.dart';
 import '../../channel/channel_gate.dart';
+import '../../channel/channel_setup.dart' show ChannelAccountType;
 import '../../ide/ide_button.dart';
 import '../../ide/ide_dialog.dart';
 import '../../ide/ide_input.dart';
@@ -12,7 +14,6 @@ import '../../ide/ide_menu.dart';
 import '../../l10n/l10n.dart';
 import '../../theme/app_theme.dart';
 import '../../theme/codicons.dart';
-import '../../workspace/editor_launcher.dart' show openExternal;
 import 'model_dialogs.dart' show ModelDialogFrame;
 import 'settings_dropdown.dart';
 import 'settings_widgets.dart';
@@ -124,7 +125,11 @@ class _AccountView extends StatelessWidget {
                       spinning: account.signingIn,
                       onPressed: account.signingIn
                           ? null
-                          : () => unawaited(account.signIn(title: channel)),
+                          : () => unawaited(
+                              account.site.type == ChannelAccountType.sub2api
+                                  ? showAccountLogin(context, account)
+                                  : account.signIn(title: channel).then((_) {}),
+                            ),
                     ),
                   )
                 else
@@ -134,16 +139,6 @@ class _AccountView extends StatelessWidget {
                     onRefresh: () => unawaited(account.refresh()),
                     onSignOut: () => unawaited(_signOut(context)),
                   ),
-                SettingsRow(
-                  label: account.site.url.host,
-                  trailing: IdeButton(
-                    label: l10n.channelAccountOpenSite,
-                    icon: Codicons.linkExternal,
-                    secondary: true,
-                    onPressed: () =>
-                        unawaited(openExternal('${account.site.url}')),
-                  ),
-                ),
               ],
             ),
             if (error != null)

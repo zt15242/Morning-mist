@@ -305,6 +305,39 @@ class ChannelAccount extends ChangeNotifier {
     _ => null,
   };
 
+  /// Authenticates with the native form. A non-null result asks for 2FA.
+  Future<String?> signInWithPassword({
+    required String email,
+    required String password,
+    String? temporaryToken,
+    String? code,
+  }) async {
+    if (_signingIn) throw const AccountError('Sign-in already in progress');
+    final adapter = _adapter;
+    if (adapter is! Sub2ApiAdapter) {
+      throw const AccountError('Password sign-in is unavailable');
+    }
+    _signingIn = true;
+    _error = null;
+    notifyListeners();
+    try {
+      final pending = await adapter.signInWithPassword(
+        email: email,
+        password: password,
+        temporaryToken: temporaryToken,
+        code: code,
+      );
+      if (pending == null) {
+        _save();
+        await settle();
+      }
+      return pending;
+    } finally {
+      _signingIn = false;
+      notifyListeners();
+    }
+  }
+
   /// Opens the login window on the site and waits for the user to sign in
   /// there (or close it): whether they did. Once signed in, their account
   /// is read, and a key put to use: the one in use before, else their

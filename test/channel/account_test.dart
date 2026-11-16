@@ -149,6 +149,49 @@ void main() {
       expect(await adapter.signedIn(window), 'rt0');
     });
 
+    test('signs in with email and keeps the refresh credential', () async {
+      site.routes['POST /api/v1/auth/login'] = (_) =>
+          sub({'access_token': 'access', 'refresh_token': 'native-refresh'});
+      final pending = await adapter.signInWithPassword(
+        email: 'person@example.com',
+        password: 'password',
+      );
+      expect(pending, isNull);
+      expect(site.sent.single.json, {
+        'email': 'person@example.com',
+        'password': 'password',
+      });
+      expect(adapter.credential, 'native-refresh');
+    });
+
+    test('completes a two-factor challenge before keeping a session', () async {
+      adapter.credential = null;
+      site.routes['POST /api/v1/auth/login'] = (_) =>
+          sub({'requires_2fa': true, 'temp_token': 'temporary'});
+      site.routes['POST /api/v1/auth/login/2fa'] = (_) =>
+          sub({'refresh_token': 'verified-refresh'});
+      final pending = await adapter.signInWithPassword(
+        email: 'person@example.com',
+        password: 'password',
+      );
+      expect(pending, 'temporary');
+      expect(adapter.credential, isNull);
+      expect(
+        await adapter.signInWithPassword(
+          email: 'person@example.com',
+          password: '',
+          temporaryToken: pending,
+          code: '123456',
+        ),
+        isNull,
+      );
+      expect(site.sent.last.json, {
+        'temp_token': 'temporary',
+        'totp_code': '123456',
+      });
+      expect(adapter.credential, 'verified-refresh');
+    });
+
     test('trades the refresh token for the next, and reads the user', () async {
       final profile = await adapter.profile();
       expect(site.sent.first.json, {'refresh_token': 'rt0'});
@@ -334,6 +377,29 @@ void main() {
       await account.load();
       expect(account.signedIn, isFalse);
       expect(store.credential, isNull);
+    });
+
+    test('native sign-in connects the account and its OpenAI key', () async {
+      site = sub2apiSite();
+      site.routes['POST /api/v1/auth/login'] = (_) =>
+          sub({'refresh_token': 'rt0'});
+      final account = accountOf(_sub2api);
+      await account.load();
+      expect(
+        await account.signInWithPassword(
+          email: 'a@example.com',
+          password: 'pw',
+        ),
+        isNull,
+      );
+      expect(account.signedIn, isTrue);
+      expect(account.profile?.email, 'sub@example.com');
+      expect(account.inUse?.id, '3');
+      expect(
+        providers.provider(ChannelAccount.providerId)?.protocol,
+        ProviderProtocol.openaiResponses,
+      );
+      expect(store.credential, 'rt1');
     });
 
     test('speaks OpenAI\'s Responses to a sub2api key for OpenAI', () async {
