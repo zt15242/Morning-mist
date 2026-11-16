@@ -421,6 +421,8 @@ void main() {
         'zh',
       )!.account!;
       expect(account.protocol, isNull);
+      expect(account.url.toString(), 'https://ai.aijws.top');
+      expect(account.apiUrl.toString(), 'https://ai.aijws.top');
     });
 
     test('updates a kept key\'s protocol when its provider is stale', () async {

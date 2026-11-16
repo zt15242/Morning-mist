@@ -5,7 +5,7 @@
 
 An awesome, easy-to-use desktop UI for [Claude Code](https://github.com/anthropics/claude-code), with a millisecond-fast IDE built in.
 
-[Website](https://api.javaxiaowu.top) · [Download](https://api.javaxiaowu.top/download) · [Changelog](https://api.javaxiaowu.top/changelog)
+[Account service](https://ai.aijws.top) · [Download](https://github.com/zt15242/Morning-mist/releases/latest) · [Changelog](https://github.com/zt15242/Morning-mist/releases)
 
 ![Morning Mist's main window: agents grouped by project, two conversations side by side, and the model picker](site/shots/main.png)
 
@@ -77,7 +77,7 @@ Releases are built and published by CI when a `v*` tag is pushed; versions, sign
 | [packages/bao_remote](packages/bao_remote) | The remote host served over SSH |
 | [macos/](macos), [windows/](windows), [linux/](linux) | The native runners |
 | [tool/](tool) | Build, packaging and release scripts |
-| [site/](site) | The website, [api.javaxiaowu.top](https://api.javaxiaowu.top) |
+| [site/](site) | Website source |
 | [docs/](docs) | Design notes |
 
 ## Feedback

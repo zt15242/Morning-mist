@@ -10429,7 +10429,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get browserWelcomeTry =>
-      'Try telling an agent: “Open api.javaxiaowu.top and look at the download page.”';
+      'Try telling an agent: “Open ai.aijws.top and look at the page.”';
 
   @override
   String get browserWelcomeUnpacked => 'Developer Mode Zip';
@@ -10737,14 +10737,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get channelSetupLead =>
-      'Finish your first-time setup on api.javaxiaowu.top. It takes about 10 seconds.';
+      'Finish your first-time setup on ai.aijws.top. It takes about 10 seconds.';
 
   @override
   String get channelSetupStepTitle => 'Finish setup in your browser';
 
   @override
   String get channelSetupStep =>
-      'Morning Mist opens api.javaxiaowu.top in your browser. Once the page says it\'s done, Morning Mist continues on its own.';
+      'Morning Mist opens ai.aijws.top in your browser. Once the page says it\'s done, Morning Mist continues on its own.';
 
   @override
   String get channelSetupWaitingTitle => 'Waiting for your browser…';
@@ -10765,7 +10765,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get channelSetupOffline =>
-      'Can\'t reach api.javaxiaowu.top. You need to be online to finish setup.';
+      'Can\'t reach ai.aijws.top. You need to be online to finish setup.';
 
   @override
   String get channelSetupRetry => 'Retry';
@@ -10821,7 +10821,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get channelSetupFinding => 'Just a moment.';
 
   @override
-  String get channelSetupSiteOfflineTitle => 'Can\'t reach api.javaxiaowu.top';
+  String get channelSetupSiteOfflineTitle => 'Can\'t reach ai.aijws.top';
 
   @override
   String get channelSetupSiteOffline =>
@@ -10832,7 +10832,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get channelSetupUnavailable =>
-      'The channel this installer came from doesn\'t have accounts set up yet. If you downloaded it through another channel, confirm where you came from in your browser; otherwise contact whoever gave you the installer, or download the standard edition from api.javaxiaowu.top.';
+      'The channel this installer came from doesn\'t have accounts set up yet. If you downloaded it through another channel, confirm where you came from in your browser; otherwise contact whoever gave you the installer, or download the standard edition from GitHub Releases.';
 
   @override
   String get channelSetupConfirmAgain => 'Confirm in Browser';

@@ -110,8 +110,8 @@ class ChannelGate extends ChangeNotifier {
       'name': {'zh': 'Morning Mist', 'en': 'Morning Mist'},
       'account': {
         'type': 'sub2api',
-        'url': 'https://api.javaxiaowu.top',
-        'apiUrl': 'https://api.javaxiaowu.top',
+        'url': 'https://ai.aijws.top',
+        'apiUrl': 'https://ai.aijws.top',
       },
       'welcome': {
         'title': {'zh': 'Morning Mist', 'en': 'Morning Mist'},

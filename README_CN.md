@@ -4,7 +4,7 @@
 
 一个出色、易用的 [Claude Code](https://github.com/anthropics/claude-code) 桌面界面，内置毫秒级响应的快速 IDE。
 
-[官网](https://api.javaxiaowu.top) · [下载](https://api.javaxiaowu.top/download) · [更新日志](https://api.javaxiaowu.top/changelog)
+[账号服务](https://ai.aijws.top) · [下载](https://github.com/zt15242/Morning-mist/releases/latest) · [更新日志](https://github.com/zt15242/Morning-mist/releases)
 
 ![Morning Mist 主窗口：按项目分组的智能体、并排显示的两个对话，以及模型选择器](site/shots/main.png)
 
@@ -78,7 +78,7 @@ dart run tool/build_remote_server.dart    # 用于 Linux x64 和 arm64 的 SSH �
 | [packages/bao_remote](packages/bao_remote) | 通过 SSH 提供服务的远程端 |
 | [macos/](macos)、[windows/](windows)、[linux/](linux) | 原生平台启动器 |
 | [tool/](tool) | 构建、打包及发布脚本 |
-| [site/](site) | 官网 [api.javaxiaowu.top](https://api.javaxiaowu.top) 的源码 |
+| [site/](site) | 网站源码 |
 | [docs/](docs) | 设计文档 |
 
 ## 反馈

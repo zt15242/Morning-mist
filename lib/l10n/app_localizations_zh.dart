@@ -9879,7 +9879,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get browserWelcomeTry => '试试对 agent 说：「打开 api.javaxiaowu.top 看看下载页」。';
+  String get browserWelcomeTry => '试试对 agent 说：「打开 ai.aijws.top 看看网页」。';
 
   @override
   String get browserWelcomeUnpacked => '开发者模式 zip';
@@ -10172,7 +10172,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get channelSetupStep =>
-      'Morning Mist 会在浏览器里打开 api.javaxiaowu.top，网页显示完成后，这里会自动继续。';
+      'Morning Mist 会在浏览器里打开 ai.aijws.top，网页显示完成后，这里会自动继续。';
 
   @override
   String get channelSetupWaitingTitle => '正在等待浏览器完成…';
@@ -10190,7 +10190,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get channelSetupAddressCopied => '已复制';
 
   @override
-  String get channelSetupOffline => '连不上 api.javaxiaowu.top，需要联网才能完成设置。';
+  String get channelSetupOffline => '连不上 ai.aijws.top，需要联网才能完成设置。';
 
   @override
   String get channelSetupRetry => '重试';
@@ -10242,7 +10242,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get channelSetupFinding => '马上就好。';
 
   @override
-  String get channelSetupSiteOfflineTitle => '连不上 api.javaxiaowu.top';
+  String get channelSetupSiteOfflineTitle => '连不上 ai.aijws.top';
 
   @override
   String get channelSetupSiteOffline => '需要联网读取渠道信息，请检查网络后重试。';
@@ -10252,7 +10252,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get channelSetupUnavailable =>
-      '这份安装包对应的渠道还没有开通账号服务。如果你是从别的渠道下载的，去浏览器确认一下来源；否则请联系提供安装包的一方，或到 api.javaxiaowu.top 下载普通版。';
+      '这份安装包对应的渠道还没有开通账号服务。如果你是从别的渠道下载的，去浏览器确认一下来源；否则请联系提供安装包的一方，或到 GitHub Releases 下载普通版。';
 
   @override
   String get channelSetupConfirmAgain => '去浏览器确认';

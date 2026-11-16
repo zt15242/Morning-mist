@@ -17014,7 +17014,7 @@ abstract class AppLocalizations {
   /// No description provided for @browserWelcomeTry.
   ///
   /// In en, this message translates to:
-  /// **'Try telling an agent: “Open api.javaxiaowu.top and look at the download page.”'**
+  /// **'Try telling an agent: “Open ai.aijws.top and look at the page.”'**
   String get browserWelcomeTry;
 
   /// No description provided for @browserWelcomeUnpacked.
@@ -17548,7 +17548,7 @@ abstract class AppLocalizations {
   /// No description provided for @channelSetupLead.
   ///
   /// In en, this message translates to:
-  /// **'Finish your first-time setup on api.javaxiaowu.top. It takes about 10 seconds.'**
+  /// **'Finish your first-time setup on ai.aijws.top. It takes about 10 seconds.'**
   String get channelSetupLead;
 
   /// No description provided for @channelSetupStepTitle.
@@ -17560,7 +17560,7 @@ abstract class AppLocalizations {
   /// No description provided for @channelSetupStep.
   ///
   /// In en, this message translates to:
-  /// **'Morning Mist opens api.javaxiaowu.top in your browser. Once the page says it\'s done, Morning Mist continues on its own.'**
+  /// **'Morning Mist opens ai.aijws.top in your browser. Once the page says it\'s done, Morning Mist continues on its own.'**
   String get channelSetupStep;
 
   /// No description provided for @channelSetupWaitingTitle.
@@ -17596,7 +17596,7 @@ abstract class AppLocalizations {
   /// No description provided for @channelSetupOffline.
   ///
   /// In en, this message translates to:
-  /// **'Can\'t reach api.javaxiaowu.top. You need to be online to finish setup.'**
+  /// **'Can\'t reach ai.aijws.top. You need to be online to finish setup.'**
   String get channelSetupOffline;
 
   /// No description provided for @channelSetupRetry.
@@ -17698,7 +17698,7 @@ abstract class AppLocalizations {
   /// No description provided for @channelSetupSiteOfflineTitle.
   ///
   /// In en, this message translates to:
-  /// **'Can\'t reach api.javaxiaowu.top'**
+  /// **'Can\'t reach ai.aijws.top'**
   String get channelSetupSiteOfflineTitle;
 
   /// No description provided for @channelSetupSiteOffline.
@@ -17716,7 +17716,7 @@ abstract class AppLocalizations {
   /// No description provided for @channelSetupUnavailable.
   ///
   /// In en, this message translates to:
-  /// **'The channel this installer came from doesn\'t have accounts set up yet. If you downloaded it through another channel, confirm where you came from in your browser; otherwise contact whoever gave you the installer, or download the standard edition from api.javaxiaowu.top.'**
+  /// **'The channel this installer came from doesn\'t have accounts set up yet. If you downloaded it through another channel, confirm where you came from in your browser; otherwise contact whoever gave you the installer, or download the standard edition from GitHub Releases.'**
   String get channelSetupUnavailable;
 
   /// No description provided for @channelSetupConfirmAgain.
