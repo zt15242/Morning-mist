@@ -98,6 +98,14 @@ final class ItemRemoved extends KernelEvent {
   final String id;
 }
 
+/// The queued messages, in the order [ids] gives: the next first. Those
+/// not named keep their places after them.
+final class QueueReordered extends KernelEvent {
+  const QueueReordered(super.seq, this.ids);
+
+  final List<String> ids;
+}
+
 final class InteractionRequested extends KernelEvent {
   const InteractionRequested(super.seq, this.request);
 
@@ -128,6 +136,14 @@ final class PlanWritten extends KernelEvent {
   const PlanWritten(super.seq, this.path);
 
   final String path;
+}
+
+/// Renamed in the agent itself (Claude Code's `/rename`): the name its
+/// list shows.
+final class SessionRenamed extends KernelEvent {
+  const SessionRenamed(super.seq, this.title);
+
+  final String title;
 }
 
 /// The files changed so far are back as they were.
@@ -164,13 +180,6 @@ final class TasksReported extends KernelEvent {
   const TasksReported(super.seq, this.tasks);
 
   final List<KernelTask> tasks;
-}
-
-/// The agent's todo list, as it last wrote it.
-final class TodosReported extends KernelEvent {
-  const TodosReported(super.seq, this.todos);
-
-  final List<TodoEntry> todos;
 }
 
 /// The session's goal, as it now stands; null with none.

@@ -73,15 +73,22 @@ void main() {
       );
       await h.turn('Think');
       final kept = lines(h.sessionFile);
-      final conversation = [
+      // The notes kept for the model (what is left of the budget) are
+      // links of the chain too.
+      final chain = [
         for (final line in kept)
+          if (const {'user', 'assistant', 'attachment'}.contains(line['type']))
+            line,
+      ];
+      expect(chain.first['uuid'], 'user-1');
+      expect(chain.first['parentUuid'], isNull);
+      for (var i = 1; i < chain.length; i++) {
+        expect(chain[i]['parentUuid'], chain[i - 1]['uuid']);
+      }
+      final conversation = [
+        for (final line in chain)
           if (line['type'] == 'user' || line['type'] == 'assistant') line,
       ];
-      expect(conversation.first['uuid'], 'user-1');
-      expect(conversation.first['parentUuid'], isNull);
-      for (var i = 1; i < conversation.length; i++) {
-        expect(conversation[i]['parentUuid'], conversation[i - 1]['uuid']);
-      }
       final answers = conversation
           .where((l) => l['type'] == 'assistant')
           .toList();
@@ -122,13 +129,17 @@ void main() {
     );
     await h.turn('Hi');
     final request = h.model.turns.single;
-    final system = jsonEncode(request.body['system']);
-    expect(system, contains('You are the coding agent of'));
-    expect(system, contains(h.cwd));
+    final system = request.body['system'] as List;
+    expect(jsonEncode(system.first), contains('You are the coding agent'));
+    expect(system, hasLength(2));
     final messages = request.body['messages'] as List;
+    // The instructions before the prompt, then the context as a system
+    // message after it.
     final first = jsonEncode(messages.first);
     expect(first, contains('Always answer in French.'));
-    expect(first, contains('# Date'));
+    expect((messages[1] as Map)['role'], 'system');
+    expect(jsonEncode(messages[1]), contains(h.cwd));
+    expect(jsonEncode(messages[1]), contains('Today is'));
     final tools = [
       for (final t in request.body['tools'] as List) (t as Map)['name'],
     ];
@@ -137,24 +148,19 @@ void main() {
       containsAll([
         'Agent',
         'Bash',
-        'Glob',
-        'Grep',
         'Read',
         'Edit',
         'Write',
-        'TodoWrite',
         'WebFetch',
         'WebSearch',
       ]),
     );
-    expect(
-      jsonEncode((request.body['tools'] as List).last),
-      contains('cache_control'),
-    );
-    expect(
-      jsonEncode((request.body['system'] as List).last),
-      contains('cache_control'),
-    );
+    // Both blocks of the system prompt cached, and the end of the
+    // conversation; the tools not.
+    expect(jsonEncode(request.body['tools']), isNot(contains('cache_control')));
+    for (final block in system) {
+      expect(jsonEncode(block), contains('cache_control'));
+    }
     expect(jsonEncode(messages.last), contains('cache_control'));
     expect(request.body['stream'], isNull, reason: 'the client sets it');
     expect(request.body['max_tokens'], greaterThan(1000));
@@ -308,6 +314,80 @@ void main() {
     final asked = h.model.turns.last.body['messages'] as List;
     expect(jsonEncode(asked), contains('interrupted'));
     expect(h.lastResult['result'], 'resumed');
+  });
+
+  test('send now stops the turn for a message waiting, the tasks in the '
+      'background going on', () async {
+    h = await Harness.start(
+      script: [
+        Reply.tool('Bash', {
+          'command': 'sleep 30',
+          'description': 'Serve',
+          'run_in_background': true,
+        }),
+        Reply.tool('Bash', {'command': 'sleep 30', 'description': 'Long'}),
+        Reply.text('never'),
+      ],
+    );
+    final init = await h.request('initialize');
+    expect(init['capabilities'], contains('interrupt_send_now_v1'));
+    final idle = h.nextIdle();
+    h.send('go');
+    await h.messages.firstWhere(
+      (m) => m['type'] == 'assistant' && jsonEncode(m).contains('"Long"'),
+    );
+    expect(
+      (await h.request('interrupt', {
+        'send_now': true,
+        'message_uuid': 'nope',
+      }))['send_now'],
+      'nothing_waiting',
+    );
+    final waiting = h.send('stop and do this');
+    h.model.script
+      ..clear()
+      ..add(Reply.text('doing it'));
+    expect(
+      (await h.request('interrupt', {
+        'send_now': true,
+        'message_uuid': waiting,
+      }))['send_now'],
+      'stopped',
+    );
+    await idle.timeout(const Duration(seconds: 10));
+    expect(h.lastResult['subtype'], 'error_during_execution');
+    await h.nextIdle().timeout(const Duration(seconds: 10));
+    expect(h.lastResult['result'], 'doing it');
+    expect(
+      jsonEncode(h.model.turns.last.body['messages']),
+      contains('stop and do this'),
+    );
+    expect(h.of('system', 'task_started'), hasLength(1));
+    expect(
+      h.of('system').where((m) => m['subtype'] == 'task_notification'),
+      isEmpty,
+    );
+  });
+
+  test('a message of priority now stops the turn running', () async {
+    h = await Harness.start(
+      script: [
+        Reply.tool('Bash', {'command': 'sleep 30', 'description': 'Long'}),
+        Reply.text('never'),
+      ],
+    );
+    final idle = h.nextIdle();
+    h.send('go');
+    await h.messages.firstWhere(
+      (m) => m['type'] == 'assistant' && jsonEncode(m).contains('tool_use'),
+    );
+    h.model.script
+      ..clear()
+      ..add(Reply.text('now then'));
+    h.send('this first', priority: 'now');
+    await idle.timeout(const Duration(seconds: 10));
+    await h.nextIdle().timeout(const Duration(seconds: 10));
+    expect(h.lastResult['result'], 'now then');
   });
 
   test('an interrupt while streaming text', () async {

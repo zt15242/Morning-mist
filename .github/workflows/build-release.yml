@@ -22,6 +22,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Setup Rust for native dependencies
+        uses: ./.github/actions/setup-rust
+
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -61,6 +64,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Setup Rust for native dependencies
+        uses: ./.github/actions/setup-rust
+
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -98,6 +104,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Setup Rust for native dependencies
+        uses: ./.github/actions/setup-rust
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -148,6 +157,9 @@ jobs:
           mkdir -p release-assets
           find artifacts -type f \( -name "*.dmg" -o -name "*.exe" -o -name "*.zip" \) -exec cp {} release-assets/ \;
           ls -la release-assets/
+
+      - name: Setup Rust for native dependencies
+        uses: ./.github/actions/setup-rust
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2

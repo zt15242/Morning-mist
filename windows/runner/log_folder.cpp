@@ -4,8 +4,11 @@
 #include <shlobj.h>
 #include <windows.h>
 
+#include <cstdio>
 #include <vector>
 
+#include "crash_report.h"
+#include "hang_watchdog.h"
 #include "utils.h"
 
 namespace log_folder {
@@ -77,6 +80,7 @@ void SetFolder(const std::wstring& folder) {
     Locked locked;
     g_folder = folder;
   }
+  hang_watchdog::LogsFolderNamed(folder);
   ::RegSetKeyValueW(HKEY_CURRENT_USER, kSettingsKey, kFolderValue, REG_SZ,
                     folder.c_str(),
                     static_cast<DWORD>((folder.size() + 1) * sizeof(wchar_t)));
@@ -125,6 +129,10 @@ std::wstring Path() {
     return fallback;
   }
   return std::wstring();
+}
+
+void AppendExit(const char* how) {
+  crash_report::AppendExit(Path(), how);
 }
 
 }  // namespace log_folder

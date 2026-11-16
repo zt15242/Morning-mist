@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 
 import '../../base/smooth_scroll.dart';
 import '../../theme/app_theme.dart';
+import 'finite_selection_edges.dart';
 import 'hover_builder.dart';
+import 'hover_scrollbar.dart';
 import 'image_thumbnails.dart' show PreviewClick, PreviewPressScope;
+import 'own_selection.dart';
+import 'scroll_edge_fade.dart';
 import 'shimmer_text.dart';
 import 'wheel_latch.dart';
 
@@ -241,7 +246,7 @@ class _ClickListenerState extends State<_ClickListener> {
 
 /// What a step opens to: a dark framed box under its header, scrolling
 /// past [maxHeight].
-class StepBody extends StatelessWidget {
+class StepBody extends StatefulWidget {
   const StepBody({
     super.key,
     required this.child,
@@ -250,6 +255,11 @@ class StepBody extends StatelessWidget {
     this.followEnd = false,
     this.overlay,
     this.header,
+    this.fadeEdges = false,
+    this.scrollbar = false,
+    this.codeBlock = false,
+    this.keepWheel = false,
+    this.bottom,
   });
 
   final Widget child;
@@ -265,34 +275,137 @@ class StepBody extends StatelessWidget {
   /// Above [child], a line under it, staying while [child] scrolls.
   final Widget? header;
 
+  /// No background of its own: a frame on the conversation; else a dark
+  /// box.
+  final bool codeBlock;
+
+  /// Whether [child] fades out towards an edge more of it is scrolled past
+  /// ([ScrollEdgeFade]), as the conversation does; not with [followEnd].
+  final bool fadeEdges;
+
+  /// Whether a scrollbar shows while the mouse is over it ([HoverScrollbar]).
+  final bool scrollbar;
+
+  /// Whether a wheel over it, once it scrolls at all, is its own at its ends
+  /// too ([WheelLatch.keep]).
+  final bool keepWheel;
+
+  /// Along the bottom of what scrolls, over [child]: scrollbars across it,
+  /// say, shown while the mouse is over it ([hovered]).
+  final Widget Function(BuildContext context, bool hovered)? bottom;
+
+  @override
+  State<StepBody> createState() => _StepBodyState();
+}
+
+class _StepBodyState extends State<StepBody> {
+  final _controller = SmoothScrollController();
+  final _scrollbarContent = GlobalKey();
+
+  @override
+  void didUpdateWidget(StepBody old) {
+    super.didUpdateWidget(old);
+    if (old.followEnd != widget.followEnd && _controller.hasClients) {
+      _keepInView(_controller.position);
+    }
+  }
+
+  /// [StepBody.followEnd] turns the view round (the command ended, or went
+  /// to the background), its offset now counted from the other end: what
+  /// was in view stays, rather than the view jumping to the far end.
+  void _keepInView(ScrollPosition position) {
+    // How far it is from the end its offset counted from, which is now the
+    // far end.
+    final held = position.pixels - position.minScrollExtent;
+    // Before this frame's layout, so the far end never shows.
+    position.correctPixels(position.maxScrollExtent - held);
+    // At that end (following the output), it stays there, though the
+    // output grew as it ended; scrolled off it, nothing in view moves.
+    if (held > 0.5) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_controller.hasClients) return;
+      final now = _controller.position;
+      if (now.pixels != now.maxScrollExtent) now.jumpTo(now.maxScrollExtent);
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
-    Widget body = Stack(
+    final StepBody(:child, :maxHeight, :padding, :overlay, :header) = widget;
+    // The line between the sidebar and the conversation.
+    final line = AppColors.partBorder;
+    Widget scroll = SingleChildScrollView(
+      controller: _controller,
+      reverse: widget.followEnd,
+      padding: padding,
+      child: FiniteSelectionEdges(
+        child: WheelLatch(
+          keep: widget.keepWheel,
+          child: SizedBox(width: double.infinity, child: child),
+        ),
+      ),
+    );
+    if (widget.fadeEdges) {
+      scroll = ScrollEdgeFade(fadeLength: 12, child: scroll);
+    }
+    Widget stack(bool hovered) => Stack(
       children: [
         ConstrainedBox(
           constraints: BoxConstraints(maxHeight: maxHeight),
-          child: SmoothScrolling(
-            builder: (context, controller) => SingleChildScrollView(
-              controller: controller,
-              reverse: followEnd,
-              padding: padding,
-              child: WheelLatch(
-                child: SizedBox(width: double.infinity, child: child),
-              ),
-            ),
-          ),
+          child: widget.scrollbar
+              ? Listener(
+                  onPointerDown: (event) {
+                    final paint = _scrollbarContent.currentContext
+                        ?.findAncestorRenderObjectOfType<RenderCustomPaint>();
+                    final painter = paint?.foregroundPainter;
+                    if (paint != null &&
+                        painter is ScrollbarPainter &&
+                        painter.hitTestInteractive(
+                          paint.globalToLocal(event.position),
+                          event.kind,
+                        )) {
+                      OwnSelection.takePress(event);
+                    }
+                  },
+                  child: Scrollbar(
+                    controller: _controller,
+                    thumbVisibility: hovered,
+                    child: Builder(
+                      key: _scrollbarContent,
+                      builder: (_) => scroll,
+                    ),
+                  ),
+                )
+              : scroll,
         ),
+        if (widget.bottom case final bottom?)
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: bottom(context, hovered),
+          ),
         if (overlay case final overlay?)
           Positioned(top: 6, right: 6, child: overlay),
       ],
     );
+    // Its scrollbars show while the mouse is over it ([HoverScrollbar]).
+    Widget body = widget.scrollbar || widget.bottom != null
+        ? HoverBuilder(builder: (context, hovered) => stack(hovered))
+        : stack(false);
     if (header case final header?) {
       body = Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: [
           header,
-          Divider(height: 1, thickness: 1, color: AppColors.partBorder),
+          Divider(height: 1, thickness: 1, color: line),
           body,
         ],
       );
@@ -301,9 +414,10 @@ class StepBody extends StatelessWidget {
       width: double.infinity,
       margin: const EdgeInsets.only(top: 2, bottom: 6),
       decoration: BoxDecoration(
-        color: AppColors.code,
+        // A code block's lies on the conversation itself.
+        color: widget.codeBlock ? null : AppColors.code,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.partBorder),
+        border: Border.all(color: line),
       ),
       clipBehavior: Clip.antiAlias,
       child: body,

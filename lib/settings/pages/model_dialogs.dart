@@ -15,6 +15,7 @@ import '../../models/upstream.dart';
 import '../../theme/app_theme.dart';
 import '../../theme/codicons.dart';
 import '../../theme/workbench_theme.dart' show themeColors;
+import 'models_page.dart' show ModelsSettingsPage;
 import 'settings_dropdown.dart';
 
 /// Asks [provider]'s upstream for its models, with [key].
@@ -83,9 +84,13 @@ class ModelDialogFrame extends StatelessWidget {
     required this.child,
     required this.actions,
     this.onSubmit,
+    this.maxWidth = 560,
   });
 
   final String title;
+
+  /// The most it is wide, in a window wide enough; 440 at least.
+  final double maxWidth;
   final Widget child;
   final List<Widget> actions;
 
@@ -98,7 +103,7 @@ class ModelDialogFrame extends StatelessWidget {
     final border = colors.get('widget.border');
     final shadow = colors.get('widget.shadow');
     final size = MediaQuery.sizeOf(context);
-    final width = math.max(440.0, math.min(560.0, size.width * .9));
+    final width = math.max(440.0, math.min(maxWidth, size.width * .9));
     return CallbackShortcuts(
       bindings: {
         const SingleActivator(LogicalKeyboardKey.escape): () =>
@@ -463,28 +468,31 @@ class _FetchModelsDialogState extends State<FetchModelsDialog> {
                                 onChanged: toggle,
                               ),
                               const SizedBox(width: 8),
+                              // The id first: what follows it is cut short
+                              // before it is (#246).
                               Flexible(
-                                child: Text(
-                                  model.id,
+                                child: Text.rich(
+                                  TextSpan(
+                                    children: [
+                                      TextSpan(
+                                        text: model.id,
+                                        style: _text(context).copyWith(
+                                          fontFamily: AppFonts.mono,
+                                          fontFamilyFallback:
+                                              AppFonts.monoFallbacks,
+                                        ),
+                                      ),
+                                      if (detail.isNotEmpty)
+                                        TextSpan(
+                                          text: '  $detail',
+                                          style: _muted(context),
+                                        ),
+                                    ],
+                                  ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
-                                  style: _text(context).copyWith(
-                                    fontFamily: AppFonts.mono,
-                                    fontFamilyFallback: AppFonts.monoFallbacks,
-                                  ),
                                 ),
                               ),
-                              if (detail.isNotEmpty) ...[
-                                const SizedBox(width: 8),
-                                Flexible(
-                                  child: Text(
-                                    detail,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: _muted(context),
-                                  ),
-                                ),
-                              ],
                               if (!known.contains(model.id)) ...[
                                 const SizedBox(width: 6),
                                 ModelBadge(l10n.modelsFetchNew),
@@ -501,6 +509,8 @@ class _FetchModelsDialogState extends State<FetchModelsDialog> {
     }
     return ModelDialogFrame(
       title: l10n.modelsFetchTitle(widget.provider.name),
+      // Room for the long ids some upstreams give theirs.
+      maxWidth: 760,
       onSubmit: listed == null ? null : _apply,
       actions: [
         if (error != null)
@@ -584,12 +594,14 @@ class _LinkButton extends StatelessWidget {
 
 // --- A model ----------------------------------------------------------------
 
-/// Edits [model] of [provider], or adds one when null; completes with it,
-/// or null when dismissed.
+/// Edits [model] of [provider], or adds one when null, filled in as
+/// [template] (a copy of it) if given; completes with it, or null when
+/// dismissed.
 Future<ProviderModel?> showModelEditDialog(
   BuildContext context, {
   required ModelProvider provider,
   ProviderModel? model,
+  ProviderModel? template,
 }) => showGeneralDialog<ProviderModel>(
   context: context,
   barrierDismissible: true,
@@ -597,36 +609,50 @@ Future<ProviderModel?> showModelEditDialog(
   barrierColor: const Color(0x80000000),
   transitionDuration: Duration.zero,
   pageBuilder: (context, _, _) =>
-      ModelEditDialog(provider: provider, model: model),
+      ModelEditDialog(provider: provider, model: model, template: template),
 );
 
 class ModelEditDialog extends StatefulWidget {
-  const ModelEditDialog({super.key, required this.provider, this.model});
+  const ModelEditDialog({
+    super.key,
+    required this.provider,
+    this.model,
+    this.template,
+  });
 
   final ModelProvider provider;
   final ProviderModel? model;
+
+  /// What a model added is filled in as: one it is a copy of.
+  final ProviderModel? template;
 
   @override
   State<ModelEditDialog> createState() => _ModelEditDialogState();
 }
 
 class _ModelEditDialogState extends State<ModelEditDialog> {
+  /// What the fields start as.
+  late final ProviderModel? _start = widget.model ?? widget.template;
+
   late final TextEditingController _id = TextEditingController(
-    text: widget.model?.id,
+    text: _start?.id,
   );
   late final TextEditingController _label = TextEditingController(
-    text: widget.model?.label,
+    text: _start?.label,
   );
   late final TextEditingController _context = TextEditingController(
-    text: switch (widget.model?.contextWindow) {
+    text: switch (_start?.contextWindow) {
       final tokens? => formatTokens(tokens),
       null => '',
     },
   );
-  late bool _images = widget.model?.images ?? true;
+  late final TextEditingController _endpointUrl = TextEditingController(
+    text: _start?.endpointUrl,
+  );
+  late bool _images = _start?.images ?? true;
 
   /// What it is for, as picked; null to go by its name.
-  late ModelKind? _kind = widget.model?.kindSet;
+  late ModelKind? _kind = _start?.kindSet;
 
   /// What it is for: as picked, else as its name tells.
   ModelKind get _shownKind => _kind ?? guessModelKind(_id.text.trim());
@@ -637,9 +663,12 @@ class _ModelEditDialogState extends State<ModelEditDialog> {
     return kind == guessModelKind(_id.text.trim()) ? null : kind;
   }
 
+  /// The endpoint it is spoken to at, as picked; null for its upstream's.
+  late ProviderProtocol? _protocol = _start?.protocol;
+
   /// The model's own efforts and contexts; null for the defaults.
-  late List<String>? _efforts = widget.model?.efforts;
-  late List<int>? _contexts = widget.model?.contexts;
+  late List<String>? _efforts = _start?.efforts;
+  late List<int>? _contexts = _start?.contexts;
   bool _tried = false;
 
   @override
@@ -661,10 +690,50 @@ class _ModelEditDialogState extends State<ModelEditDialog> {
     _id.dispose();
     _label.dispose();
     _context.dispose();
+    _endpointUrl.dispose();
     super.dispose();
   }
 
   bool get _adding => widget.model == null;
+
+  /// [_protocol] as kept: none for a picture's model, or on an upstream
+  /// signed in to (Codex), whose models all go as it does.
+  ProviderProtocol? get _keptProtocol =>
+      _shownKind.generatesImages || widget.provider.protocol.usesAccounts
+      ? null
+      : _protocol;
+
+  /// Its address as kept: none where [_keptProtocol] is none for want of
+  /// an endpoint of its own to speak to.
+  String? get _keptEndpointUrl =>
+      _shownKind.generatesImages || widget.provider.protocol.usesAccounts
+      ? null
+      : switch (_endpointUrl.text.trim()) {
+          '' => null,
+          final url => url,
+        };
+
+  /// Where it goes with no address of its own, as its endpoint type is
+  /// picked: the upstream's endpoint if it speaks the upstream's
+  /// protocol, else as the base URL says.
+  String get _endpointUrlByDefault {
+    final provider = widget.provider;
+    final protocol = _protocol ?? provider.protocol;
+    final speaking = provider.copyWith(
+      protocol: protocol,
+      endpointUrl: () =>
+          protocol == provider.protocol ? provider.endpointUrl : null,
+    );
+    return '${UpstreamUrls.endpoint(speaking) ?? ''}';
+  }
+
+  /// What the Endpoint choice shows [protocol] as; the upstream's for
+  /// null.
+  String _endpointName(ProviderProtocol? protocol) => protocol == null
+      ? context.l10n.modelsEndpointUpstream(
+          ModelsSettingsPage.protocolName(context, widget.provider.protocol),
+        )
+      : ModelsSettingsPage.protocolName(context, protocol);
 
   /// [options], or null when they are [defaults]: the model then follows
   /// the defaults as they change.
@@ -718,6 +787,8 @@ class _ModelEditDialogState extends State<ModelEditDialog> {
               images: _images,
               custom: true,
               kind: _keptKind,
+              protocol: _keptProtocol,
+              endpointUrl: _keptEndpointUrl,
             )
           : model.copyWith(
               label: () => label.isEmpty ? null : label,
@@ -726,6 +797,8 @@ class _ModelEditDialogState extends State<ModelEditDialog> {
               contexts: () => _contexts,
               images: _images,
               kind: () => _keptKind,
+              protocol: () => _keptProtocol,
+              endpointUrl: () => _keptEndpointUrl,
             ),
     );
   }
@@ -849,6 +922,66 @@ class _ModelEditDialogState extends State<ModelEditDialog> {
                 ),
               )
             else ...[
+              if (!widget.provider.protocol.usesAccounts)
+                _field(
+                  l10n.modelsEndpoint,
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SettingsDropdown(
+                        current: _endpointName(_protocol),
+                        semanticLabel:
+                            '${l10n.modelsEndpoint}: ${_endpointName(_protocol)}',
+                        entries: () => [
+                          IdeMenuAction(
+                            _endpointName(null),
+                            checked: _protocol == null,
+                            onSelected: () => setState(() => _protocol = null),
+                          ),
+                          const IdeMenuSeparator(),
+                          for (final protocol in ProviderProtocol.forModels)
+                            IdeMenuAction(
+                              _endpointName(protocol),
+                              checked: protocol == _protocol,
+                              onSelected: () =>
+                                  setState(() => _protocol = protocol),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        l10n.modelsEndpointDescription,
+                        style: _text(
+                          context,
+                          size: 12,
+                        ).copyWith(color: AppColors.textMuted),
+                      ),
+                    ],
+                  ),
+                ),
+              if (!widget.provider.protocol.usesAccounts)
+                _field(
+                  l10n.modelsEndpointUrl,
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      IdeInputBox(
+                        controller: _endpointUrl,
+                        placeholder: _endpointUrlByDefault,
+                        semanticsLabel: l10n.modelsEndpointUrl,
+                        onSubmitted: (_) => _save(),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        l10n.modelsModelEndpointUrlDescription,
+                        style: _text(
+                          context,
+                          size: 12,
+                        ).copyWith(color: AppColors.textMuted),
+                      ),
+                    ],
+                  ),
+                ),
               _field(
                 l10n.modelsContextWindow,
                 IdeInputBox(

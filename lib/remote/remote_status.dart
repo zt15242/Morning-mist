@@ -1,5 +1,5 @@
 import 'package:bao_remote/client.dart'
-    show SshConnectException, SshFailure, SshLauncher;
+    show RemotePlatform, SshConnectException, SshFailure, SshLauncher;
 import 'package:flutter/material.dart';
 
 import '../chat/panels/health_banner.dart';
@@ -13,7 +13,7 @@ import '../theme/workbench_theme.dart' show themeColors;
 import 'remote_location.dart';
 import 'ssh_host.dart';
 
-/// `SSH: <host>` at the status bar's left edge, as VS Code's remote
+/// `SSH: <host>` (`WSL: <distribution>`) at the status bar's left edge, as VS Code's remote
 /// indicator: the connection's state, and a click for the remote menu
 /// (the hosts to switch to, and the current host's actions).
 class SshStatusIndicator implements IdeRemoteIndicator {
@@ -36,7 +36,8 @@ class SshStatusIndicator implements IdeRemoteIndicator {
   @override
   IdeStatusBarItem item(BuildContext context) {
     final l10n = context.l10n;
-    final name = host.host;
+    final name = RemoteLocation.hostName(host.host);
+    final kind = RemoteLocation.reachedBy(host.host);
     final onChoose = this.onChoose;
     String tooltip(String base) => onChoose == null
         ? base
@@ -44,10 +45,15 @@ class SshStatusIndicator implements IdeRemoteIndicator {
     if (host.installingClaude case final installing?
         when host.state == SshHostState.connected) {
       return IdeStatusBarItem(
-        l10n.remoteStatusInstalling(
-          name,
-          ((installing.fraction ?? 0) * 100).round(),
-        ),
+        switch (installing.fraction) {
+          final fraction? => l10n.remoteStatusInstalling(
+            kind,
+            name,
+            (fraction * 100).round(),
+          ),
+          // Its size not known yet: no 0% for what is under way.
+          null => l10n.remoteStatusInstallingUnsized(kind, name),
+        },
         icon: Codicons.sync,
         tooltip: tooltip(claudeInstallText(l10n, name, installing)),
         onTapRect: onChoose,
@@ -55,25 +61,38 @@ class SshStatusIndicator implements IdeRemoteIndicator {
     }
     return switch (host.state) {
       SshHostState.connected => IdeStatusBarItem(
-        l10n.remoteStatus(name),
+        l10n.remoteStatus(kind, name),
         icon: Codicons.remote,
-        tooltip: tooltip(l10n.remoteStatusTooltip(name)),
+        tooltip: tooltip(
+          [
+            l10n.remoteStatusTooltip(kind, name),
+            if (host.hello?.platform case final platform?)
+              l10n.remoteStatusSystem(systemName(platform)),
+          ].join('\n'),
+        ),
         onTapRect: onChoose,
       ),
       SshHostState.connecting => IdeStatusBarItem(
-        l10n.remoteStatusConnecting(name),
+        l10n.remoteStatusConnecting(kind, name),
         icon: Codicons.sync,
-        tooltip: tooltip(host.progress ?? l10n.remoteStatusConnecting(name)),
+        tooltip: tooltip(
+          host.progress ?? l10n.remoteStatusConnecting(kind, name),
+        ),
         onTapRect: onChoose,
       ),
       SshHostState.reconnecting => IdeStatusBarItem(
-        l10n.remoteStatusReconnecting(name),
+        l10n.remoteStatusReconnecting(kind, name),
         icon: Codicons.sync,
-        tooltip: tooltip(l10n.remoteStatusTooltipLost(name)),
+        // The session there kept, or gone too.
+        tooltip: tooltip(
+          host.client != null
+              ? l10n.remoteStatusTooltipResuming(name)
+              : l10n.remoteStatusTooltipLost(name),
+        ),
         onTapRect: onChoose,
       ),
       SshHostState.failed || SshHostState.idle => IdeStatusBarItem(
-        l10n.remoteStatusFailed(name),
+        l10n.remoteStatusFailed(kind, name),
         icon: Codicons.debugDisconnect,
         tooltip: tooltip(
           [
@@ -97,12 +116,18 @@ class SshStatusIndicator implements IdeRemoteIndicator {
   int get hashCode => host.hashCode;
 }
 
+/// [platform] for people (`Windows x64`, `Linux arm64`).
+String systemName(RemotePlatform platform) => SshLauncher.describe(
+  '${platform.os == 'win' ? 'windows' : platform.os}-${platform.arch}',
+);
+
 /// What installing Claude Code on [host] is doing, for the user.
 String claudeInstallText(
   AppLocalizations l10n,
   String host,
   ClaudeInstallProgress progress,
 ) {
+  host = RemoteLocation.hostName(host);
   final percent = switch (progress.fraction) {
     final fraction? => (fraction * 100).round(),
     null => null,
@@ -238,7 +263,7 @@ class SshHostBanner extends StatelessWidget {
             health: KernelHealth(
               KernelHealthStatus.failed,
               message: [
-                context.l10n.remoteConnectFailed(name),
+                context.l10n.remoteConnectFailed(RemoteLocation.hostName(name)),
                 ?message,
               ].join(': '),
               detail: detail,
@@ -269,6 +294,7 @@ class SshHostBanner extends StatelessWidget {
           SshFailure.hostKey => l10n.remoteFailHostKey,
           SshFailure.hostKeyChanged => l10n.remoteFailHostKeyChanged,
           SshFailure.unreachable => l10n.remoteFailUnreachable,
+          SshFailure.wsl => l10n.remoteFailWsl,
           _ => message,
         },
         detail,

@@ -60,6 +60,62 @@ void main() {
     expect(h.permissionRequests.map((r) => r['tool_name']), ['ExitPlanMode']);
   });
 
+  test('a plan sent rather than written is kept in its file, which the '
+      'user is shown', () async {
+    // #298: the file named was not there, and its tab said so.
+    h = await Harness.start(permissionMode: 'plan');
+    h.model.script.add(Reply.text('looking'));
+    await h.turn('plan');
+    final plan = RegExp(r'write it to ([^ ]+\.md)')
+        .firstMatch(sentIn(h.model.turns.first))![1]!;
+    expect(File(plan).existsSync(), isFalse);
+    h.model.script.addAll([
+      Reply.tool('ExitPlanMode', {'plan': '# Plan\n\nStep one.'}),
+      Reply.text('done'),
+    ]);
+    Map<String, Object?>? asked;
+    h.onPermission = (request) async {
+      asked = request;
+      // Shown the file: there by then.
+      expect(File(plan).readAsStringSync(), '# Plan\n\nStep one.');
+      return {'behavior': 'allow', 'updatedInput': request['input']};
+    };
+    await h.turn('go');
+    expect((asked!['input'] as Map)['planFilePath'], plan);
+    expect(File(plan).readAsStringSync(), '# Plan\n\nStep one.');
+  });
+
+  test('in plan mode, the cache ends before the reminder: the next turn '
+      'reads it', () async {
+    h = await Harness.start(permissionMode: 'plan');
+    final path = p.join(h.cwd, 'f.txt');
+    File(path).writeAsStringSync('hello');
+    h.model.script.addAll([
+      Reply.tool('Read', {'file_path': path}),
+      Reply.tool('Read', {'file_path': path}),
+      Reply.text('done'),
+    ]);
+    await h.turn('look');
+    List<Map> messagesOf(ModelRequest request) => [
+      for (final m in request.body['messages'] as List) m as Map,
+    ];
+    final first = messagesOf(h.model.turns[1]);
+    final second = messagesOf(h.model.turns[2]);
+    final last = (first.last['content'] as List).cast<Map>();
+    expect('${last.last['text']}', contains('plan mode'));
+    expect(last.last.containsKey('cache_control'), isFalse);
+    expect(last[last.length - 2]['cache_control'], isNotNull);
+    // What the first wrote to the cache, the second sends the same (the
+    // mark itself moves on to the end).
+    String plain(Object? m) =>
+        jsonEncode(m).replaceAll(',"cache_control":{"type":"ephemeral"}', '');
+    final i = first.length - 1;
+    expect(
+      plain(second[i]),
+      plain({...first[i], 'content': last.sublist(0, last.length - 1)}),
+    );
+  });
+
   test('questions not answered; EnterPlanMode is not for subagents', () async {
     h = await Harness.start();
     h.model.route = (request) {
@@ -129,13 +185,14 @@ void main() {
             'Agent',
             {'description': 'x', 'prompt': 'p', 'subagent_type': 'nope'},
           ),
-          ('Agent', {'description': 'x', 'prompt': 'p', 'resume': 'a-missing'}),
+          ('SendMessage', {'to': 'a-missing', 'message': 'go on'}),
           (
             'Agent',
             {
               'description': 'x',
               'prompt': 'p',
               'subagent_type': 'general-PURPOSE',
+              'run_in_background': false,
             },
           ),
         ]),
@@ -147,7 +204,7 @@ void main() {
         '${unknown['content']}',
         allOf(contains("no agent of the kind 'nope'"), contains('Explore')),
       );
-      expect('${missing['content']}', contains('with the ID a-missing'));
+      expect('${missing['content']}', contains('No agent "a-missing"'));
       expect((cased['tool_use_result'] as Map)['status'], 'completed');
     });
 
@@ -187,7 +244,11 @@ void main() {
         );
       };
       h.model.script.addAll([
-        Reply.tool('Agent', {'description': 'Work', 'prompt': 'SUB: work'}),
+        Reply.tool('Agent', {
+          'description': 'Work',
+          'prompt': 'SUB: work',
+          'run_in_background': false,
+        }),
         Reply.text('it failed'),
       ]);
       await h.turn('go');
@@ -207,6 +268,79 @@ void main() {
       );
     });
 
+    test('the model set for agents, forced: over inherit and the call\'s, '
+        'as the CLI', () async {
+      h = await Harness.start(
+        environment: {
+          'CLAUDE_CODE_SUBAGENT_MODEL': 'sub-model',
+          'CLAUDE_CODE_SUBAGENT_MODEL_FORCE': '1',
+        },
+      );
+      final main = <ModelRequest>[];
+      final sub = <ModelRequest>[];
+      h.model.route = (request) {
+        if (!jsonEncode((request.body['messages'] as List).first)
+            .contains('SUB:')) {
+          main.add(request);
+          return null;
+        }
+        sub.add(request);
+        return Reply.text('found');
+      };
+      h.model.script.addAll([
+        Reply.tool('Agent', {
+          'description': 'Look',
+          'prompt': 'SUB: look',
+          'subagent_type': 'Explore',
+          'run_in_background': false,
+        }),
+        Reply.tool('Agent', {
+          'description': 'Plan',
+          'prompt': 'SUB: plan',
+          'subagent_type': 'Plan',
+          'model': 'haiku',
+          'run_in_background': false,
+        }),
+        Reply.text('done'),
+      ]);
+      await h.turn('go');
+      expect([for (final r in sub) r.model], ['sub-model', 'sub-model']);
+      final agent = (main.first.body['tools'] as List)
+          .cast<Map<String, Object?>>()
+          .firstWhere((tool) => tool['name'] == 'Agent');
+      expect(
+        (agent['input_schema'] as Map)['properties'] as Map,
+        isNot(contains('model')),
+      );
+      expect('${agent['description']}', contains('there is none to pick'));
+    });
+
+    test('unforced, inherit stands: Explore on the session\'s model', () async {
+      h = await Harness.start(
+        environment: {'CLAUDE_CODE_SUBAGENT_MODEL': 'sub-model'},
+      );
+      final sub = <ModelRequest>[];
+      h.model.route = (request) {
+        if (!jsonEncode((request.body['messages'] as List).first)
+            .contains('SUB:')) {
+          return null;
+        }
+        sub.add(request);
+        return Reply.text('found');
+      };
+      h.model.script.addAll([
+        Reply.tool('Agent', {
+          'description': 'Look',
+          'prompt': 'SUB: look',
+          'subagent_type': 'Explore',
+          'run_in_background': false,
+        }),
+        Reply.text('done'),
+      ]);
+      await h.turn('go');
+      expect(sub.single.model, isNot('sub-model'));
+    });
+
     test('stopped with the turn', () async {
       h = await Harness.start();
       h.model.delay = const Duration(milliseconds: 200);
@@ -215,7 +349,11 @@ void main() {
           ? Reply.text('a long answer that takes a while to come')
           : null;
       h.model.script.addAll([
-        Reply.tool('Agent', {'description': 'Slow', 'prompt': 'SUB: slow'}),
+        Reply.tool('Agent', {
+          'description': 'Slow',
+          'prompt': 'SUB: slow',
+          'run_in_background': false,
+        }),
       ]);
       final idle = h.nextIdle();
       h.send('go');
@@ -230,67 +368,54 @@ void main() {
   });
 
   group('compaction', () {
-    test('a PreCompact hook adds to the instructions; todos and the plan carried over', () async {
-      final bin = Directory.systemTemp
-          .createTempSync('hooks_')
-          .resolveSymbolicLinksSync();
-      addTearDown(() => Directory(bin).deleteSync(recursive: true));
-      final hook = File(p.join(bin, 'pre.sh'))
-        ..writeAsStringSync('#!/bin/sh\necho "Keep the API notes."\n');
-      Process.runSync('chmod', ['+x', hook.path]);
-      h = await Harness.start(
-        permissionMode: 'plan',
-        settings: {
-          'hooks': {
-            'PreCompact': [
-              {
-                'matcher': 'manual',
-                'hooks': [
-                  {'type': 'command', 'command': hook.path},
-                ],
-              },
-            ],
-          },
-        },
-      );
-      h.model.script.add(Reply.text('looking'));
-      await h.turn('plan');
-      final plan = RegExp(r'write it to ([^ ]+\.md)')
-          .firstMatch(sentIn(h.model.turns.first))![1]!;
-      h.model.script.addAll([
-        Reply.tools([
-          ('Write', {'file_path': plan, 'content': '# Plan'}),
-          (
-            'TodoWrite',
-            {
-              'todos': [
+    test(
+      'a PreCompact hook adds to the instructions; the plan carried over',
+      () async {
+        final bin = Directory.systemTemp
+            .createTempSync('hooks_')
+            .resolveSymbolicLinksSync();
+        addTearDown(() => Directory(bin).deleteSync(recursive: true));
+        final hook = File(p.join(bin, 'pre.sh'))
+          ..writeAsStringSync('#!/bin/sh\necho "Keep the API notes."\n');
+        Process.runSync('chmod', ['+x', hook.path]);
+        h = await Harness.start(
+          permissionMode: 'plan',
+          settings: {
+            'hooks': {
+              'PreCompact': [
                 {
-                  'content': 'First',
-                  'status': 'pending',
-                  'activeForm': 'Doing first',
+                  'matcher': 'manual',
+                  'hooks': [
+                    {'type': 'command', 'command': hook.path},
+                  ],
                 },
               ],
             },
-          ),
-        ]),
-        Reply.text('ok'),
-        Reply.text('<summary>Summed.</summary>'),
-      ]);
-      await h.turn('write');
-      await h.turn('/compact');
-      final summarizing = h.model.requests.lastWhere(
-        (r) =>
-            jsonEncode(r.body['system']).contains('summary of a conversation'),
-      );
-      expect(sentIn(summarizing), contains('Keep the API notes.'));
-      final summary = h
-          .of('user')
-          .lastWhere((m) => m['isCompactSummary'] == true);
-      expect(
-        jsonEncode(summary),
-        allOf(contains('[pending] First'), contains(plan)),
-      );
-    });
+          },
+        );
+        h.model.script.add(Reply.text('looking'));
+        await h.turn('plan');
+        final plan = RegExp(r'write it to ([^ ]+\.md)')
+            .firstMatch(sentIn(h.model.turns.first))![1]!;
+        h.model.script.addAll([
+          Reply.tool('Write', {'file_path': plan, 'content': '# Plan'}),
+          Reply.text('ok'),
+          Reply.text('<summary>Summed.</summary>'),
+        ]);
+        await h.turn('write');
+        await h.turn('/compact');
+        final summarizing = h.model.requests.lastWhere(
+          (r) =>
+              jsonEncode(r.body['system'])
+                  .contains('summary of a conversation'),
+        );
+        expect(sentIn(summarizing), contains('Keep the API notes.'));
+        final summary = h
+            .of('user')
+            .lastWhere((m) => m['isCompactSummary'] == true);
+        expect(jsonEncode(summary), contains(plan));
+      },
+    );
 
     test(
       'too long even to sum up: the oldest left out until it fits',
@@ -537,45 +662,27 @@ void main() {
     }
   });
 
-  test('Bash: long output cut in the middle; TaskOutput filtered; TaskStop of what is not running', () async {
-    h = await Harness.start(environment: {'BASH_MAX_OUTPUT_LENGTH': '200'});
-    h.model.script.addAll([
-      Reply.tool('Bash', {'command': 'seq 1 500', 'description': 'Count'}),
-      Reply.tool('Bash', {
-        'command': 'printf "keep 1\\ndrop\\nkeep 2\\n"',
-        'description': 'Print',
-        'run_in_background': true,
-      }, id: 'toolu_print'),
-    ]);
-    h.model.route = (request) {
-      final text = sentIn(request);
-      if (text.contains('<task-notification>')) return Reply.text('noted');
-      final id = RegExp(r'background with ID: (\w+)').firstMatch(text)?[1];
-      if (id == null) return null;
-      if (!text.contains('"name":"TaskOutput"')) {
-        return Reply.tools([
-          ('TaskOutput', {'task_id': id, 'block': true, 'filter': '^keep'}),
-          ('TaskOutput', {'task_id': id, 'filter': '('}),
+  test(
+    'Bash: long output cut in the middle; TaskStop of what is not running',
+    () async {
+      h = await Harness.start(environment: {'BASH_MAX_OUTPUT_LENGTH': '200'});
+      h.model.script.addAll([
+        Reply.tool('Bash', {'command': 'seq 1 500', 'description': 'Count'}),
+        Reply.tools([
           ('TaskStop', {'task_id': 'b-none'}),
           ('TaskStop', {}),
-        ]);
-      }
-      return null;
-    };
-    h.model.script.add(Reply.text('done'));
-    await h.turn('go');
-    final results = h.toolResults;
-    expect(
-      '${results[0]['content']}',
-      allOf(contains('lines truncated'), startsWith('1\n'), endsWith('500')),
-    );
-    final [filtered, invalid, none, missing] = results.sublist(2, 6);
-    expect(
-      '${filtered['content']}',
-      allOf(contains('keep 1'), contains('keep 2'), isNot(contains('drop'))),
-    );
-    expect('${invalid['content']}', contains('Invalid filter'));
-    expect('${none['content']}', contains('No task found'));
-    expect(missing['is_error'], isTrue);
-  });
+        ]),
+        Reply.text('done'),
+      ]);
+      await h.turn('go');
+      final results = h.toolResults;
+      expect(
+        '${results[0]['content']}',
+        allOf(contains('lines truncated'), startsWith('1\n'), endsWith('500')),
+      );
+      final [none, missing] = results.sublist(1, 3);
+      expect('${none['content']}', contains('No task found'));
+      expect(missing['is_error'], isTrue);
+    },
+  );
 }

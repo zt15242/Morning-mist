@@ -28,8 +28,10 @@ import 'dart:async';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:path/path.dart' as p;
 
 import '../../chat/chat_models.dart' show CommandStatus;
+import '../../keybindings/keybinding_service.dart';
 import '../../kernel/kernel_types.dart';
 import '../../l10n/l10n.dart';
 import '../../theme/app_theme.dart';
@@ -65,29 +67,84 @@ String? terminalKeyLabel(List<IdeKeybinding> bindings) {
   return null;
 }
 
-/// A tab's context menu: Rename..., then Kill Terminal ([onKill] where
-/// given); in [l10n]'s language (English when null).
+/// [folder]'s name among a workspace's [folders]: its own, else (two of
+/// them named alike) its path.
+String terminalFolderName(String folder, List<String> folders) {
+  final name = p.basename(folder);
+  final alike = folders.where((each) => p.basename(each) == name);
+  return alike.length > 1 ? folder : name;
+}
+
+/// New Terminal in a workspace of several [folders]: which one it starts
+/// in, as VS Code's multi-root workspace asks.
+List<IdeMenuEntry> terminalFolderMenu(
+  List<String> folders,
+  ValueChanged<String> onPick,
+) => [
+  for (final folder in folders)
+    IdeMenuAction(
+      terminalFolderName(folder, folders),
+      icon: const Icon(Codicons.folder),
+      onSelected: () => onPick(folder),
+    ),
+];
+
+/// A tab's context menu: New Terminal ([onNew] where given); Rename...
+/// ([onRename], else in place); Clear; then Kill Terminal, the others and
+/// all of them ([onKill] each, where given); in [l10n]'s language
+/// (English when null).
 List<IdeMenuEntry> terminalTabMenu(
   TerminalService terminals,
   TerminalInstance instance, {
   AppLocalizations? l10n,
   ValueChanged<TerminalInstance>? onKill,
-}) => ideMenuGroups([
-  [
-    IdeMenuAction(
-      (l10n ?? englishLocalizations).termRename,
-      keybinding: terminalKeyLabel(TerminalTabKeys.rename),
-      onSelected: () => terminals.startRename(instance),
-    ),
-  ],
-  [
-    IdeMenuAction(
-      (l10n ?? englishLocalizations).termKillTerminal,
-      keybinding: terminalKeyLabel(TerminalTabKeys.kill),
-      onSelected: () => (onKill ?? terminals.kill)(instance),
-    ),
-  ],
-]);
+  VoidCallback? onNew,
+  VoidCallback? onRename,
+}) {
+  final strings = l10n ?? englishLocalizations;
+  final kill = onKill ?? (each) => terminals.kill(each);
+  final others = [
+    for (final each in terminals.instances)
+      if (each != instance) each,
+  ];
+  return ideMenuGroups([
+    [
+      if (onNew != null)
+        IdeMenuAction(
+          strings.termNewTerminal,
+          keybinding: KeybindingService.instance.labelFor(
+            'workbench.action.terminal.new',
+          ),
+          onSelected: onNew,
+        ),
+    ],
+    [
+      IdeMenuAction(
+        strings.termRename,
+        keybinding: terminalKeyLabel(TerminalTabKeys.rename),
+        onSelected: onRename ?? () => terminals.startRename(instance),
+      ),
+      IdeMenuAction(strings.termClear, onSelected: instance.clearBuffer),
+    ],
+    [
+      IdeMenuAction(
+        strings.termKillTerminal,
+        keybinding: terminalKeyLabel(TerminalTabKeys.kill),
+        onSelected: () => kill(instance),
+      ),
+      IdeMenuAction(
+        strings.termKillOtherTerminals,
+        enabled: others.isNotEmpty,
+        onSelected: () => others.forEach(kill),
+      ),
+      IdeMenuAction(
+        strings.termKillAllTerminals,
+        enabled: others.isNotEmpty,
+        onSelected: () => [...others, instance].forEach(kill),
+      ),
+    ],
+  ]);
+}
 
 /// The marker of a terminal whose process ended and that stays to say why:
 /// VS Code's error status, as a failed task's tab has it.
@@ -143,6 +200,7 @@ class TerminalTabs extends StatefulWidget {
     this.shownTask,
     this.onShowTask,
     this.onStopTask,
+    this.onClearTasks,
     this.grouped = false,
     this.selected,
     this.onOpen,
@@ -169,6 +227,10 @@ class TerminalTabs extends StatefulWidget {
   /// Shows a command's output (by its id), or the active terminal (null).
   final ValueChanged<String?>? onShowTask;
   final ValueChanged<KernelTask>? onStopTask;
+
+  /// Takes commands that have ended off the list: one from its row, all
+  /// of them from the group's; not offered when null.
+  final ValueChanged<List<KernelTask>>? onClearTasks;
 
   /// In a group each, the terminals and the commands, without any command
   /// too (the side panel's).
@@ -310,8 +372,29 @@ class _TerminalTabsState extends State<TerminalTabs> {
     );
   }
 
+  /// The commands that have ended (done, failed, stopped).
+  List<KernelTask> get _ended => [
+    for (final task in widget.tasks)
+      if (task.status != CommandStatus.running) task,
+  ];
+
+  /// What clears the commands that have ended, where any have.
+  List<IdeMenuEntry> _clearEnded() {
+    final clear = widget.onClearTasks;
+    final ended = _ended;
+    if (clear == null || ended.isEmpty) return const [];
+    return [
+      IdeMenuAction(
+        context.l10n.termClearEndedTasks,
+        onSelected: () => clear(ended),
+      ),
+    ];
+  }
+
   Widget _taskRow(KernelTask task) {
     final l10n = context.l10n;
+    final clear = widget.onClearTasks;
+    final running = task.status == CommandStatus.running;
     return IdeListRow(
       key: ValueKey(('task', task.id)),
       selected: widget.onOpen == null
@@ -326,16 +409,20 @@ class _TerminalTabsState extends State<TerminalTabs> {
       },
       onContextMenu: (position) {
         final stop = widget.onStopTask;
-        if (stop == null || task.status != CommandStatus.running) return;
-        unawaited(
-          showIdeMenu(
-            context,
-            position: position,
-            entries: [
+        final entries = ideMenuGroups([
+          [
+            if (stop != null && running)
               IdeMenuAction(l10n.chatStop, onSelected: () => stop(task)),
-            ],
-          ),
-        );
+            if (clear != null && !running)
+              IdeMenuAction(
+                l10n.termClearTask,
+                onSelected: () => clear([task]),
+              ),
+          ],
+          _clearEnded(),
+        ]);
+        if (entries.isEmpty) return;
+        unawaited(showIdeMenu(context, position: position, entries: entries));
       },
       builder: (context, hovered) => Padding(
         padding: const EdgeInsets.only(left: 26, right: 8),
@@ -344,6 +431,14 @@ class _TerminalTabsState extends State<TerminalTabs> {
             TerminalTaskIcon(task),
             const SizedBox(width: 6),
             Expanded(child: IdeResourceLabel(name: task.description)),
+            if (clear != null && !running && hovered)
+              IdeActionButton(
+                icon: Codicons.close,
+                size: 20,
+                iconSize: 14,
+                tooltip: l10n.termClearTask,
+                onPressed: () => clear([task]),
+              ),
           ],
         ),
       ),
@@ -469,6 +564,18 @@ class _TerminalTabsState extends State<TerminalTabs> {
                   Codicons.serverProcess,
                   l10n.sidePanelBackgroundTasks,
                   tasks.length,
+                  menu: _clearEnded(),
+                  actions: [
+                    if (widget.onClearTasks case final clear?
+                        when _ended.isNotEmpty)
+                      IdeActionButton(
+                        key: const ValueKey('terminal-tabs-clear-ended'),
+                        icon: Codicons.clearAll,
+                        size: 20,
+                        tooltip: l10n.termClearEndedTasks,
+                        onPressed: () => clear(_ended),
+                      ),
+                  ],
                 ),
                 if (!_folded.contains('tasks'))
                   if (tasks.isEmpty)

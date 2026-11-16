@@ -122,6 +122,9 @@ LONG HeightOf(const RECT& rect) {
 #ifndef DWMWA_SYSTEMBACKDROP_TYPE
 #define DWMWA_SYSTEMBACKDROP_TYPE 38
 #endif
+#ifndef DWMSBT_NONE
+#define DWMSBT_NONE 1
+#endif
 #ifndef DWMSBT_TRANSIENTWINDOW
 #define DWMSBT_TRANSIENTWINDOW 3
 #endif
@@ -143,6 +146,29 @@ constexpr const wchar_t kGetPreferredBrightnessRegValue[] = L"AppsUseLightTheme"
 // The number of Win32Window objects that currently exist.
 static int g_active_window_count = 0;
 static std::optional<bool> g_dark_appearance;
+
+/// Where the windows' blur is kept (SetWindowBlur), as the app's other
+/// words for the next start (see app_windows.cpp).
+constexpr wchar_t kSettingsKey[] = L"Software\\BaoCode";
+constexpr wchar_t kWindowBlurValue[] = L"WindowBlur";
+static std::optional<bool> g_window_blur;
+
+// Whether the windows are blurred underneath: as the app last said, else
+// as the last run left it; not the first time.
+bool WindowBlurred() {
+  if (g_window_blur.has_value()) {
+    return *g_window_blur;
+  }
+  DWORD blurred = 0;
+  DWORD size = sizeof(blurred);
+  if (::RegGetValueW(HKEY_CURRENT_USER, kSettingsKey, kWindowBlurValue,
+                     RRF_RT_REG_DWORD, nullptr, &blurred,
+                     &size) != ERROR_SUCCESS) {
+    blurred = 0;
+  }
+  g_window_blur = blurred != 0;
+  return *g_window_blur;
+}
 
 using EnableNonClientDpiScaling = BOOL __stdcall(HWND hwnd);
 
@@ -191,8 +217,8 @@ DWORD WindowsBuild() {
 
 // Acrylic, on the Windows 11 builds that have no backdrop attribute yet:
 // the undocumented composition policy. The tint is the app's own dark, in
-// the policy's AABBGGRR.
-void AskForAccentAcrylic(HWND window) {
+// the policy's AABBGGRR. Not [blurred], none.
+void AskForAccentAcrylic(HWND window, bool blurred) {
   using SetWindowCompositionAttributePtr =
       BOOL(WINAPI*)(HWND, void*);
   struct AccentPolicy {
@@ -215,8 +241,10 @@ void AskForAccentAcrylic(HWND window) {
   if (set_attribute == nullptr) {
     return;
   }
-  // ACCENT_ENABLE_ACRYLICBLURBEHIND, and the flag that tints it.
-  AccentPolicy policy = {4, 2, 0xCC181818, 0};
+  // ACCENT_ENABLE_ACRYLICBLURBEHIND, and the flag that tints it; or
+  // ACCENT_DISABLED.
+  AccentPolicy policy = blurred ? AccentPolicy{4, 2, 0xCC181818, 0}
+                                : AccentPolicy{0, 0, 0, 0};
   CompositionAttribute data = {19, &policy, sizeof(policy)};
   set_attribute(window, &data);
 }
@@ -240,7 +268,11 @@ void AskForSystemFrame(HWND window) {
   // Windows rounds the corners of a window whose frame it draws, of its own
   // accord only while the frame is the whole of the window's edge (see
   // above), so it is asked for them.
-  const int corners = DWMWCP_ROUND;
+  // Full screen, the window's corners are the screen's.
+  const Win32Window* that = Win32Window::GetThisFromHandle(window);
+  const int corners = that != nullptr && that->IsFullScreen()
+                          ? DWMWCP_DONOTROUND
+                          : DWMWCP_ROUND;
   ::DwmSetWindowAttribute(window, DWMWA_WINDOW_CORNER_PREFERENCE, &corners,
                           sizeof(corners));
   if (!acrylic) {
@@ -262,12 +294,14 @@ void AskForSystemFrame(HWND window) {
       has_theme ? apps_use_light_theme == 0 : false);
   const COLORREF border = dark ? 0x002C2C2C : 0x00D6D6D6;
   ::DwmSetWindowAttribute(window, DWMWA_BORDER_COLOR, &border, sizeof(border));
+  // None while the app paints the window opaque (SetWindowBlur).
+  const bool blurred = WindowBlurred();
   if (build >= kSystemBackdropBuild) {
-    const int backdrop = DWMSBT_TRANSIENTWINDOW;
+    const int backdrop = blurred ? DWMSBT_TRANSIENTWINDOW : DWMSBT_NONE;
     ::DwmSetWindowAttribute(window, DWMWA_SYSTEMBACKDROP_TYPE, &backdrop,
                             sizeof(backdrop));
   } else {
-    AskForAccentAcrylic(window);
+    AskForAccentAcrylic(window, blurred);
   }
 }
 
@@ -459,10 +493,11 @@ Win32Window::MessageHandler(HWND hwnd,
 
     case WM_GETMINMAXINFO: {
       // At the dpi the window has now, with the frame it has (see
-      // NonClientSize): the sides and the bottom, no top.
+      // NonClientSize): the sides and the bottom, no top; none when the
+      // border is inside.
       if (minimum_size_.width > 0 && minimum_size_.height > 0) {
         const double scale = FlutterDesktopGetDpiForHWND(hwnd) / 96.0;
-        const SIZE border = ResizeBorder();
+        const SIZE border = frame_inside_ ? SIZE{0, 0} : ResizeBorder();
         auto* info = reinterpret_cast<MINMAXINFO*>(lparam);
         info->ptMinTrackSize.x =
             static_cast<LONG>(minimum_size_.width * scale) + 2 * border.cx;
@@ -477,6 +512,13 @@ Win32Window::MessageHandler(HWND hwnd,
         return *size;
       }
       break;
+
+    case WM_WINDOWPOSCHANGED: {
+      // Sized and moved (WM_SIZE, WM_MOVE) first, then looked at.
+      const LRESULT result = DefWindowProc(hwnd, message, wparam, lparam);
+      CheckFrameShown();
+      return result;
+    }
 
     case WM_DWMCOLORIZATIONCOLORCHANGED:
       UpdateTheme(hwnd);
@@ -518,6 +560,45 @@ void Win32Window::SetChildContent(HWND content) {
   AskForSystemFrame(window_handle_);
 
   SetFocus(child_content_);
+}
+
+void Win32Window::SetFullScreen(bool full_screen) {
+  const HWND window = window_handle_;
+  if (window == nullptr || full_screen == full_screen_) {
+    return;
+  }
+  // The window's own frame goes (the resize border, the caption buttons'
+  // styles) and comes back, as in "How do I switch a window between normal
+  // and fullscreen?" (The Old New Thing); the placement keeps whether it
+  // was maximized, and where it was restored to.
+  constexpr LONG_PTR kFrame = WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX;
+  const LONG_PTR style = ::GetWindowLongPtrW(window, GWL_STYLE);
+  if (full_screen) {
+    MONITORINFO monitor = {};
+    monitor.cbSize = sizeof(monitor);
+    restore_ = {};
+    restore_.length = sizeof(restore_);
+    if (!::GetWindowPlacement(window, &restore_) ||
+        !::GetMonitorInfoW(::MonitorFromWindow(window, MONITOR_DEFAULTTONEAREST),
+                           &monitor)) {
+      return;
+    }
+    full_screen_ = true;
+    frame_styles_ = style & kFrame;
+    ::SetWindowLongPtrW(window, GWL_STYLE, style & ~kFrame);
+    const RECT& screen = monitor.rcMonitor;
+    ::SetWindowPos(window, HWND_TOP, screen.left, screen.top,
+                   screen.right - screen.left, screen.bottom - screen.top,
+                   SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
+  } else {
+    full_screen_ = false;
+    ::SetWindowLongPtrW(window, GWL_STYLE, style | frame_styles_);
+    ::SetWindowPlacement(window, &restore_);
+    ::SetWindowPos(window, nullptr, 0, 0, 0, 0,
+                   SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOOWNERZORDER |
+                       SWP_FRAMECHANGED);
+  }
+  AskForSystemFrame(window);
 }
 
 RECT Win32Window::GetClientArea() {
@@ -622,6 +703,20 @@ void Win32Window::SetMinimumSize(const Size& size) {
   minimum_size_ = size;
 }
 
+void Win32Window::SetWindowBlur(bool blurred) {
+  g_window_blur = blurred;
+  const DWORD kept = blurred ? 1 : 0;
+  ::RegSetKeyValueW(HKEY_CURRENT_USER, kSettingsKey, kWindowBlurValue,
+                    REG_DWORD, &kept, sizeof(kept));
+  EnumThreadWindows(
+      GetCurrentThreadId(),
+      [](HWND window, LPARAM) -> BOOL {
+        AskForSystemFrame(window);
+        return TRUE;
+      },
+      0);
+}
+
 void Win32Window::SetDarkAppearance(bool dark) {
   g_dark_appearance = dark;
   EnumThreadWindows(
@@ -664,6 +759,12 @@ std::optional<LRESULT> Win32Window::NonClientSize(WPARAM wparam,
     client->bottom = client->top;
     return 0;
   }
+  if (full_screen_) {
+    // All of it, the monitor's whole rectangle (see SetFullScreen): a
+    // window maximized before stays so underneath, and would otherwise be
+    // kept to the work area.
+    return 0;
+  }
   if (::IsZoomed(window_handle_)) {
     // The monitor of the rectangle proposed, not of the window: the window
     // is still where it was. Restored from minimized, that is off every
@@ -680,6 +781,9 @@ std::optional<LRESULT> Win32Window::NonClientSize(WPARAM wparam,
     }
     return 0;
   }
+  if (frame_inside_) {
+    return 0;
+  }
   const SIZE border = ResizeBorder();
   client->left += border.cx;
   client->right -= border.cx;
@@ -687,13 +791,50 @@ std::optional<LRESULT> Win32Window::NonClientSize(WPARAM wparam,
   return 0;
 }
 
+void Win32Window::CheckFrameShown() {
+  const HWND window = window_handle_;
+  if (frame_inside_ || full_screen_ || window == nullptr ||
+      !::IsWindowVisible(window) || ::IsZoomed(window) || ::IsIconic(window)) {
+    return;
+  }
+  RECT bounds = {};
+  RECT frame = {};
+  if (!::GetWindowRect(window, &bounds) ||
+      FAILED(::DwmGetWindowAttribute(window, DWMWA_EXTENDED_FRAME_BOUNDS,
+                                     &frame, sizeof(frame))) ||
+      WidthOf(frame) <= 0 || HeightOf(frame) <= 0 ||
+      // Nothing said of the frame (not yet): no telling.
+      ::EqualRect(&frame, &bounds)) {
+    return;
+  }
+  // What DWM leaves out of the border at each side is its invisible part;
+  // the rest it shows, the outline its last pixel.
+  const SIZE border = ResizeBorder();
+  const LONG shown = std::max({border.cx - (frame.left - bounds.left),
+                               border.cx - (bounds.right - frame.right),
+                               border.cy - (bounds.bottom - frame.bottom)});
+  if (shown <= 1) {
+    return;
+  }
+  LogContent(
+      "frame: DWM shows %ld px of the %ld px border outside the client "
+      "(window %ld,%ld,%ld,%ld; shown %ld,%ld,%ld,%ld): border inside",
+      shown, border.cx, bounds.left, bounds.top, bounds.right, bounds.bottom,
+      frame.left, frame.top, frame.right, frame.bottom);
+  frame_inside_ = true;
+  ::SetWindowPos(window, nullptr, 0, 0, 0, 0,
+                 SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER |
+                     SWP_NOACTIVATE);
+}
+
 std::optional<LRESULT> Win32Window::ResizeHitTest(const POINT& point) const {
   if (window_handle_ == nullptr) {
     return std::nullopt;
   }
   // Maximized, the header drags the window back down instead (the system
-  // does that itself for HTCAPTION), and there is no border to grab.
-  if (::IsZoomed(window_handle_)) {
+  // does that itself for HTCAPTION), and there is no border to grab; nor
+  // is there full screen.
+  if (::IsZoomed(window_handle_) || full_screen_) {
     return std::nullopt;
   }
   RECT client = {};
@@ -703,12 +844,14 @@ std::optional<LRESULT> Win32Window::ResizeHitTest(const POINT& point) const {
   const SIZE border = ResizeBorder();
   // The top is a strip of the client (there is no frame above it), and its
   // corners reach in as far as the sides' border reaches out; the sides and
-  // the bottom are the frame, outside the client.
+  // the bottom are the frame, outside the client — or strips of it as well,
+  // where the border is inside (see frame_inside_).
   const bool top = point.y < border.cy;
-  const LONG corner = top ? border.cx : 0;
-  const bool left = point.x < corner;
-  const bool right = point.x >= client.right - corner;
-  const bool bottom = point.y >= client.bottom;
+  const LONG side = (top || frame_inside_) ? border.cx : 0;
+  const bool left = point.x < side;
+  const bool right = point.x >= client.right - side;
+  const bool bottom =
+      point.y >= client.bottom - (frame_inside_ ? border.cy : 0);
   if (left && top) {
     return HTTOPLEFT;
   }

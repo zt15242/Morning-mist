@@ -8,6 +8,7 @@ import 'package:baocode/chat/chat_history_view.dart';
 import 'package:baocode/chat/chat_models.dart';
 import 'package:baocode/chat/chat_session.dart';
 import 'package:baocode/chat/composer/composer_draft.dart';
+import 'package:baocode/chat/widgets/step_header.dart';
 import 'package:baocode/theme/app_theme.dart';
 import 'package:super_sliver_list/super_sliver_list.dart';
 
@@ -68,7 +69,7 @@ class _Feed extends ChangeNotifier implements ChatFeed {
   @override
   set editing(({int index, ComposerDraft draft})? value) {}
   @override
-  void editMessage(int index, ComposerMessage message) {}
+  void editMessage(int index, ComposerMessage message, {UserPlace? from}) {}
   @override
   VoidCallback? moveToBackgroundAt(int index) => null;
   @override
@@ -445,6 +446,140 @@ void main() {
     expect(copied, answer);
   });
 
+  testWidgets('a drag on the text below a code block, begun left of the '
+      'code, selects that text alone', (tester) async {
+    const after = 'The parser drops the last token.';
+    final feed = _Feed([
+      const UserMessageItem(text: 'Why does it fail?'),
+      const AssistantTextItem(
+        'It reads:\n\n```dart\nfinal token = next(); // the last one\n```'
+        '\n\n$after',
+      ),
+    ])..streaming = false;
+    addTearDown(feed.dispose);
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildAppTheme(),
+        home: Scaffold(body: ChatHistoryView(feed: feed)),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final delegate = tester
+        .widgetList<SelectionContainer>(
+          find.ancestor(
+            of: find.byType(SuperListView),
+            matching: find.byType(SelectionContainer),
+          ),
+        )
+        .map((container) => container.delegate)
+        .whereType<StaticSelectionContainerDelegate>()
+        .first;
+    RenderParagraph paragraphOf(String text) =>
+        tester.renderObject<RenderParagraph>(
+          find.byWidgetPredicate(
+            (widget) =>
+                widget is RichText &&
+                widget.text.toPlainText().startsWith(text),
+          ),
+        );
+    final paragraph = paragraphOf(after);
+    final from = paragraph.localToGlobal(const Offset(0.5, 6));
+    // The text begins left of the code (past its line numbers).
+    expect(
+      from.dx,
+      lessThan(paragraphOf('final token').localToGlobal(Offset.zero).dx),
+    );
+
+    final mouse = await tester.startGesture(
+      from,
+      kind: PointerDeviceKind.mouse,
+    );
+    await tester.pump();
+    await mouse.moveTo(
+      paragraph.localToGlobal(Offset(paragraph.size.width - 0.5, 6)),
+    );
+    await tester.pump();
+    await mouse.up();
+    await tester.pump();
+    expect(tester.takeException(), isNull);
+    expect(delegate.getSelectedContent()?.plainText, after);
+  });
+
+  testWidgets('a release the list did not see (the button let go outside '
+      'the window) ends the drag: the wheel then leaves the selection', (
+    tester,
+  ) async {
+    String? copied;
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    messenger.setMockMethodCallHandler(SystemChannels.platform, (call) async {
+      if (call.method == 'Clipboard.setData') {
+        copied = (call.arguments as Map)['text'] as String;
+      }
+      return null;
+    });
+    addTearDown(
+      () => messenger.setMockMethodCallHandler(SystemChannels.platform, null),
+    );
+    final feed = _Feed([
+      for (var n = 0; n < 30; n++) ...[
+        UserMessageItem(text: 'Question $n?'),
+        AssistantTextItem('Answer $n, a line of its own.'),
+      ],
+    ])..streaming = false;
+    addTearDown(feed.dispose);
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildAppTheme(),
+        home: Scaffold(body: ChatHistoryView(feed: feed)),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    const answer = 'Answer 27, a line of its own.';
+    final paragraph = tester.renderObject<RenderParagraph>(
+      find.byWidgetPredicate(
+        (widget) => widget is RichText && widget.text.toPlainText() == answer,
+      ),
+    );
+    final end = paragraph.localToGlobal(
+      Offset(paragraph.size.width - 0.5, paragraph.size.height / 2),
+    );
+    final mouse = await tester.startGesture(
+      paragraph.localToGlobal(Offset(0.5, paragraph.size.height / 2)),
+      kind: PointerDeviceKind.mouse,
+    );
+    await tester.pump();
+    await mouse.moveTo(end);
+    await tester.pump();
+    // No release comes; the mouse moves on with no button down.
+    tester.binding.handlePointerEvent(
+      PointerHoverEvent(
+        position: end,
+        kind: PointerDeviceKind.mouse,
+        device: 1,
+      ),
+    );
+    await tester.pump();
+    tester.binding.handlePointerEvent(
+      PointerScrollEvent(
+        position: end,
+        kind: PointerDeviceKind.mouse,
+        device: 1,
+        scrollDelta: const Offset(0, -300),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pump(const Duration(milliseconds: 300));
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.metaLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyC);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.metaLeft);
+    await tester.pump();
+    expect(copied, answer);
+  });
+
   testWidgets('Select All copies the whole conversation, not only what is '
       'built of it', (tester) async {
     String? copied;
@@ -618,4 +753,187 @@ void main() {
       expect(tester.takeException(), isNull);
     }
   });
+
+  testWidgets('text below an open diff with a line cut short is '
+      'selectable', (tester) async {
+    const answer = 'The parser drops the last token.';
+    final feed = _Feed([
+      const UserMessageItem(text: 'Fix the parser.'),
+      CodeDiffItem(
+        fileName: 'parser.dart',
+        directory: 'lib',
+        lines: [
+          for (var i = 1; i <= 20; i++)
+            DiffLine(
+              i.isEven ? DiffLineType.added : DiffLineType.context,
+              i,
+              // Wider than the diff: cut short with an ellipsis.
+              i == 3 ? 'final token = ${'x' * 300};' : 'line $i',
+            ),
+        ],
+      ),
+      const AssistantTextItem(answer),
+    ])..streaming = false;
+    addTearDown(feed.dispose);
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildAppTheme(),
+        home: Scaffold(body: ChatHistoryView(feed: feed)),
+      ),
+    );
+    await tester.pumpAndSettle();
+    // The diff's card, taller than its box: what it scrolls to lies below
+    // it, under the answer.
+    expect(find.byType(StepBody), findsOneWidget);
+
+    final paragraph = tester.renderObject<RenderParagraph>(
+      find.byWidgetPredicate(
+        (widget) => widget is RichText && widget.text.toPlainText() == answer,
+      ),
+    );
+    final mouse = await tester.startGesture(
+      paragraph.localToGlobal(Offset(0.5, paragraph.size.height / 2)),
+      kind: PointerDeviceKind.mouse,
+    );
+    await tester.pump();
+    await mouse.moveTo(
+      paragraph.localToGlobal(
+        Offset(paragraph.size.width - 0.5, paragraph.size.height / 2),
+      ),
+    );
+    await tester.pump();
+    // Selected as it is dragged, not only by the history's retry.
+    expect(paragraph.selections.any((s) => !s.isCollapsed), isTrue);
+    await mouse.up();
+    await tester.pump();
+    expect(tester.takeException(), isNull);
+  }, variant: TargetPlatformVariant.desktop());
+
+  testWidgets('a drag in an edit card\'s editor leaves the conversation\'s '
+      'selection as it was', (tester) async {
+    const answer = 'The parser drops the last token.';
+    final feed = _Feed([
+      const UserMessageItem(text: 'Fix the parser.'),
+      CodeDiffItem(
+        fileName: 'parser.dart',
+        directory: 'lib',
+        lines: [
+          for (var i = 1; i <= 20; i++)
+            DiffLine(
+              i.isEven ? DiffLineType.added : DiffLineType.context,
+              i,
+              'line $i',
+            ),
+        ],
+      ),
+      const AssistantTextItem(answer),
+    ])..streaming = false;
+    addTearDown(feed.dispose);
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildAppTheme(),
+        home: Scaffold(body: ChatHistoryView(feed: feed)),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final paragraph = tester.renderObject<RenderParagraph>(
+      find.byWidgetPredicate(
+        (widget) => widget is RichText && widget.text.toPlainText() == answer,
+      ),
+    );
+    Future<void> drag(Offset from, Offset to) async {
+      final mouse = await tester.startGesture(
+        from,
+        kind: PointerDeviceKind.mouse,
+      );
+      await tester.pump();
+      await mouse.moveTo(to);
+      await tester.pump();
+      await mouse.up();
+      await tester.pump(const Duration(milliseconds: 500));
+    }
+
+    final middle = paragraph.size.height / 2;
+    final editor = tester.getRect(find.byType(StepBody));
+    final below = paragraph.localToGlobal(
+      Offset(paragraph.size.width / 2, middle + 40),
+    );
+    // From the editor's lines out past the answer: the editor's selection,
+    // not the conversation's.
+    await drag(editor.center, below);
+    expect(paragraph.selections.where((s) => !s.isCollapsed), isEmpty);
+
+    // Nor does it clear one.
+    await drag(
+      paragraph.localToGlobal(Offset(0.5, middle)),
+      paragraph.localToGlobal(Offset(paragraph.size.width - 0.5, middle)),
+    );
+    final selected = paragraph.selections;
+    expect(selected.any((s) => !s.isCollapsed), isTrue);
+
+    await drag(editor.center, below);
+    expect(paragraph.selections, selected);
+    expect(tester.takeException(), isNull);
+  }, variant: TargetPlatformVariant.desktop());
+
+  for (final composerFirst in [false, true]) {
+    testWidgets('a drag on text holds as something else takes the focus '
+        '(the composer focused first: $composerFirst)', (tester) async {
+      const answer = 'The parser drops the last token of every line.';
+      final feed = _Feed([
+        const UserMessageItem(text: 'Fix the parser.'),
+        const AssistantTextItem(answer),
+      ])..streaming = false;
+      addTearDown(feed.dispose);
+      final elsewhere = FocusNode();
+      addTearDown(elsewhere.dispose);
+      // In use: a selection losing the focus is cleared only then.
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: buildAppTheme(),
+          home: Scaffold(
+            body: Column(
+              children: [
+                Expanded(child: ChatHistoryView(feed: feed)),
+                // A panel come up meanwhile, taking the focus (a question's).
+                Focus(focusNode: elsewhere, child: const SizedBox(height: 40)),
+              ],
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      if (composerFirst) {
+        elsewhere.requestFocus();
+        await tester.pump();
+      }
+
+      final paragraph = tester.renderObject<RenderParagraph>(
+        find.byWidgetPredicate(
+          (widget) => widget is RichText && widget.text.toPlainText() == answer,
+        ),
+      );
+      Offset at(double x) =>
+          paragraph.localToGlobal(Offset(x, paragraph.size.height / 2));
+      final mouse = await tester.startGesture(
+        at(0.5),
+        kind: PointerDeviceKind.mouse,
+      );
+      await tester.pump();
+      await mouse.moveTo(at(paragraph.size.width / 3));
+      await tester.pump();
+      elsewhere.requestFocus();
+      await tester.pump();
+      await mouse.moveTo(at(paragraph.size.width - 0.5));
+      await tester.pump();
+      expect(paragraph.selections.any((s) => !s.isCollapsed), isTrue);
+      await mouse.up();
+      await tester.pump();
+      expect(paragraph.selections.any((s) => !s.isCollapsed), isTrue);
+      // Focused again, for the keys to copy it.
+      expect(elsewhere.hasFocus, isFalse);
+      expect(tester.takeException(), isNull);
+    }, variant: TargetPlatformVariant.desktop());
+  }
 }

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
@@ -5,17 +7,20 @@ import 'package:flutter/scheduler.dart';
 import '../../chat/chat_keys.dart';
 import '../../chat/side_panel/side_panel_view.dart' show SidePanelToggle;
 import '../../icons/project_icon_view.dart';
+import '../../ide/editor_minimap_setting.dart';
+import '../../ide/editor_word_wrap.dart';
+import '../../ide/ide_command_center.dart';
 import '../../ide/ide_hover.dart';
 import '../../ide/ide_layout.dart';
 import '../../ide/ide_modern_ui.dart';
 import '../../keybindings/chat_keybindings.dart';
 import '../../keybindings/default_keybindings.dart'
     show openSettingsCommandId, toggleAutoSaveCommandId;
+import '../../keybindings/window_keybindings.dart' show WindowCommandIds;
 import '../../l10n/l10n.dart';
 import '../../sidebar/sidebar.dart';
 import '../../theme/codicons.dart';
 import '../../theme/app_theme.dart';
-import '../../theme/workbench_theme.dart' show themeColors;
 import '../back_to_chat_button.dart';
 import '../chat_terminal.dart';
 import '../open_in_editor_button.dart';
@@ -42,21 +47,25 @@ class WindowHeader extends StatefulWidget {
     super.key,
     required this.workspace,
     required this.sidebarShown,
+    this.sidebarAtRight = false,
     required this.onToggleSidebar,
     required this.pinned,
     required this.onTogglePin,
     required this.onOpenFolder,
     required this.onToggleContextPanel,
+    this.reloadChat,
     this.terminalShown = false,
     this.onToggleTerminal,
     this.sidePanelShown = false,
     this.onToggleSidePanel,
+    this.chatTools = true,
     this.onOpenSettings,
     this.onCommand,
     this.onFileCommand,
     this.autoSave = false,
     this.project,
     this.ideLayout,
+    this.ideNavigation,
     this.ide,
     this.hasFolder,
     this.onBack,
@@ -77,12 +86,21 @@ class WindowHeader extends StatefulWidget {
   /// Whether the sidebar is shown (the toggle offers the other way).
   final bool sidebarShown;
 
+  /// The sidebar at the window's right: its toggle's icon says so.
+  final bool sidebarAtRight;
+
   /// Shows or hides the sidebar; with none (an agent's window has no
   /// sidebar), its toggle is not offered.
   final VoidCallback? onToggleSidebar;
 
   /// Over the IDE, which of its parts show, for its layout toggles.
   final IdeLayout? ideLayout;
+
+  /// Over the IDE, whether its Go Back and Go Forward have somewhere to
+  /// go: its command center's arrows, beside its search box, in the middle
+  /// of the strip as on its own title bar (#539). They run through
+  /// [onFileCommand].
+  final ValueListenable<({bool back, bool forward})>? ideNavigation;
 
   /// Whether it is over the IDE; by default, whether the workspace shows
   /// it ([Workspace.layout]). An IDE window's always is.
@@ -146,6 +164,18 @@ class WindowHeader extends StatefulWidget {
   final bool sidePanelShown;
   final VoidCallback? onToggleSidePanel;
 
+  /// Over the chat, the button that reads its conversation anew, once it
+  /// was talked in elsewhere (see [Workspace.reload]); before the
+  /// terminal's.
+  final Widget? reloadChat;
+
+  /// Whether the strip has the chat's terminal and side panel buttons: only
+  /// where it has the conversation's title, the card having no row of its
+  /// own for them; else the card's row has them, as on macOS (the menus
+  /// still toggle the focused one's). Open in Editor stays, the focused
+  /// one's project's: the window's, at its top right.
+  final bool chatTools;
+
   /// The File menu's Settings…: opens the settings dialog.
   final VoidCallback? onOpenSettings;
 
@@ -185,6 +215,7 @@ class _WindowHeaderState extends State<WindowHeader> {
   final _sidePanel = GlobalKey(debugLabel: 'header side panel');
   final _open = GlobalKey(debugLabel: 'header open in editor');
   final _back = GlobalKey(debugLabel: 'header back to chat');
+  final _center = GlobalKey(debugLabel: 'header command center');
   final _minimize = GlobalKey(debugLabel: 'window minimize');
   final _maximize = GlobalKey(debugLabel: 'window maximize');
   final _close = GlobalKey(debugLabel: 'window close');
@@ -222,10 +253,9 @@ class _WindowHeaderState extends State<WindowHeader> {
     // Windows (see WindowControls.drawsHeader), so the system draws none.
     // The same tint as the sidebar, so the material shows through the strip
     // too (on Windows 10, where there is none, that tint is opaque).
-    // Over the IDE it is the IDE's title bar: its color, no line, and the
-    // way back to the chat on the right, as on macOS. With the session's
-    // title, it is the top of the conversation.
-    final colors = themeColors;
+    // Over the IDE it is the IDE's title bar: its color, and the way back
+    // to the chat on the right, as on macOS. With the session's title, it
+    // is the top of the conversation.
     final menus = KeyedSubtree(
       key: _menus,
       child: HeaderMenuBar(items: _items, compact: widget.compact),
@@ -238,9 +268,12 @@ class _WindowHeaderState extends State<WindowHeader> {
           null => const SizedBox.shrink(),
           // The IDE's layout icons: the icon shows whether it is open.
           final toggle => SidebarIconButton(
-            icon: widget.sidebarShown
-                ? Codicons.layoutSidebarLeft
-                : Codicons.layoutSidebarLeftOff,
+            icon: switch ((widget.sidebarShown, widget.sidebarAtRight)) {
+              (true, false) => Codicons.layoutSidebarLeft,
+              (false, false) => Codicons.layoutSidebarLeftOff,
+              (true, true) => Codicons.layoutSidebarRight,
+              (false, true) => Codicons.layoutSidebarRightOff,
+            },
             tooltip: widget.sidebarShown
                 ? context.l10n.windowHideSidebar
                 : context.l10n.windowShowSidebar,
@@ -256,154 +289,195 @@ class _WindowHeaderState extends State<WindowHeader> {
           : title != null
           ? AppColors.conversationSurface
           : AppColors.sidebarSurface,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          border: ide || title != null
-              ? null
-              : Border(
-                  bottom: BorderSide(
-                    color:
-                        colors.get('titleBar.border') ?? AppColors.partBorder,
-                  ),
+      // No line under it: in the IDE its tabs' strip is under it, and the
+      // conversations' cards are on the window's color, as on macOS.
+      child: SizedBox(
+        height: AppMetrics.headerHeight,
+        child: Row(
+          children: [
+            const SizedBox(width: WindowHeader.settingsToggleLeft),
+            // Room for the settings' toggle, the window's to leave to
+            // Flutter as the sidebar toggle's.
+            if (settings)
+              KeyedSubtree(
+                key: _toggle,
+                child: const SizedBox.square(
+                  dimension: WindowHeader.settingsToggleSize,
                 ),
-        ),
-        child: SizedBox(
-          height: AppMetrics.headerHeight,
-          child: Row(
-            children: [
-              const SizedBox(width: WindowHeader.settingsToggleLeft),
-              // Room for the settings' toggle, the window's to leave to
-              // Flutter as the sidebar toggle's.
-              if (settings)
-                KeyedSubtree(
-                  key: _toggle,
-                  child: const SizedBox.square(
-                    dimension: WindowHeader.settingsToggleSize,
-                  ),
-                )
-              // Folded, the menus' button comes after the toggle, which is
-              // first as by macOS's traffic lights; else the menu bar is.
-              else if (widget.compact) ...[
-                toggle,
-                const SizedBox(width: 2),
-                menus,
-              ] else ...[
-                menus,
-                const SizedBox(width: 4),
-                toggle,
-              ],
-              if (title != null)
-                // Its own pixels drag the window, as the rest of the strip.
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.only(left: 8, right: 12),
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(
-                          maxWidth: _maxTitleWidth,
-                        ),
-                        child: Text(
-                          title,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          // As the chat's own title row.
-                          style: TextStyle(
-                            color: AppColors.textMuted,
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.w500,
-                          ),
+              )
+            // Folded, the menus' button comes after the toggle, which is
+            // first as by macOS's traffic lights; else the menu bar is.
+            else if (widget.compact) ...[
+              toggle,
+              const SizedBox(width: 2),
+              menus,
+            ] else ...[
+              menus,
+              const SizedBox(width: 4),
+              toggle,
+            ],
+            if (title != null)
+              // Its own pixels drag the window, as the rest of the strip.
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 8, right: 12),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(
+                        maxWidth: _maxTitleWidth,
+                      ),
+                      child: Text(
+                        title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        // As the chat's own title row.
+                        style: TextStyle(
+                          color: AppColors.textMuted,
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
                     ),
                   ),
-                )
-              else
-                const Spacer(),
-              if (layout != null) ...[
-                KeyedSubtree(key: _panel, child: IdeLayoutToggle.panel(layout)),
-                KeyedSubtree(key: _chat, child: IdeLayoutToggle.chat(layout)),
-              ],
-              // The chat's terminal and side panel where the IDE has its
-              // panel and chat, the pin after them, and the way to the other
-              // layout last: each where it was after a switch.
-              if (widget.onToggleTerminal case final toggle? when !ide)
-                KeyedSubtree(
-                  key: _terminal,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 2),
-                    child: ChatTerminalToggle(
-                      shown: widget.terminalShown,
-                      onTap: toggle,
-                      size: 22,
-                    ),
-                  ),
                 ),
-              if (widget.onToggleSidePanel case final toggle? when !ide)
-                KeyedSubtree(
-                  key: _sidePanel,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 2),
-                    child: SidePanelToggle(
-                      shown: widget.sidePanelShown,
-                      onTap: toggle,
-                      size: 22,
-                    ),
-                  ),
+              )
+            else if (_commandCenter(ide && !settings) case final center?)
+              Expanded(
+                child: Center(
+                  child: KeyedSubtree(key: _center, child: center),
                 ),
-              const SizedBox(width: 2),
-              KeyedSubtree(
-                key: _pin,
-                child: PinWindowButton(
-                  pinned: widget.pinned,
-                  onChanged: widget.onTogglePin,
-                ),
-              ),
-              // The chat's; the IDE is the editor there.
-              if (widget.project case final project? when !ide) ...[
-                const SizedBox(width: 8),
-                KeyedSubtree(
-                  key: _open,
-                  child: OpenInEditorButton(
-                    workspace: widget.workspace,
-                    project: project,
-                  ),
-                ),
-              ],
-              if (ide) ...[
-                const SizedBox(width: 8),
-                KeyedSubtree(
-                  key: _back,
-                  // Its label and the keys of Back to Chat, as on the IDE's
-                  // own title bar.
-                  child: IdeHover(
-                    message: ChatKeys.titleWithKey(
-                      widget.backLabel ?? context.l10n.workspaceBackToChat,
-                      _backToChatCommand,
-                      ChatKeys.ideLayout,
-                    ),
-                    excludeFromSemantics: true,
-                    child: BackToChatButton(
-                      label: widget.backLabel,
-                      onPressed:
-                          widget.onBack ??
-                          () => widget.workspace.layout = WorkspaceLayout.chat,
-                    ),
-                  ),
-                ),
-              ],
-              const SizedBox(width: 10),
-              WindowButtons(
-                minimizeKey: _minimize,
-                maximizeKey: _maximize,
-                closeKey: _close,
-              ),
-            ],
-          ),
+              )
+            else
+              const Spacer(),
+            // Under the settings, whose barrier takes their clicks, the
+            // window's buttons alone (#312), as macOS's settings cover the
+            // title bar's.
+            if (!settings) ..._tools(layout, ide),
+            const SizedBox(width: 10),
+            WindowButtons(
+              minimizeKey: _minimize,
+              maximizeKey: _maximize,
+              closeKey: _close,
+            ),
+          ],
         ),
       ),
     );
   }
+
+  /// Over the IDE, its command center: Go Back, Go Forward and the search
+  /// box, run as the IDE's commands.
+  Widget? _commandCenter(bool shown) {
+    final navigation = widget.ideNavigation;
+    final run = widget.onFileCommand;
+    if (!shown || navigation == null || run == null) return null;
+    final l10n = context.l10n;
+    final hasFolder = widget.hasFolder ?? widget.workspace.ideFolder != null;
+    final project = hasFolder ? widget.project : null;
+    return IdeCommandCenter(
+      label: project?.name ?? l10n.ideSearchOpenFiles,
+      tooltip: ChatKeys.titleWithKey(
+        project == null
+            ? l10n.ideSearchOpenFiles
+            : l10n.ideSearchProject(project.name),
+        _quickOpenCommand,
+        ChatKeys.ideLayout,
+      ),
+      onSearch: () => run(_quickOpenCommand),
+      navigation: navigation,
+      onNavigate: (back) => run(
+        back ? IdeCommandCenter.backCommand : IdeCommandCenter.forwardCommand,
+      ),
+    );
+  }
+
+  static const _quickOpenCommand = 'workbench.action.quickOpen';
+
+  /// The tools on the right of the strip, before the window's buttons.
+  List<Widget> _tools(IdeLayout? layout, bool ide) => [
+    if (layout != null) ...[
+      KeyedSubtree(key: _panel, child: IdeLayoutToggle.panel(layout)),
+      KeyedSubtree(key: _chat, child: IdeLayoutToggle.chat(layout)),
+    ],
+    // The chat's terminal and side panel where the IDE has its
+    // panel and chat, the pin after them, and the way to the other
+    // layout last: each where it was after a switch. Agents side by side
+    // have theirs in their panes, the pin and the editor's here (see
+    // [chatTools]).
+    if (widget.reloadChat case final reload? when !ide && widget.chatTools)
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 2),
+        child: reload,
+      ),
+    if (widget.onToggleTerminal case final toggle?
+        when !ide && widget.chatTools)
+      KeyedSubtree(
+        key: _terminal,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 2),
+          child: ChatTerminalToggle(
+            shown: widget.terminalShown,
+            onTap: toggle,
+            size: 22,
+          ),
+        ),
+      ),
+    if (widget.onToggleSidePanel case final toggle?
+        when !ide && widget.chatTools)
+      KeyedSubtree(
+        key: _sidePanel,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 2),
+          child: SidePanelToggle(
+            shown: widget.sidePanelShown,
+            onTap: toggle,
+            size: 22,
+          ),
+        ),
+      ),
+    const SizedBox(width: 2),
+    KeyedSubtree(
+      key: _pin,
+      child: PinWindowButton(
+        pinned: widget.pinned,
+        onChanged: widget.onTogglePin,
+      ),
+    ),
+    // The chat's; the IDE is the editor there.
+    if (widget.project case final project? when !ide) ...[
+      const SizedBox(width: 8),
+      KeyedSubtree(
+        key: _open,
+        child: OpenInEditorButton(
+          workspace: widget.workspace,
+          project: project,
+        ),
+      ),
+    ],
+    if (ide) ...[
+      const SizedBox(width: 8),
+      KeyedSubtree(
+        key: _back,
+        // Its label and the keys of Back to Chat, as on the IDE's
+        // own title bar.
+        child: IdeHover(
+          message: ChatKeys.titleWithKey(
+            widget.backLabel ?? context.l10n.workspaceBackToChat,
+            _backToChatCommand,
+            ChatKeys.ideLayout,
+          ),
+          excludeFromSemantics: true,
+          child: BackToChatButton(
+            label: widget.backLabel,
+            onPressed:
+                widget.onBack ??
+                () => widget.workspace.layout = WorkspaceLayout.chat,
+          ),
+        ),
+      ),
+    ],
+  ];
 
   /// Tells the window where the header's controls are: the rest of the strip
   /// drags it, and its three buttons are the system's own to run.
@@ -419,6 +493,7 @@ class _WindowHeaderState extends State<WindowHeader> {
         _pin,
         _open,
         _back,
+        _center,
       ])
         ?_rect(key),
     ];
@@ -645,6 +720,33 @@ class _WindowHeaderState extends State<WindowHeader> {
           command(
             l10n.cmdToggleSidePanelPosition,
             ChatCommandIds.toggleSidePanelPosition,
+          ),
+        if (WindowControls.canFullScreen)
+          HeaderMenuItem(
+            l10n.cmdToggleFullScreen,
+            shortcut: _shortcut(
+              WindowCommandIds.toggleFullScreen,
+              ide ? ChatKeys.ideLayout : ChatKeys.chatLayout,
+            ),
+            onSelected: () => unawaited(
+              WindowControls.toggleFullScreen(
+                viewId: View.maybeOf(context)?.viewId,
+              ),
+            ),
+          ),
+        if (ide)
+          HeaderMenuItem(
+            l10n.menuWordWrap,
+            checked: EditorWordWrap.on.value,
+            shortcut: _shortcut(EditorWordWrap.commandId, ChatKeys.ideLayout),
+            onSelected: EditorWordWrap.toggle,
+          ),
+        if (ide)
+          HeaderMenuItem(
+            l10n.menuMinimap,
+            checked: EditorMinimap.on.value,
+            shortcut: _shortcut(EditorMinimap.commandId, ChatKeys.ideLayout),
+            onSelected: EditorMinimap.toggle,
           ),
         HeaderMenuItem(
           l10n.menuKeepOnTop,

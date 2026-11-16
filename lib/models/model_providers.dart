@@ -238,12 +238,49 @@ class ModelProviders extends ChangeNotifier {
     await _writeProviders(list);
   }
 
-  /// Removes provider [id], and its key (its accounts' tokens).
+  /// Adds a copy of provider [id] named [name], its key with it; not its
+  /// accounts, signed in to anew, nor the app it follows: the copy is the
+  /// user's own. Its id; null without [id].
+  Future<String?> duplicate(String id, String name) async {
+    final source = provider(id);
+    if (source == null) return null;
+    final copy = newId(name);
+    final json = {...source.toJson(), 'id': copy, 'name': name}
+      ..remove('accounts')
+      ..remove('follows');
+    await save(ModelProvider.fromJson(json)!);
+    if (await key(id) case final key? when key.isNotEmpty) {
+      await setKey(copy, key);
+    }
+    return copy;
+  }
+
+  /// Unsets the other providers' roles that pick a model of provider
+  /// [id] ([ProviderRoles.without]), of its [models] only when given:
+  /// they, or it, gone.
+  Future<void> forgetRoles(String id, [Set<String>? models]) async {
+    final list = providers;
+    final kept = [
+      for (final provider in list)
+        provider.id == id
+            ? provider
+            : provider.copyWith(roles: provider.roles.without(id, models)),
+    ];
+    if (Iterable<int>.generate(list.length)
+        .every((i) => kept[i].roles == list[i].roles)) {
+      return;
+    }
+    await _writeProviders(kept);
+  }
+
+  /// Removes provider [id], and its key (its accounts' tokens); the other
+  /// providers' roles on its models with it.
   Future<void> remove(String id) async {
     final accounts = provider(id)?.accounts ?? const [];
     await _writeProviders([
       for (final provider in providers)
-        if (provider.id != id) provider,
+        if (provider.id != id)
+          provider.copyWith(roles: provider.roles.without(id)),
     ]);
     if (parseModelRef(defaultModel)?.provider == id) {
       await setDefaultModel(null);
@@ -297,17 +334,29 @@ class ModelProviders extends ChangeNotifier {
 
   // --- Keys -------------------------------------------------------------------------
 
-  final Map<String, String?> _keys = {};
+  final Map<String, Future<String?>> _keys = {};
 
-  /// Provider [id]'s key, from the keychain (read once).
-  Future<String?> key(String id) async {
-    if (_keys.containsKey(id)) return _keys[id];
-    try {
-      return _keys[id] = await secrets.read(ModelProvider.keyRefFor(id));
-    } on SecretStoreException catch (error) {
+  /// Provider [id]'s key, from the keychain (read once: the requests that
+  /// arrive while the read is under way wait for that same read).
+  Future<String?> key(String id) {
+    if (_keys[id] case final read?) return read;
+    late final Future<String?> read;
+    read = secrets.read(ModelProvider.keyRefFor(id)).catchError((
+      Object error,
+      StackTrace stack,
+    ) {
+      // A failure, whatever it is, is not kept: the keychain may read it the
+      // next time. Until that read answers them all, none of the requests
+      // that arrive starts one of its own (one PowerShell for each was the
+      // hang). A key set meanwhile stays.
+      if (identical(_keys[id], read)) _keys.remove(id);
+      if (error is! SecretStoreException) {
+        Error.throwWithStackTrace(error, stack);
+      }
       debugPrint('Key of $id not read: $error');
       return null;
-    }
+    });
+    return _keys[id] = read;
   }
 
   /// Keeps [key] for provider [id]; empty removes it.
@@ -315,10 +364,10 @@ class ModelProviders extends ChangeNotifier {
     final trimmed = key.trim();
     if (trimmed.isEmpty) {
       await secrets.delete(ModelProvider.keyRefFor(id));
-      _keys[id] = null;
+      _keys[id] = Future.value();
     } else {
       await secrets.write(ModelProvider.keyRefFor(id), trimmed);
-      _keys[id] = trimmed;
+      _keys[id] = Future.value(trimmed);
     }
     notifyListeners();
   }

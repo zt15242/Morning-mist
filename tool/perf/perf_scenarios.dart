@@ -12,18 +12,23 @@ import 'package:flutter/widgets.dart';
 import 'package:bao_editor/monaco/flutter/editor_surface.dart';
 import 'package:baocode/chat/chat_history_view.dart';
 import 'package:baocode/chat/chat_session.dart';
+import 'package:baocode/chat/edit_detail.dart';
+import 'package:baocode/chat/widgets/step_header.dart' show StepBody;
 import 'package:baocode/ide/ide_editor.dart';
 import 'package:baocode/ide/ide_workbench.dart';
 import 'package:baocode/ide/lsp/lsp_protocol.dart';
 import 'package:baocode/workspace/chat_grid.dart';
+import 'package:baocode/theme/app_theme.dart';
 import 'package:baocode/workspace/workspace.dart';
 
 import 'perf_content.dart';
 import 'perf_input.dart';
+import 'perf_hands.dart';
 import 'perf_interaction.dart';
 import 'perf_probe.dart';
 import 'perf_stress.dart';
 import 'perf_trace.dart';
+import 'perf_transcript.dart';
 import 'perf_transport.dart';
 
 /// The files the IDE's scenarios open, in the project's folder.
@@ -112,6 +117,11 @@ class PerfContext {
   /// What the app last copied, kept from the clipboard (see perf_app.dart).
   static String? copied;
 
+  /// What the engine's pointer data went to before the perf app took it
+  /// away from the desktop (see perf_app.dart): given back while a hand is
+  /// recorded (`record.hands`).
+  static ui.PointerDataPacketCallback? desktopPointers;
+
   static void log(String message) =>
       stderr.writeln('BAOCODE_PERF_LOG $message');
 
@@ -156,6 +166,7 @@ class PerfContext {
     Duration time = const Duration(milliseconds: 800),
   ]) async {
     final watch = Stopwatch()..start();
+    PerfProbe.instance.forceFrames();
     while (watch.elapsed < time) {
       await nextFrame();
       await Future<void>.delayed(const Duration(milliseconds: 16));
@@ -193,8 +204,12 @@ class PerfContext {
 
   /// Sends [thread] a message it answers with [turn]; done as the turn
   /// begins.
-  Future<void> start(AgentThread thread, PerfTurn turn) async {
-    final prompt = 'perf ${++_prompts}: ${content.paragraph()}';
+  Future<void> start(
+    AgentThread thread,
+    PerfTurn turn, {
+    String? prompt,
+  }) async {
+    prompt = 'perf ${++_prompts}: ${prompt ?? content.paragraph()}';
     PerfTurns.register(prompt, turn);
     final session = thread.session;
     await until(() => session.canSend, 'the agent to take a message');
@@ -202,9 +217,9 @@ class PerfContext {
   }
 
   /// Sends [thread] [turn], and waits for it to end.
-  Future<void> run(AgentThread thread, PerfTurn turn) async {
+  Future<void> run(AgentThread thread, PerfTurn turn, {String? prompt}) async {
     final ended = thread.session.lastTurnEndSeq;
-    await start(thread, turn);
+    await start(thread, turn, prompt: prompt);
     await until(
       () =>
           thread.session.lastTurnEndSeq > ended && !thread.session.isStreaming,
@@ -557,9 +572,122 @@ final List<PerfScenario> perfScenarios = [
   ..._scenarios,
   ...stressScenarios,
   ...interactionScenarios,
+  ...handScenarios,
 ];
 
 final List<PerfScenario> _scenarios = [
+  // --- Pictures ----------------------------------------------------------------
+  PerfScenario(
+    'shot.edits',
+    'Not a measure, for its pictures (--shots): an agent writes a file and '
+        'edits another, its turn still under way; the edits as cards, then '
+        'compact (Settings → Appearance → File Edits).',
+    (c) async {
+      final root = c.project.root;
+      const written = 'src/middleware/rate-limiter/index.ts';
+      const edited = 'src/index.ts';
+      const content = '''import type { MiddlewareHandler } from 'hono'
+import { HTTPException } from 'hono/http-exception'
+
+export interface RateLimitOptions {
+  limit: number
+  windowMs: number
+  key?: (c: Context) => string
+}
+
+/** A sliding-window counter: two windows per key, the last weighted. */
+export const rateLimiter = (options: RateLimitOptions): MiddlewareHandler => {
+  const counts = new Map<string, { at: number; now: number; last: number }>()
+  return async (c, next) => {
+    const key = options.key?.(c) ?? c.req.header('x-forwarded-for') ?? ''
+    const window = Math.floor(Date.now() / options.windowMs)
+    const entry = counts.get(key) ?? { at: window, now: 0, last: 0 }
+    if (entry.at !== window) {
+      entry.last = entry.at === window - 1 ? entry.now : 0
+      entry.now = 0
+      entry.at = window
+    }
+    entry.now++
+    counts.set(key, entry)
+    if (entry.now + entry.last > options.limit) {
+      throw new HTTPException(429, { message: 'Too Many Requests' })
+    }
+    await next()
+  }
+}''';
+      final lines = content.split('\n');
+      final turn = PerfTurn([
+        const PerfSay(
+          'I\'ll add the rate limiter as a middleware of its own, then '
+          'export it from the package.',
+        ),
+        PerfTool(
+          'Write',
+          {'file_path': '$root/$written', 'content': content},
+          result: 'File created successfully at: $root/$written',
+          structured: {
+            'type': 'create',
+            'filePath': '$root/$written',
+            'content': content,
+            'structuredPatch': [
+              {
+                'oldStart': 0,
+                'oldLines': 0,
+                'newStart': 1,
+                'newLines': lines.length,
+                'lines': [for (final l in lines) '+$l'],
+              },
+            ],
+          },
+        ),
+        PerfTool(
+          'Edit',
+          {
+            'file_path': '$root/$edited',
+            'old_string': "export { logger } from './middleware/logger'",
+            'new_string':
+                "export { logger } from './middleware/logger'\n"
+                "export { rateLimiter } from './middleware/rate-limiter'",
+          },
+          result: 'The file $root/$edited has been updated successfully.',
+          structured: {
+            'filePath': '$root/$edited',
+            'structuredPatch': [
+              {
+                'oldStart': 12,
+                'oldLines': 4,
+                'newStart': 12,
+                'newLines': 5,
+                'lines': [
+                  " export { cors } from './middleware/cors'",
+                  " export { etag } from './middleware/etag'",
+                  "-export { logger } from './middleware/logger'",
+                  "+export { logger } from './middleware/logger'",
+                  "+export { rateLimiter } from './middleware/rate-limiter'",
+                  " export { secureHeaders } from './middleware/secure-headers'",
+                ],
+              },
+            ],
+          },
+        ),
+        // Under way still as the pictures are taken: a finished turn folds
+        // its work away.
+        const PerfPause(Duration(minutes: 5)),
+        const PerfSay('Now the tests.'),
+      ], pace: PerfPace.fast);
+      await c.start(c.agent, turn, prompt: 'Add a rate limiter middleware');
+      await c.settle(const Duration(seconds: 4));
+      await c.phase('card', (r) => c.settle());
+      // The written file's card scrolled partway: faded at both edges.
+      final card = c.find<StepBody>();
+      c.check(card != null, 'an edit\'s card shows');
+      if (card != null) c.scrollableIn(card)?.position.jumpTo(70);
+      await c.phase('card_scrolled', (r) => c.settle());
+      EditDetail.current.value = EditDetail.compact;
+      await c.phase('compact', (r) => c.settle());
+      EditDetail.current.value = EditDetail.card;
+    },
+  ),
   // --- The chat ----------------------------------------------------------------
   PerfScenario(
     'chat.stream',
@@ -617,6 +745,157 @@ final List<PerfScenario> _scenarios = [
       });
     },
   ),
+  // --- With the semantics tree on -------------------------------------------
+  // As when an accessibility client reads the window (a screen reader, an
+  // input method, a translator's or a password manager's UI Automation).
+  PerfScenario(
+    'a11y.long_history',
+    'chat.long_history with the semantics tree on.',
+    (c) async {
+      final semantics = SemanticsBinding.instance.ensureSemantics();
+      try {
+        await c.settle();
+        await c.phase('load', (r) async {
+          await c.history(c.agent, 40);
+          await c.settle();
+        });
+        final turn = c.reply(4000, PerfPace.typical);
+        await c.phase('stream', (r) async {
+          await c.run(c.agent, turn);
+        });
+      } finally {
+        semantics.dispose();
+      }
+    },
+  ),
+  PerfScenario(
+    'a11y.huge_history',
+    'A 150-turn conversation with the semantics tree on: loaded, the wheel '
+        'spun through it, an answer streamed below it.',
+    (c) async {
+      final semantics = SemanticsBinding.instance.ensureSemantics();
+      try {
+        await c.settle();
+        await c.phase('load', (r) async {
+          await c.history(c.agent, 150);
+          await c.settle();
+        });
+        PerfContext.log('after load: ${treeCounts()}');
+        final at = c.chatCenter;
+        await c.phase('spin', (r) async {
+          for (var i = 0; i < 3; i++) {
+            await c.input.spin(
+              at,
+              -200,
+              400,
+              every: const Duration(milliseconds: 16),
+            );
+            await c.settle(const Duration(milliseconds: 300));
+            await c.input.spin(
+              at,
+              200,
+              400,
+              every: const Duration(milliseconds: 16),
+            );
+            await c.settle(const Duration(milliseconds: 300));
+            PerfContext.log('after spin $i: ${treeCounts()}');
+          }
+          r.extra.addAll(treeCounts());
+        });
+        await c.phase('stream', (r) async {
+          await c.run(c.agent, c.reply(6000, PerfPace.fast, heavy: true));
+          r.extra.addAll(treeCounts());
+        });
+        PerfContext.log('after stream: ${treeCounts()}');
+      } finally {
+        semantics.dispose();
+      }
+    },
+  ),
+  PerfScenario(
+    'real.history',
+    'A real session, a Claude Code transcript (BAOCODE_PERF_TRANSCRIPT; '
+        'BAOCODE_PERF_TRANSCRIPT_TURNS, its first turns only), loaded turn '
+        'by turn, the wheel spun through it, an answer streamed below it.',
+    (c) async {
+      final path = Platform.environment['BAOCODE_PERF_TRANSCRIPT'];
+      c.check(path != null, 'BAOCODE_PERF_TRANSCRIPT names a transcript');
+      if (path == null) return;
+      final turns = readTranscript(
+        path,
+        limit: int.tryParse(
+          Platform.environment['BAOCODE_PERF_TRANSCRIPT_TURNS'] ?? '',
+        ),
+      );
+      await c.settle();
+      await c.phase('load', (r) async {
+        for (final (:prompt, :turn) in turns) {
+          await c.run(c.agent, turn, prompt: prompt);
+        }
+        await c.settle();
+        r.extra['turns'] = turns.length;
+        r.extra.addAll(treeCounts());
+      });
+      PerfContext.log('after load: ${treeCounts()}');
+      final at = c.chatCenter;
+      await c.phase('spin', (r) async {
+        await c.input.spin(
+          at,
+          -200,
+          400,
+          every: const Duration(milliseconds: 16),
+        );
+        await c.settle(const Duration(milliseconds: 300));
+        await c.input.spin(
+          at,
+          200,
+          400,
+          every: const Duration(milliseconds: 16),
+        );
+        await c.settle(const Duration(milliseconds: 300));
+      });
+      await c.phase('stream', (r) async {
+        await c.run(c.agent, c.reply(6000, PerfPace.fast, heavy: true));
+        r.extra.addAll(treeCounts());
+      });
+    },
+  ),
+  PerfScenario(
+    'bench.text_layout',
+    'Paragraphs laid out in the styles the app draws text in, each new '
+        '(no cache): what a line of text costs, font by font.',
+    (c) async {
+      await c.settle();
+      await c.phase('layout', (r) async {
+        r.extra.addAll(_textLayoutBench());
+      });
+    },
+  ),
+  PerfScenario(
+    'hang.ui',
+    'The UI thread held 7 s in _holdUiThread, past the hang watchdog\'s 6 '
+        '(Windows) or 4 (macOS): its report in the logs\' hangs/ (Windows: '
+        'the data folder\'s; macOS: the event log\'s, beside the [hang] '
+        'lines), whose Dart frames the build\'s symbols should name so; and '
+        'the event log\'s slow frame.',
+    (c) async {
+      await c.settle();
+      await c.phase('hang', (r) async {
+        final done = Completer<void>();
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _holdUiThread(const Duration(seconds: 7));
+          done.complete();
+        });
+        WidgetsBinding.instance.scheduleFrame();
+        await done.future;
+        await c.settle();
+      });
+      // macOS' sample of it, begun 4 s in, written before the app goes.
+      if (Platform.isMacOS) {
+        await Future<void>.delayed(const Duration(seconds: 8));
+      }
+    },
+  ),
   PerfScenario(
     'chat.tools',
     'An agent at work: 120 tool calls in quick succession (reads, greps, '
@@ -665,6 +944,80 @@ final List<PerfScenario> _scenarios = [
         );
         r.extra['panes'] = c.workspace.grid.panes.length;
       });
+    },
+  ),
+  PerfScenario(
+    'chat.working',
+    'Agents at work with nothing to stream: the app at rest first, then an '
+        'agent waiting on its model, one running a tool, and four side by '
+        'side waiting at once: what the status row and the loaders cost '
+        'the GPU, as the user sees them most of a turn.',
+    (c) async {
+      // Long enough to measure in, the status row come in.
+      const wait = Duration(seconds: 6);
+      const shown = Duration(milliseconds: 1500);
+      PerfTurn waiting() => PerfTurn([
+        PerfPause(wait + shown + const Duration(seconds: 1)),
+        PerfSay(c.content.paragraph()),
+      ]);
+      Future<void> rest() => Future<void>.delayed(wait);
+      await c.history(c.agent, 2);
+      FocusManager.instance.primaryFocus?.unfocus();
+      await c.settle(const Duration(seconds: 2));
+      await c.phase('idle', (r) => rest());
+
+      await c.start(c.agent, waiting());
+      await Future<void>.delayed(shown);
+      await c.phase('waiting', (r) => rest());
+      await c.until(() => !c.agent.session.isStreaming, 'the turn to end');
+      await c.settle();
+
+      await c.start(
+        c.agent,
+        PerfTurn([
+          PerfTool(
+            'Bash',
+            const {'command': 'flutter test', 'description': 'Run the tests'},
+            result: 'All tests passed!',
+            took: wait + shown + const Duration(seconds: 1),
+          ),
+          PerfSay(c.content.paragraph()),
+        ]),
+      );
+      await Future<void>.delayed(shown);
+      await c.phase('tool', (r) => rest());
+      await c.until(() => !c.agent.session.isStreaming, 'the turn to end');
+      await c.settle();
+
+      final agents = [c.agent, ...await c.agents(3)];
+      final [a, b, d, e] = agents;
+      c.workspace
+        ..select(a)
+        ..openBeside(b, a, PaneSide.right)
+        ..openBeside(d, a, PaneSide.bottom)
+        ..openBeside(e, b, PaneSide.bottom);
+      await c.settle();
+      for (final thread in agents) {
+        await c.start(thread, waiting());
+      }
+      await Future<void>.delayed(shown);
+      await c.phase('grid', (r) async {
+        await rest();
+        r.extra['panes'] = c.workspace.grid.panes.length;
+      });
+      await c.until(
+        () => agents.every((t) => !t.session.isStreaming),
+        'the four turns',
+      );
+      // What moves while they work moves on the shared clock's frames.
+      for (final name in ['waiting', 'tool', 'grid']) {
+        final perSecond =
+            ((c.results[name] as Map?)?['frames'] as Map?)?['perSecond'];
+        c.check(
+          perSecond is! num || perSecond <= 40,
+          '$name: agents at work, the app draws $perSecond frames a second',
+        );
+      }
     },
   ),
   PerfScenario(
@@ -865,3 +1218,101 @@ final List<PerfScenario> _scenarios = [
     },
   ),
 ];
+
+/// The semantics nodes of every view, and the children of the lazy lists:
+/// laid out in them, and all (those kept alive besides).
+Map<String, int> treeCounts() {
+  var nodes = 0, inList = 0, all = 0, lists = 0, objects = 0;
+  void visit(RenderObject object) {
+    objects++;
+    if (object is RenderSliverMultiBoxAdaptor) {
+      lists++;
+      for (var c = object.firstChild; c != null; c = object.childAfter(c)) {
+        inList++;
+      }
+      object.visitChildren((_) => all++);
+    }
+    object.visitChildren(visit);
+  }
+
+  bool count(SemanticsNode node) {
+    nodes++;
+    node.visitChildren(count);
+    return true;
+  }
+
+  for (final view in RendererBinding.instance.renderViews) {
+    visit(view);
+    if (view.owner?.semanticsOwner?.rootSemanticsNode case final root?) {
+      count(root);
+    }
+  }
+  return {
+    'renderObjects': objects,
+    'semanticsNodes': nodes,
+    'lazyLists': lists,
+    'listChildren': inList,
+    'keptAlive': all - inList,
+  };
+}
+
+/// Microseconds per paragraph of about 80 characters, for each of the
+/// styles the app's text is in, a different text each time.
+Map<String, int> _textLayoutBench() {
+  final uiFallbacks = Platform.isWindows ? AppFonts.windowsFallbacks : null;
+  final styles = <String, (TextStyle, String)>{
+    'ui': (
+      TextStyle(fontSize: 13, fontFamilyFallback: uiFallbacks),
+      'The quick brown fox jumps over the lazy dog, then reads the file',
+    ),
+    'ui_cjk': (
+      TextStyle(fontSize: 13, fontFamilyFallback: uiFallbacks),
+      '先确认一下现有的实现，再运行分析器和测试，看看哪里需要修改和补充',
+    ),
+    'ui_symbols': (
+      TextStyle(fontSize: 13, fontFamilyFallback: uiFallbacks),
+      'Done ✓ → next ⚠ check 📁 lib/ide ★ “quoted” — dash … end',
+    ),
+    'code': (
+      AppFonts.uiCodeStyle(13),
+      'final tokens = WheelGlide.cache(63); // return a + b * c;',
+    ),
+    'code_cjk': (
+      AppFonts.uiCodeStyle(13),
+      'final label = "保存文件"; // 中文注释 and some ascii',
+    ),
+    'code_installed_only': (
+      const TextStyle(
+        fontSize: 13,
+        fontFamily: 'Consolas',
+        fontFamilyFallback: ['Microsoft YaHei UI'],
+      ),
+      'final tokens = WheelGlide.cache(63); // return a + b * c;',
+    ),
+  };
+  final results = <String, int>{};
+  var n = 0;
+  for (final MapEntry(key: name, value: (style, text)) in styles.entries) {
+    // Warmed, then measured.
+    for (final round in [40, 300]) {
+      final watch = Stopwatch()..start();
+      for (var i = 0; i < round; i++) {
+        final painter = TextPainter(
+          text: TextSpan(text: '$text ${n++}', style: style),
+          textDirection: TextDirection.ltr,
+        )..layout(maxWidth: 600);
+        painter.dispose();
+      }
+      results[name] = watch.elapsedMicroseconds ~/ round;
+    }
+  }
+  PerfContext.log('text layout µs per paragraph: $results');
+  return results;
+}
+
+/// Keeps the thread busy for [time]: a hang, by a function of its own name.
+@pragma('vm:never-inline')
+void _holdUiThread(Duration time) {
+  final clock = Stopwatch()..start();
+  while (clock.elapsed < time) {}
+}

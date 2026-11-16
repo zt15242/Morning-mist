@@ -155,10 +155,11 @@ class AppWindow {
   String title(AppLocalizations l10n) => '${label(l10n)} — BaoCode';
 
   /// The folder's name; a remote one's with its host, as VS Code shows
-  /// one (`app [SSH: dev]`).
+  /// one (`app [SSH: dev]`, `app [WSL: Ubuntu]`).
   static String _folderName(String folder) {
     if (RemoteLocation.hostOf(folder) case final host?) {
-      return '${RemoteLocation.nameOf(folder)} [SSH: $host]';
+      return '${RemoteLocation.nameOf(folder)} '
+          '[${RemoteLocation.reachedBy(host)}: ${RemoteLocation.hostName(host)}]';
     }
     final name = p.basename(folder);
     return name.isEmpty ? folder : name;
@@ -1166,6 +1167,8 @@ class AppWindows extends ChangeNotifier implements WindowHostEvents {
         workspace.threads.any(
           (thread) =>
               !thread.archived &&
+              // A bot's answering is not the user's work to lose.
+              !workspace.isAppFolder(thread.project.path) &&
               (thread.status == ThreadStatus.running ||
                   thread.status == ThreadStatus.needsInput),
         ) ||
@@ -1242,8 +1245,16 @@ class AppWindows extends ChangeNotifier implements WindowHostEvents {
   @override
   void newWindowRequested() => unawaited(newWindow());
 
+  /// The tray's Quit. Chosen again while the app asks whether to quit, it
+  /// quits: the window asked in may show nothing to answer in.
   @override
-  void quitRequested() => unawaited(_quit());
+  void quitRequested() {
+    if (QuitConfirmation.asking) {
+      QuitConfirmation.quitAnyway();
+      return;
+    }
+    unawaited(_quit());
+  }
 
   /// The app's icon clicked with none of its windows shown: the IDE's
   /// window last in front (a new one, if none is open) when the app opens

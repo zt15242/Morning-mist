@@ -107,7 +107,10 @@ class ViewportLineDecorations {
         (injections ??= []).add((
           0,
           order++,
-          ViewportInjection(wholeLine ? 0 : decoration.start - lineStart, before),
+          ViewportInjection(
+            wholeLine ? 0 : decoration.start - lineStart,
+            before,
+          ),
         ));
       }
       if (decoration.after case final after?
@@ -913,6 +916,15 @@ class ViewportLayout {
   /// ([rows].length past the last).
   int rowIndexAt(double y) => _rowIndexAt(y);
 
+  /// The one-based model line of the first row whose bottom is strictly
+  /// below unscrolled [y] (the last line's past the end).
+  int lineNumberAt(double y) {
+    final count = wrap ? rows.length : viewLineCount;
+    if (count == 0) return 1;
+    final index = math.min(_rowIndexAt(y), count - 1);
+    return wrap ? rows[index].lineNumber : _modelLineOfView(index) + 1;
+  }
+
   /// Index of the first row whose bottom is strictly below document [y].
   int _rowIndexAt(double y) {
     if (!wrap && _zoneViews.isNotEmpty) {
@@ -1446,6 +1458,29 @@ class _ShapeCache {
   }
 }
 
+/// Visible columns advanced by each tab of [content], like Monaco's
+/// renderLine (a tab reaches the next multiple of [tabSize]).
+List<int> tabAdvances(String content, int tabSize) {
+  final size = tabSize < 1 ? 1 : tabSize;
+  final result = <int>[];
+  var column = 0;
+  var segmentStart = 0;
+  for (var i = 0; i < content.length; i++) {
+    if (content.codeUnitAt(i) != 0x09) continue;
+    final segment = content.substring(segmentStart, i);
+    column += CursorColumns.visibleColumnFromColumn(
+      segment,
+      segment.length + 1,
+      size,
+    );
+    final advance = size - column % size;
+    result.add(advance);
+    column += advance;
+    segmentStart = i + 1;
+  }
+  return result;
+}
+
 /// Measured, document-position-independent paragraph geometry. Only identical
 /// text, styled spans and injections can share it.
 ///
@@ -1549,7 +1584,7 @@ class _LineShape {
           ? TextSpan(text: content, style: style)
           : TextSpan(style: style, children: spans);
     }
-    final tabColumns = tabs ? _tabColumns(content, tabSize) : const <int>[];
+    final tabColumns = tabs ? tabAdvances(content, tabSize) : const <int>[];
     final runs = <(String, TextStyle?)>[];
     void flatten(InlineSpan span, TextStyle? inherited) {
       if (span is! TextSpan) return;
@@ -1618,29 +1653,6 @@ class _LineShape {
     }
     _kinds = kinds;
     return TextSpan(style: style, children: children);
-  }
-
-  /// Visible columns advanced by each tab of [content], like Monaco's
-  /// renderLine (a tab reaches the next multiple of [tabSize]).
-  static List<int> _tabColumns(String content, int tabSize) {
-    final size = tabSize < 1 ? 1 : tabSize;
-    final result = <int>[];
-    var column = 0;
-    var segmentStart = 0;
-    for (var i = 0; i < content.length; i++) {
-      if (content.codeUnitAt(i) != 0x09) continue;
-      final segment = content.substring(segmentStart, i);
-      column += CursorColumns.visibleColumnFromColumn(
-        segment,
-        segment.length + 1,
-        size,
-      );
-      final advance = size - column % size;
-      result.add(advance);
-      column += advance;
-      segmentStart = i + 1;
-    }
-    return result;
   }
 
   final String content;

@@ -7,6 +7,9 @@
 //
 //   dart run tool/build_macos.dart                build, then package
 //   dart run tool/build_macos.dart --skip-build   package what is built
+//   dart run tool/build_macos.dart --build-only   build, not package (CI,
+//                                                while the remote server is
+//                                                still building)
 //   dart run tool/build_macos.dart --remote-built build the app, take the
 //                                                remote server already in
 //                                                build/remote/ (CI builds
@@ -21,12 +24,18 @@
 //                                                fetch_remote_server.dart)
 //                                                instead of building one
 //
-// They land in build/installers/: BaoCode-<version>-<arch>.dmg and
-// BaoCode-<version>-mac-<arch>.zip, arch arm64 or x64 (the channel
-// build's ending in -channel: BaoCode-<version>-<arch>-channel.dmg…); beside them,
+// They land in build/installers/: Morning-Mist-<version>-<arch>.dmg and
+// Morning-Mist-<version>-mac-<arch>.zip, arch arm64 or x64 (the channel
+// build's ending in -channel: Morning-Mist-<version>-<arch>-channel.dmg…); beside them,
 // remote/<VERSION>/, the remote server's gzipped builds, which the app
 // downloads instead of carrying them (tool/build_remote_server.dart), to
 // upload with the release.
+//
+// The Dart code's symbols are saved as it is built, to build/symbols/
+// App.macos.symbols (universal: the App framework's executable before it is
+// stripped): a jank sample (lib/diagnostics/jank_sample.dart) names its
+// frames by their offsets in App, which tool/symbolize_jank_sample.dart
+// turns into functions with that file. The app ships stripped, as before.
 //
 // Signed with a Developer ID and notarised when the environment says how
 // (docs/release.md has how to get each):
@@ -54,6 +63,10 @@ import 'dart:io';
 /// clean already removes.
 const _bundleRelative = 'build/macos/Build/Products/Release/Morning Mist.app';
 const _installersRelative = 'build/installers';
+const _symbolsRelative = 'build/symbols';
+
+/// The App framework's executable: the Dart code, compiled.
+const _appExecutable = 'Contents/Frameworks/App.framework/Versions/A/App';
 
 /// Where each architecture's app is made of the universal one.
 const _thinRelative = 'build/macos/thin';
@@ -85,6 +98,8 @@ const _required = [
   'Contents/Frameworks/App.framework/Resources/flutter_assets',
   // The terminal's native half (bao_pty's hook/build.dart builds it).
   'Contents/Frameworks/bao_pty.framework',
+  // The phones' link: iroh (bao_iroh's hook/build.dart builds it).
+  'Contents/Frameworks/bao_iroh.framework',
   // Finder's context menu (macos/FinderExtension), which Settings → General
   // turns on.
   'Contents/PlugIns/FinderExtension.appex',
@@ -105,6 +120,10 @@ Future<void> main(List<String> arguments) async {
     );
   }
   final skipBuild = arguments.contains('--skip-build');
+  final buildOnly = arguments.contains('--build-only');
+  if (skipBuild && buildOnly) {
+    _fail('--skip-build and --build-only leave nothing to do.');
+  }
   final channel = arguments.contains('--channel');
   final edition = channel ? '-channel' : '';
   final releaseAt = arguments.indexOf('--remote-release');
@@ -135,7 +154,20 @@ Future<void> main(List<String> arguments) async {
       'macos',
       '--release',
       if (channel) '--dart-define=BAOCODE_CHANNEL=true',
+      // Its symbols kept, to be saved before it is stripped below.
+      '--extra-gen-snapshot-options=--no-strip',
     ], root.path);
+    _step('Saving the Dart code\'s symbols, then stripping them');
+    final app = File('${bundle.path}/$_appExecutable');
+    final symbols = Directory('${root.path}/$_symbolsRelative')
+      ..createSync(recursive: true);
+    app.copySync('${symbols.path}/App.macos.symbols');
+    // -x: the local symbols, the Dart code's (as flutter strips it).
+    await _run('strip', ['-x', app.path, '-o', app.path], root.path);
+    if (buildOnly) {
+      _step('Built: --skip-build packages it');
+      return;
+    }
   } else {
     _step('Using the app already built');
   }
@@ -200,7 +232,11 @@ Future<void> main(List<String> arguments) async {
 
   final createDmg = await _findCreateDmg();
   installers.createSync(recursive: true);
-  final made = <File>[];
+  // Each image notarised, stapled and zipped while the next is made, and
+  // the notarisations side by side: Apple takes minutes over each. The
+  // images themselves one after the other: create-dmg lays out a window in
+  // Finder for each.
+  final finishing = <Future<List<File>>>[];
   for (final MapEntry(key: lipoArch, value: arch) in _architectures.entries) {
     _step('Making the $arch app');
     final app = Directory('${root.path}/$_thinRelative/$arch/Morning Mist.app');
@@ -250,37 +286,12 @@ Future<void> main(List<String> arguments) async {
       // The folder the app alone is in: all of it goes in the image.
       app.parent.path,
     ], root.path);
-    if (!signing.adHoc) {
-      await signing.sign(dmg.path);
-      if (signing.notary != null) {
-        // Notarising the image notarises the app in it too: the ticket
-        // stapled to each is the one for its own signature.
-        _step('Notarising the $arch disk image (a few minutes)');
-        await signing.notarise(dmg);
-        await signing.staple(dmg.path);
-        await signing.staple(app.path);
-      }
-    }
-
-    _step('Making the $arch update archive');
-    // What the app downloads to update itself: the .app (stapled when it
-    // was notarised), zipped as Finder would (ditto keeps its symlinks,
-    // permissions and extended attributes, which a framework's signature
-    // depends on).
-    final zip = File(
-      '${installers.path}/Morning-Mist-${version.marketing}-mac-$arch$edition.zip',
+    if (!signing.adHoc) await signing.sign(dmg.path);
+    finishing.add(
+      _finish(signing, installers, version.marketing, edition, arch, app, dmg),
     );
-    if (zip.existsSync()) zip.deleteSync();
-    await _run('ditto', [
-      '-c',
-      '-k',
-      '--sequesterRsrc',
-      '--keepParent',
-      app.path,
-      zip.path,
-    ], root.path);
-    made.addAll([dmg, zip]);
   }
+  final made = [for (final files in await Future.wait(finishing)) ...files];
 
   // None when published already (--remote-release).
   final downloads = Directory('${installers.path}/remote/$remoteVersion');
@@ -330,6 +341,48 @@ Future<void> main(List<String> arguments) async {
       '    --macos-x64$edition $base-mac-x64$edition.zip '
       '--dmg-x64$edition $base-x64$edition.dmg',
     );
+}
+
+/// Notarises [dmg] (and so the [arch] app in it) where [signing] says to,
+/// staples the ticket to both, and zips the app for updates: the image and
+/// the archive.
+Future<List<File>> _finish(
+  _Signing signing,
+  Directory installers,
+  String marketing,
+  String edition,
+  String arch,
+  Directory app,
+  File dmg,
+) async {
+  if (!signing.adHoc && signing.notary != null) {
+    // Notarising the image notarises the app in it too: the ticket
+    // stapled to each is the one for its own signature.
+    _step('Notarising the $arch disk image (a few minutes)');
+    await signing.notarise(dmg);
+    await signing.staple(dmg.path);
+    await signing.staple(app.path);
+    _step('Notarised the $arch disk image');
+  }
+
+  _step('Making the $arch update archive');
+  // What the app downloads to update itself: the .app (stapled when it
+  // was notarised), zipped as Finder would (ditto keeps its symlinks,
+  // permissions and extended attributes, which a framework's signature
+  // depends on).
+  final zip = File(
+    '${installers.path}/Morning-Mist-$marketing-mac-$arch$edition.zip',
+  );
+  if (zip.existsSync()) zip.deleteSync();
+  await _run('ditto', [
+    '-c',
+    '-k',
+    '--sequesterRsrc',
+    '--keepParent',
+    app.path,
+    zip.path,
+  ], signing.root.path);
+  return [dmg, zip];
 }
 
 /// Signing with a Developer ID, and notarising, as the environment says
@@ -456,21 +509,29 @@ class _Signing {
     }
   }
 
-  /// Staples the notarisation ticket to [path], trying again a few times:
-  /// stapler fetches the ticket from Apple's CloudKit, which can drop the
-  /// connection, or not have the ticket yet just after it is accepted.
+  /// Staples the notarisation ticket to [path], trying again for about
+  /// twelve minutes: stapler fetches the ticket from Apple's CloudKit, which
+  /// can drop the connection (-1005, stapler's error 68) for minutes on
+  /// end, or not have the ticket yet just after it is accepted. Within two
+  /// and a half minutes it had failed builds four times in a week (all the
+  /// failures there were), while notarising never did.
   Future<void> staple(String path) async {
+    const waits = [15, 30, 60, 90, 120, 180, 240];
     for (var attempt = 1; ; attempt++) {
       stdout.writeln('  \$ xcrun stapler staple $path');
       final result = await Process.run('xcrun', ['stapler', 'staple', path]);
       if (result.exitCode == 0) return;
       stdout.writeln('${result.stdout}'.trim());
       stderr.writeln('${result.stderr}'.trim());
-      if (attempt == 5) {
+      if (attempt > waits.length) {
         _fail('stapler exited with code ${result.exitCode}, $attempt times.');
       }
-      stdout.writeln('  Trying again in ${attempt * 15} seconds');
-      await Future<void>.delayed(Duration(seconds: attempt * 15));
+      final wait = waits[attempt - 1];
+      stdout.writeln(
+        '  Trying again in $wait seconds '
+        '(attempt ${attempt + 1} of ${waits.length + 1})',
+      );
+      await Future<void>.delayed(Duration(seconds: wait));
     }
   }
 }

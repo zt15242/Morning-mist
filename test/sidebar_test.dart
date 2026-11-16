@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:baocode/workspace/islands.dart';
 import 'package:baocode/chat/widgets/pixel_loader.dart';
 import 'package:baocode/chat/chat_screen.dart';
-import 'package:baocode/chat/composer/composer.dart';
 import 'package:baocode/chat/chat_session.dart';
 import 'package:baocode/kernel/agent_kernel.dart';
 import 'package:baocode/kernel/claude_code/claude_code_kernel.dart';
@@ -21,6 +21,7 @@ import 'package:baocode/search/search_palette.dart';
 import 'package:baocode/chat/widgets/user_message_bubble.dart';
 import 'package:baocode/sidebar/sidebar.dart';
 import 'package:baocode/sidebar/sidebar_times.dart';
+import 'package:baocode/theme/code_font.dart';
 import 'package:baocode/theme/codicons.dart';
 import 'package:baocode/theme/workbench_theme.dart';
 import 'package:baocode/workspace/chat_grid_view.dart';
@@ -30,6 +31,7 @@ import 'package:baocode/workspace/open_in_editor_button.dart';
 import 'package:baocode/workspace/pin_window_button.dart';
 import 'package:baocode/workspace/preference_store.dart';
 import 'package:baocode/workspace/workspace.dart';
+import 'package:baocode/chat/side_panel/side_panel_controller.dart';
 
 Future<Workspace> pumpApp(WidgetTester tester, {double width = 1400}) async {
   tester.view.physicalSize = Size(width, 900);
@@ -204,6 +206,86 @@ void main() {
     expect(inSidebar(find.text('3')), findsOneWidget);
   });
 
+  testWidgets('typed in the focused list, speed search finds a project; '
+      "typed in the chat, the pointer over the list, it is the chat's", (
+    tester,
+  ) async {
+    final workspace = await pumpApp(tester);
+    Text header() => tester.widget<Text>(inSidebar(find.text('api-gateway')));
+    bool highlighted() => (header().textSpan! as TextSpan).children != null;
+    Future<void> type(String keys) async {
+      for (final key in keys.split('')) {
+        await tester.sendKeyEvent(switch (key) {
+          'g' => LogicalKeyboardKey.keyG,
+          'w' => LogicalKeyboardKey.keyW,
+          _ => throw ArgumentError(key),
+        });
+        await tester.pump();
+      }
+    }
+
+    // The chat's input has the keys: the pointer moved over the sidebar,
+    // what is typed is still the chat's.
+    final input = FocusManager.instance.primaryFocus;
+    expect(input?.debugLabel, 'Composer');
+    final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+    addTearDown(mouse.removePointer);
+    await mouse.addPointer(location: const Offset(900, 450));
+    await tester.pump();
+    await mouse.moveTo(tester.getCenter(inSidebar(find.text('baocode'))));
+    await tester.pump();
+    await type('g');
+    expect(inSidebar(find.text('g')), findsNothing);
+    expect(FocusManager.instance.primaryFocus, input);
+
+    // A project clicked (folded, to be unfolded once found): the list has
+    // the keys, and what is typed searches.
+    await tester.tap(inSidebar(find.text('api-gateway')));
+    await tester.pump();
+    expect(
+      inSidebar(find.textContaining('Rate limit per API key')),
+      findsNothing,
+    );
+    await type('gw');
+    expect(inSidebar(find.text('gw')), findsOneWidget);
+    expect(highlighted(), isTrue);
+    // Only the projects it matches are listed.
+    expect(inSidebar(find.text('baocode')), findsNothing);
+    expect(inSidebar(find.text('cursor-docs')), findsNothing);
+    expect(inSidebar(find.text('Pinned')), findsNothing);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pump();
+    expect(inSidebar(find.text('gw')), findsNothing);
+    expect(highlighted(), isFalse);
+    expect(inSidebar(find.text('baocode')), findsOneWidget);
+    expect(inSidebar(find.text('Pinned')), findsOneWidget);
+
+    // Deleted back to nothing, the list is as it was.
+    await type('gw');
+    for (var i = 0; i < 2; i++) {
+      await tester.sendKeyEvent(LogicalKeyboardKey.backspace);
+      await tester.pump();
+    }
+    expect(inSidebar(find.text('baocode')), findsOneWidget);
+    expect(inSidebar(find.text('g')), findsNothing);
+    await type('gw');
+    expect(inSidebar(find.text('baocode')), findsNothing);
+
+    // Enter goes into it, unfolded, its first agent focused; Enter again
+    // opens that one.
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pump();
+    expect(inSidebar(find.text('gw')), findsNothing);
+    expect(
+      inSidebar(find.textContaining('Rate limit per API key')),
+      findsOneWidget,
+    );
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pump();
+    expect(workspace.selected.project.name, 'api-gateway');
+  });
+
   testWidgets('a new agent is named by its first message', (tester) async {
     final workspace = await pumpApp(tester);
     await tester.tap(inSidebar(find.text('New Chat')));
@@ -232,17 +314,31 @@ void main() {
     await tester.pump();
     expect(background.status, ThreadStatus.running);
 
+    Finder told(String label) => find.descendant(
+      of: find.byType(Sidebar),
+      matching: find.byWidgetPredicate(
+        (widget) => widget is Semantics && widget.properties.label == label,
+      ),
+    );
+    // Folded away at work, its project's header spins as its row would.
+    await tester.tap(inSidebar(find.text('api-gateway')));
+    await tester.pump();
+    expect(told('Running 1'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: told('Running 1'),
+        matching: find.byType(PixelLoader),
+      ),
+      findsOneWidget,
+    );
+    await tester.tap(inSidebar(find.text('api-gateway')));
+    await tester.pump();
+
     await runUntilQuestion(tester, background.session);
     expect(background.status, ThreadStatus.needsInput);
 
     // Folded away, its project's header shows its dot, after the name.
-    Finder dot() => find.descendant(
-      of: find.byType(Sidebar),
-      matching: find.byWidgetPredicate(
-        (widget) =>
-            widget is Semantics && widget.properties.label == 'Needs input',
-      ),
-    );
+    Finder dot() => told('Needs input 1');
     expect(dot(), findsNothing);
     await tester.tap(inSidebar(find.text('api-gateway')));
     await tester.pump();
@@ -799,7 +895,7 @@ void main() {
     expect(decoration().color, IdeListColors.activeSelection);
     expectForeground(IdeListColors.activeSelectionForeground);
     expect(tester.getSize(row).height, IdeListColors.rowHeight);
-    expect(decoration().borderRadius, BorderRadius.circular(4));
+    expect(decoration().borderRadius, BorderRadius.circular(Islands.rowRadius));
 
     listFocus.requestFocus();
     await tester.pump();
@@ -811,7 +907,8 @@ void main() {
       find.descendant(
         of: row,
         matching: find.byWidgetPredicate(
-          (widget) => widget is Positioned && widget.left == 0 && widget.width == 2,
+          (widget) =>
+              widget is Positioned && widget.left == 0 && widget.width == 2,
         ),
       ),
       findsNothing,
@@ -888,6 +985,46 @@ void main() {
     expect(chatTitle(tester), 'Sticky user message on scroll');
   });
 
+  testWidgets('the sidebar at the window\'s right, as the layout has it: '
+      'the conversations at its left, under the traffic lights; hidden, its '
+      'toggle at their title bar\'s right', (tester) async {
+    tester.view.physicalSize = const Size(1400, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final workspace = Workspace.mock()
+      ..keepSidePanelView({'layout': ChatLayout.chatPanelSidebar.name});
+    await tester.pumpWidget(BaoCodeApp(workspace: workspace));
+    await tester.pump();
+    final sidebar = tester.getRect(find.byType(Sidebar));
+    final chat = tester.getRect(find.byType(ChatScreen));
+    expect(sidebar.right, 1400);
+    expect(sidebar.width, 260);
+    expect(chat.right, sidebar.left);
+    expect(chat.left, Islands.gap);
+    IconData icon(String tooltip) => tester
+        .widget<SidebarIconButton>(
+          find.byWidgetPredicate(
+            (widget) =>
+                widget is SidebarIconButton && widget.tooltip == tooltip,
+          ),
+        )
+        .icon;
+    expect(icon('Hide sidebar'), Codicons.layoutSidebarRight);
+
+    await tester.tap(find.bySemanticsLabel('Hide sidebar'));
+    await tester.pumpAndSettle();
+    expect(tester.getRect(find.byType(ChatScreen)).right, 1400 - Islands.gap);
+    expect(icon('Show sidebar'), Codicons.layoutSidebarRightOff);
+    // At the right of the title bar.
+    expect(
+      tester.getCenter(find.bySemanticsLabel('Show sidebar')).dx,
+      greaterThan(1400 - 100),
+    );
+    await tester.tap(find.bySemanticsLabel('Show sidebar'));
+    await tester.pumpAndSettle();
+    expect(tester.getRect(find.byType(Sidebar)).right, 1400);
+  }, variant: TargetPlatformVariant.only(TargetPlatform.macOS));
+
   testWidgets('⌘B hides and shows the sidebar', (tester) async {
     await pumpApp(tester);
     expect(tester.getSize(find.byType(Sidebar)).width, 260);
@@ -931,7 +1068,8 @@ void main() {
     final workspace = await pumpApp(tester, width: 700);
     expect(find.byType(Sidebar), findsNothing);
     final chatWidth = tester.getSize(find.byType(ChatScreen)).width;
-    expect(chatWidth, 700);
+    // The window's, less the gaps about its card.
+    expect(chatWidth, 700 - 2 * Islands.gap);
 
     await tester.tap(find.bySemanticsLabel('Show sidebar'));
     await tester.pumpAndSettle();
@@ -963,14 +1101,14 @@ void main() {
     await tester.pump();
     expect(thread.title, 'Quota');
 
-    // The title bar, left-aligned with the conversation's column.
+    // The title bar's title at its left, not the conversation's column.
     final title = find.descendant(
       of: find.byType(ChatScreen),
       matching: find.text('Quota'),
     );
     expect(
       tester.getTopLeft(title).dx,
-      tester.getTopLeft(find.byType(ChatComposer)).dx,
+      tester.getTopLeft(find.byType(ChatScreen)).dx + 12,
     );
     await tester.tap(title);
     await tester.pump(const Duration(milliseconds: 50));
@@ -1315,6 +1453,28 @@ void main() {
     );
   });
 
+  testWidgets('an agent at work shows past the five most recent', (
+    tester,
+  ) async {
+    final workspace = await pumpKept(
+      tester,
+      KeptCatalog([for (var i = 1; i <= 7; i++) kept('a$i', '/tmp/a', i)]),
+    );
+    expect(inSidebar(find.text('Chat a7')), findsNothing);
+    final working = keptThread(workspace, 'a7');
+    working.session.send(const ComposerMessage(text: 'go'));
+    await tester.pump();
+    expect(working.shownStatus, ThreadStatus.running);
+    // Long at work, the others touched since: the oldest.
+    working.updatedAt = DateTime(2000);
+    workspace.rename(keptThread(workspace, 'a1'), 'Chat a1');
+    await tester.pump();
+    expect(inSidebar(find.text('Chat a7')), findsOneWidget);
+    expect(inSidebar(find.text('Chat a6')), findsNothing);
+    working.session.stop();
+    await tester.pump(const Duration(seconds: 5));
+  });
+
   testWidgets('the only project has a plain header that does not fold', (
     tester,
   ) async {
@@ -1369,6 +1529,54 @@ void main() {
     await tester.pump(const Duration(seconds: 2));
     expect(find.text('Chat b1'), findsNWidgets(2));
     expect(find.text('/tmp/b'), findsOneWidget);
+  });
+
+  testWidgets('Collapse All folds every project, Expand All unfolds them '
+      '(#300)', (tester) async {
+    await pumpKept(
+      tester,
+      KeptCatalog([kept('a1', '/tmp/a', 1), kept('b1', '/tmp/b', 2)]),
+    );
+    final collapse = inSidebar(
+      find.widgetWithIcon(SidebarIconButton, Codicons.collapseAll),
+    );
+    expect(collapse, findsOneWidget);
+    expect(inSidebar(find.text('Chat a1')), findsOneWidget);
+
+    await tester.tap(collapse);
+    await tester.pump();
+    expect(inSidebar(find.text('Chat a1')), findsNothing);
+    expect(inSidebar(find.text('Chat b1')), findsNothing);
+
+    final expand = inSidebar(
+      find.widgetWithIcon(SidebarIconButton, Codicons.expandAll),
+    );
+    await tester.tap(expand);
+    await tester.pump();
+    expect(inSidebar(find.text('Chat a1')), findsOneWidget);
+    expect(inSidebar(find.text('Chat b1')), findsOneWidget);
+  });
+
+  testWidgets('an agent\'s hover says the model it runs on (#245)', (
+    tester,
+  ) async {
+    final workspace = await pumpKept(
+      tester,
+      KeptCatalog([kept('a1', '/tmp/a', 1), kept('b1', '/tmp/b', 2)]),
+    );
+    final thread = workspace.threads.firstWhere((t) => t.title == 'Chat b1');
+    final models = thread.session.models!;
+    final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+    addTearDown(mouse.removePointer);
+    await mouse.addPointer(location: Offset.zero);
+    await mouse.moveTo(tester.getCenter(inSidebar(find.text('Chat b1'))));
+    await tester.pump(const Duration(seconds: 2));
+    expect(
+      find.text(
+        'Model: ${[?models.selected.group?.label, models.selected.label].join(' · ')}',
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('a project header has a menu of what can be done there', (
@@ -1476,6 +1684,114 @@ void main() {
     await tester.pump();
     expect(inSidebar(find.text('Chat b2')), findsOneWidget);
     expect(workspace.isHidden(workspace.selected.project), isFalse);
+  });
+
+  testWidgets('pinned projects stay on top, dragged among themselves; kept '
+      'between runs', (tester) async {
+    final store = MemoryPreferenceStore();
+    final catalog = KeptCatalog([
+      kept('a1', '/tmp/a', 1),
+      kept('b1', '/tmp/b', 2),
+      kept('c1', '/tmp/c', 3),
+    ]);
+    var workspace = await pumpKept(tester, catalog, preferences: store);
+    List<String> order() => [
+      for (final project in workspace.sidebarProjectsHere) project.name,
+    ];
+    // The headers' pins, not the menu's.
+    final pin = inSidebar(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is Icon &&
+            widget.icon == Icons.push_pin &&
+            widget.size == 11,
+      ),
+    );
+    expect(pin, findsNothing);
+
+    await pickFromMenu(tester, 'a', 'Pin');
+    expect(order().first, 'a');
+    expect(top(tester, 'a'), lessThan(top(tester, 'b')));
+    expect(top(tester, 'a'), lessThan(top(tester, 'c')));
+    expect(pin, findsOneWidget);
+
+    // Not above the pinned one, nor it below the others.
+    await mouseDrag(
+      tester,
+      tester.getCenter(inSidebar(find.text('c'))),
+      () => tester.getTopLeft(inSidebar(find.text('a'))) + const Offset(20, 2),
+    );
+    expect(order().first, 'a');
+    await mouseDrag(
+      tester,
+      tester.getCenter(inSidebar(find.text('a'))),
+      () => tester.getCenter(inSidebar(find.text('Chat c1'))),
+    );
+    expect(order().first, 'a');
+
+    // The last pinned on top of those pinned.
+    await pickFromMenu(tester, 'b', 'Pin');
+    expect(order().take(2), ['b', 'a']);
+    expect(pin, findsNWidgets(2));
+
+    // The next run.
+    await tester.pumpWidget(const SizedBox());
+    workspace = await pumpKept(tester, catalog, preferences: store);
+    expect(order(), ['b', 'a', 'c']);
+
+    await pickFromMenu(tester, 'b', 'Unpin');
+    expect(order(), ['a', 'b', 'c']);
+    expect(pin, findsOneWidget);
+  });
+
+  testWidgets('projects follow their latest agent until dragged; the '
+      'grouping menu switches back', (tester) async {
+    final store = MemoryPreferenceStore();
+    final catalog = KeptCatalog([
+      kept('a1', '/tmp/a', 30),
+      kept('b1', '/tmp/b', 10),
+      kept('c1', '/tmp/c', 20),
+    ]);
+    var workspace = await pumpKept(tester, catalog, preferences: store);
+    List<String> order() => [
+      for (final project in workspace.sidebarProjectsHere) project.name,
+    ];
+    Future<void> pick(String item) async {
+      await tester.tap(inSidebar(find.text('By project')));
+      await tester.pump();
+      await tester.tap(find.text(item));
+      await tester.pump(const Duration(milliseconds: 200));
+    }
+
+    expect(workspace.projectSort, ProjectSort.recent);
+    expect(order(), ['b', 'c', 'a']);
+
+    // Dragged on top: in the user's order from then on.
+    await mouseDrag(
+      tester,
+      tester.getCenter(inSidebar(find.text('a'))),
+      () => tester.getTopLeft(inSidebar(find.text('b'))) + const Offset(20, 2),
+    );
+    expect(workspace.projectSort, ProjectSort.manual);
+    expect(order(), ['a', 'b', 'c']);
+
+    await pick('Recent activity');
+    expect(order(), ['b', 'c', 'a']);
+    // The order dragged is kept for when it is back.
+    await pick('Manual');
+    expect(order(), ['a', 'b', 'c']);
+
+    // The next run.
+    await tester.pumpWidget(const SizedBox());
+    workspace = await pumpKept(tester, catalog, preferences: store);
+    expect(workspace.projectSort, ProjectSort.manual);
+    expect(order(), ['a', 'b', 'c']);
+
+    // Grouped by date, there is no project order to pick.
+    await pick('Date');
+    await tester.tap(inSidebar(find.text('By date')));
+    await tester.pump();
+    expect(find.text('Manual'), findsNothing);
   });
 
   testWidgets('agents and projects keep the order they are dragged to', (
@@ -1615,6 +1931,37 @@ void main() {
       expect(grabbingCursor(), findsNothing);
     },
   );
+
+  testWidgets('the dragged chat follows the pointer in a zoomed window', (
+    tester,
+  ) async {
+    CodeFont.uiScale.value = 150;
+    addTearDown(() => CodeFont.uiScale.value = CodeFont.defaultUiScale);
+    await pumpKept(
+      tester,
+      KeptCatalog([kept('a1', '/tmp/a', 1), kept('a2', '/tmp/a', 2)]),
+    );
+    final start = tester.getCenter(inSidebar(find.text('Chat a2')));
+    final gesture = await tester.startGesture(
+      start,
+      kind: PointerDeviceKind.mouse,
+    );
+    await gesture.moveBy(const Offset(0, -10));
+    await tester.pump();
+    final at = start + const Offset(300, 120);
+    await gesture.moveTo(at);
+    await tester.pump();
+    final chip = find.descendant(
+      of: find.byType(ChatDragLayer),
+      matching: find.byType(IgnorePointer),
+    );
+    // Just below and right of the pointer, in the window's pixels.
+    final topLeft = tester.getTopLeft(chip);
+    expect(topLeft.dx, closeTo(at.dx + 12 * 1.5, 0.5));
+    expect(topLeft.dy, closeTo(at.dy + 10 * 1.5, 0.5));
+    await gesture.up();
+    await tester.pump();
+  });
 
   testWidgets('losing window focus cancels a chat drag', (tester) async {
     final workspace = await pumpKept(

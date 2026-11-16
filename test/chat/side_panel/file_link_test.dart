@@ -80,6 +80,20 @@ void main() {
         FileLink.parseHref('file:///C:/p/a.dart'),
         const FileLink('C:/p/a.dart'),
       );
+      // A Windows model's, after the prompt's `/absolute/path`: opened as
+      // `\D:\Desktop\…`, not found, before.
+      expect(
+        FileLink.parseHref('/D:/Desktop/ctf/pelican_bicycle.svg'),
+        const FileLink('D:/Desktop/ctf/pelican_bicycle.svg'),
+      );
+      expect(
+        FileLink.parseHref(r'/D:\p\a.dart#L4'),
+        const FileLink(r'D:\p\a.dart', FileLineRange(4)),
+      );
+      expect(
+        FileLink.parseHref('</D:/My Project/a.dart>'),
+        const FileLink('D:/My Project/a.dart'),
+      );
     });
 
     test('spaces, escaped or in angle brackets', () {
@@ -112,6 +126,46 @@ void main() {
         null,
       ]) {
         expect(FileLink.parseHref(href), isNull, reason: '$href');
+      }
+    });
+
+    test('another machine\'s: the user\'s computer, an SSH host', () {
+      expect(
+        FileLink.parseHref('local:/Users/me/Downloads/a.pdf'),
+        const FileLink.on(FileLink.userComputer, '/Users/me/Downloads/a.pdf'),
+      );
+      expect(
+        FileLink.parseHref('<local:///Users/me/My Files/a.md#L3>'),
+        const FileLink.on(
+          FileLink.userComputer,
+          '/Users/me/My Files/a.md',
+          FileLineRange(3),
+        ),
+      );
+      expect(
+        FileLink.parseHref('local:C:/Users/me/a.txt'),
+        const FileLink.on(FileLink.userComputer, 'C:/Users/me/a.txt'),
+      );
+      expect(
+        FileLink.parseHref('ssh://devbox/var/log/app.log#L120-L130'),
+        const FileLink.on(
+          'devbox',
+          '/var/log/app.log',
+          FileLineRange(120, 130),
+        ),
+      );
+      expect(
+        FileLink.parseHref('ssh://me@10.0.0.2:2222/srv/a.py:7'),
+        const FileLink.on('me@10.0.0.2:2222', '/srv/a.py', FileLineRange(7)),
+      );
+      expect(
+        FileLink.parseHref('ssh://win/C:/app/a.cs'),
+        const FileLink.on('win', 'C:/app/a.cs'),
+      );
+      // Where a relative one is from is not known there; a host alone is
+      // no file.
+      for (final href in ['local:a/b.md', 'ssh://devbox', 'ssh:///a.md']) {
+        expect(FileLink.parseHref(href), isNull, reason: href);
       }
     });
   });
@@ -167,17 +221,23 @@ void main() {
     });
   });
 
-  group('kept to the project', () {
-    test('relative paths join it; those outside are refused', () {
-      expect(
-        const FileLink('lib/a.dart').resolveIn('/p'),
-        p.join('/p', 'lib', 'a.dart'),
-      );
-      expect(const FileLink('/p/lib/a.dart').resolveIn('/p'), '/p/lib/a.dart');
-      expect(const FileLink('../etc/passwd').resolveIn('/p'), isNull);
-      expect(const FileLink('/etc/passwd').resolveIn('/p'), isNull);
-      expect(const FileLink('~/a.dart').resolveIn('/p'), isNull);
-      expect(const FileLink('lib/../../x').resolveIn('/p'), isNull);
+  group('made absolute as the agent\'s tools take them', () {
+    test('relative paths join where it works, out of it too; `~` is the '
+        'home folder', () {
+      final posix = p.Context(style: p.Style.posix);
+      String? at(String path, {String? home}) =>
+          FileLink(path).resolveIn('/p', paths: posix, home: home);
+      expect(at('lib/a.dart'), '/p/lib/a.dart');
+      expect(at('/p/lib/a.dart'), '/p/lib/a.dart');
+      expect(at('../q/a.dart'), '/q/a.dart');
+      expect(at('/etc/hosts'), '/etc/hosts');
+      expect(at('lib/../../x'), '/x');
+      expect(at('~/a.dart', home: '/home/me'), '/home/me/a.dart');
+      expect(at('~', home: '/home/me'), '/home/me');
+      // No home known, or another user's.
+      expect(at('~/a.dart'), isNull);
+      expect(at('~bob/a.dart', home: '/home/me'), isNull);
+      expect(at(''), isNull);
     });
 
     test('a Windows project\'s paths, as its host spells them', () {
@@ -192,7 +252,23 @@ void main() {
       );
       expect(
         const FileLink(r'D:\other\a.dart').resolveIn(r'C:\p', paths: windows),
+        r'D:\other\a.dart',
+      );
+      expect(
+        const FileLink(r'~\a.dart')
+            .resolveIn(r'C:\p', paths: windows, home: r'C:\Users\me'),
+        r'C:\Users\me\a.dart',
+      );
+      // Another user's, not this one's.
+      expect(
+        const FileLink(r'~bob\a.dart')
+            .resolveIn(r'C:\p', paths: windows, home: r'C:\Users\me'),
         isNull,
+      );
+      // A code citation's `/D:/…`, the drive's.
+      expect(
+        const FileLink('/D:/other/a.dart').resolveIn(r'C:\p', paths: windows),
+        r'D:\other\a.dart',
       );
     });
   });
@@ -245,21 +321,30 @@ see also `pubspec.yaml` and [the site](https://baocode.dev).
     final prompt = arguments[at + 1];
     expect(prompt, contains(ClaudeLaunch.citingCode));
     expect(prompt, contains(ClaudeLaunch.fileLinks));
+    expect(prompt, contains(ClaudeLaunch.formatting));
     expect(ClaudeLaunch.fileLinks, contains('#L42-L58'));
+    expect(ClaudeLaunch.formatting, contains(r'\(...\)'));
     // Its examples parse as it asks them to be written.
     expect(
-      FileLink.parseHref('path/relative/to/working/directory#L42'),
-      const FileLink('path/relative/to/working/directory', FileLineRange(42)),
+      FileLink.parseHref('/absolute/path/to/file#L42'),
+      const FileLink('/absolute/path/to/file', FileLineRange(42)),
+    );
+    expect(
+      FileLink.parseHref('C:/Users/me/app/Program.cs#L12'),
+      const FileLink('C:/Users/me/app/Program.cs', FileLineRange(12)),
     );
     final (:hrefs, code: _) = _parsed(
-      '[notes.md](<docs/release notes.md#L3>) '
-      '[chat_screen.dart:42](lib/chat/chat_screen.dart#L42)',
+      '[notes.md](</Users/me/My Project/docs/notes.md#L3>) '
+      '[chat_screen.dart:42](/Users/me/app/lib/chat/chat_screen.dart#L42)',
     );
     expect(
       [for (final href in hrefs) FileLink.parseHref(href)],
       [
-        const FileLink('docs/release notes.md', FileLineRange(3)),
-        const FileLink('lib/chat/chat_screen.dart', FileLineRange(42)),
+        const FileLink('/Users/me/My Project/docs/notes.md', FileLineRange(3)),
+        const FileLink(
+          '/Users/me/app/lib/chat/chat_screen.dart',
+          FileLineRange(42),
+        ),
       ],
     );
   });

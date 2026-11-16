@@ -1,30 +1,43 @@
 import 'dart:async';
+import 'dart:convert' show jsonEncode;
 import 'dart:ui' show AppExitResponse;
 
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart'
+    show kIsWeb, visibleForTesting;
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:flutter_quill/flutter_quill.dart';
 import 'package:path/path.dart' as p;
 import 'package:bao_editor/textmate/textmate_syntax.dart';
+import 'package:bao_markdown/bao_markdown.dart'
+    show MarkdownEditor, MdClipboard;
 
 import 'package:bao_editor/monaco/flutter/language_assets.dart';
 
+import 'base/quiet_view.dart';
 import 'base/smooth_scroll.dart' show BaoScrollBehavior;
+import 'bots/bots.dart';
 import 'browser/browser_bridge.dart';
 import 'browser/browser_tools.dart' show BrowserHistory;
 import 'chat/composer/composer_files.dart' show ComposerFile, pastedAsPicture;
 import 'chat/chat_width.dart';
 import 'chat/reply_scroll.dart';
+import 'chat/edit_detail.dart';
 import 'chat/user_message_style.dart';
 import 'chat/widgets/chat_minimap.dart';
 import 'chat/widgets/pixel_loader.dart';
 import 'chat/resume_after_reset.dart';
+import 'chat/rewind_files_setting.dart';
 import 'chat/widgets/turn_footer.dart' show LiveTurnStatsSetting;
 import 'customize/customization_store.dart';
 import 'diagnostics/app_event_watch.dart';
+import 'diagnostics/crash_reports.dart';
+import 'diagnostics/exit_watch.dart';
+import 'diagnostics/frame_watch.dart';
+import 'diagnostics/hang_watch.dart';
 import 'diagnostics/diagnostics_upload.dart';
 import 'extensions/theme_extensions.dart';
+import 'ide/editor_minimap_setting.dart';
+import 'ide/editor_word_wrap.dart';
 import 'ide/git/git_repository.dart';
 import 'ide/git/repository_scan.dart';
 import 'ide/language_mode.dart';
@@ -47,6 +60,7 @@ import 'kernel/claude_code/turn_stats_stub.dart'
     if (dart.library.io) 'kernel/claude_code/turn_stats_io.dart'
     show turnStatsIn;
 import 'kernel/commit_attribution.dart';
+import 'kernel/extension_switches.dart';
 import 'kernel/prompt_suggestions.dart';
 import 'chat/composer/composer_polish.dart' show ComposerPolishSetting;
 import 'kernel/queued_messages.dart';
@@ -56,6 +70,7 @@ import 'keybindings/keymap.dart';
 import 'keybindings/vscode_import.dart';
 import 'l10n/l10n.dart';
 import 'models/featured_upstreams.dart';
+import 'models/magpie_follow.dart';
 import 'models/model_icons.dart';
 import 'models/model_providers.dart';
 import 'models/model_runtime.dart';
@@ -63,6 +78,8 @@ import 'models/model_welcome.dart';
 import 'network/network_proxy.dart';
 import 'notifications/attention_settings.dart';
 import 'platform/memory_budget.dart';
+import 'platform/native_md_clipboard.dart';
+import 'platform/app_binding.dart';
 import 'platform/app_platform.dart';
 import 'platform/data_dir.dart';
 import 'platform/error_log.dart';
@@ -102,13 +119,18 @@ import 'theme/app_theme.dart';
 import 'theme/code_font.dart';
 import 'theme/pixel_snapped_text_scaler.dart';
 import 'theme/ui_zoom.dart';
+import 'theme/window_blur.dart';
 import 'theme/workbench_theme.dart';
+import 'theme/theme_transition.dart';
 import 'update/update_controller.dart';
 import 'update/update_platform.dart';
 import 'update/update_service.dart';
 import 'update/update_settings.dart';
 import 'update/update_store.dart';
 import 'update/version.dart';
+import 'usage/usage_ledger.dart';
+import 'usage/usage_prices.dart';
+import 'usage/usage_storage.dart';
 import 'window/app_windows.dart';
 import 'window/code_args.dart';
 import 'window/window_host.dart';
@@ -131,22 +153,33 @@ Future<void> main(List<String> arguments) async {
     if (resolution.ok) {
       DataDirectory.current = resolution.directory;
     } else {
-      WidgetsFlutterBinding.ensureInitialized();
+      AppBinding.ensureInitialized();
       DataDirectory.current = await recoverDataDirectory(resolution);
     }
     // What goes wrong unseen from here on, kept for the user to send.
     errors = ErrorLog(DataDirectory.current.logsDir)..install();
-    // And what the app went through, to read what led to it.
-    EventLog.current = EventLog(DataDirectory.current.logsDir);
+    // And what the app went through, to read what led to it; how the run
+    // before ended, if it did not say.
+    final crashFolders = platformCrashReportFolders();
+    EventLog.current = EventLog(
+      DataDirectory.current.logsDir,
+      crashSince: (since) => crashReportSince(crashFolders, since),
+    );
+    watchExit(DataDirectory.current.logsDir);
   }
   unawaited(reapClaudeProcesses());
   unawaited(reapLspProcesses());
   unawaited(reapPtyProcesses());
-  WidgetsFlutterBinding.ensureInitialized();
+  AppBinding.ensureInitialized();
   MemoryBudget.apply();
-  if (!kIsWeb) AppEventWatch.start();
-  // The Windows app's own logs go beside it.
-  if (errors != null) unawaited(errors.shareWithHost());
+  if (!kIsWeb) {
+    AppEventWatch.start();
+    FrameWatch.start();
+    MarkdownEditor.onInputLost = (message) => appEvent('input', message);
+  }
+  // The Windows app's own logs and the macOS app's hang reports go beside
+  // them.
+  if (errors != null) unawaited(shareLogsFolder(errors.directory));
   // The editor's language packs are the language servers' (README.md in
   // lib/ide/lsp/packs).
   MonacoLanguageAssets.defaultPacks = () => LanguagePackRegistry.instance;
@@ -164,122 +197,10 @@ Future<void> main(List<String> arguments) async {
       files.settings,
       (key) => files.settings[key],
     ).timeout(const Duration(seconds: 1), onTimeout: () {});
-    // Read as each agent starts.
-    CommitAttribution.current = () =>
-        CommitAttribution.parse(files.settings[CommitAttribution.settingKey]);
-    // Read as each message is sent.
-    QueuedMessages.current = () =>
-        QueuedMessages.parse(files.settings[QueuedMessages.settingKey]);
-    // Read as each agent starts, and as each message is sent.
-    PromptSuggestions.current = () =>
-        PromptSuggestions.enabled(files.settings[PromptSuggestions.settingKey]);
-    // The composer's Polish button, shown or not as it changes.
-    ComposerPolishSetting.current = () => ComposerPolishSetting.enabled(
-      files.settings[ComposerPolishSetting.settingKey],
-    );
-    ComposerPolishSetting.changes = files.settings;
-    // The turn under way's line of figures, shown or not as it changes.
-    LiveTurnStatsSetting.current = () => LiveTurnStatsSetting.enabled(
-      files.settings[LiveTurnStatsSetting.settingKey],
-    );
-    LiveTurnStatsSetting.changes = files.settings;
-    // An agent stopped at the usage limit: whether it goes on once it
-    // resets, set in the model picker.
-    ResumeAfterResetSetting.current = () => ResumeAfterResetSetting.enabled(
-      files.settings[ResumeAfterResetSetting.settingKey],
-    );
-    ResumeAfterResetSetting.changes = files.settings;
-    ResumeAfterResetSetting.write = (on) => unawaited(
-      files.settings
-          .update(
-            ResumeAfterResetSetting.settingKey,
-            on ? ResumeAfterResetSetting.on : null,
-          )
-          .catchError((Object error) {
-            // A settings file that does not parse is left as it is; its
-            // error is shown.
-            debugPrint(
-              '${ResumeAfterResetSetting.settingKey} not kept: $error',
-            );
-          }),
-    );
-    // Settings → General → Claude Code: the build to run, read as each
-    // agent starts.
-    ClaudePathSetting.current = () =>
-        ClaudePathSetting.parse(files.settings[ClaudePathSetting.settingKey]);
-    // Settings → General → Claude Code: the core sessions run on (BaoCode's
-    // own, or the CLI), read as each agent starts. Unset, the CLI where it
-    // is installed: looked for on the app's PATH, then the shell's.
-    ClaudeCore.cliInstalled = localClaudeInstalled;
-    unawaited(lookForLocalClaude());
-    ClaudeCore.current = () =>
-        ClaudeCore.parse(files.settings[ClaudeCore.settingKey]);
-    // Settings → Models: the upstreams, kept in settings.json.
-    ModelProviders.current = ModelProviders.settings(files.settings);
-    // Claude Code's own models as it last listed them: in the picker
-    // before a session on them starts.
-    ClaudeCodeKernel.modelCache = files.storage;
-    // Whether the welcome to setting a model up has shown by itself.
-    ModelWelcome.storage = files.storage;
+    followSettingsFiles(files);
     // The channel build's first start: set up before anything else shows.
     await _beginChannelSetup(files);
     _openChannelGate(files);
-    // What each turn took and spent, for its footer when the session is
-    // opened again: in the data folder, a file per session.
-    ClaudeCodeKernel.turnStats = turnStatsIn(
-      p.join(DataDirectory.current.path, 'turn-stats'),
-    );
-    // The upstreams' sites' icons, for those that show no other: in the
-    // cache, fetched as soon as one is added.
-    SiteIcons.current = SiteIcons(
-      library: IconLibrary(
-        storage: IconStorage.directory(
-          p.join(DataDirectory.current.cacheDir, 'site-icons'),
-        ),
-      ),
-    );
-    prefetchProviderIcons(ModelProviders.current, SiteIcons.current);
-    // The logos of the sites listed, for their upstreams' icons, as kept
-    // last time (Settings → Models gets the list again).
-    unawaited(FeaturedUpstream.readKept());
-    // Settings → Appearance: how wide the conversation grows.
-    ChatWidth.follow(
-      files.settings,
-      () => files.settings[ChatWidth.settingKey],
-    );
-    // Settings → Appearance: how the user's messages show.
-    UserMessageStyle.follow(
-      files.settings,
-      () => files.settings[UserMessageStyle.settingKey],
-    );
-    // Settings → Appearance: where a conversation stays as a reply comes.
-    ReplyScroll.keep(
-      files.settings,
-      () => files.settings[ReplyScroll.settingKey],
-    );
-    // Settings → Appearance: whether the conversation has a minimap, how
-    // opaque its glass is and how much it stretches.
-    ChatMinimap.follow(files.settings, (key) => files.settings[key]);
-    // Settings → Appearance: what an agent and a subagent show running.
-    PixelLoaderRole.follow(files.settings, (key) => files.settings[key]);
-    // Settings → Appearance: whether the sidebar's agents show their times.
-    SidebarTimes.follow(
-      files.settings,
-      () => files.settings[SidebarTimes.settingKey],
-    );
-    // Settings → Browser: whether the agents may use the user's browsers.
-    BrowserBridge.instance.follow(
-      files.settings,
-      () => files.settings[BrowserBridge.settingKey],
-    );
-    // Settings → Browser: whether the history keeps bodies and steps too.
-    BrowserHistory.instance.follow(
-      files.settings,
-      () => files.settings[BrowserHistory.detailedKey],
-    );
-    // Settings → Appearance: the code's font, size and ligatures, and the
-    // window's text size.
-    CodeFont.follow(files.settings, (key) => files.settings[key]);
   }
   // Emoji as pictures: fetched into the cache the first run, in the
   // background, through the proxy.
@@ -310,14 +231,52 @@ Future<void> main(List<String> arguments) async {
     l10n: () =>
         lookupAppLocalizations(locale.locale ?? AppLocale.systemLocale()),
   )..load();
+  // The conversations' titles and projects, kept with their calls.
+  UsageLedger.titleOf = (session) => switch (workspace.threads
+      .where((thread) => thread.id == session)
+      .firstOrNull) {
+    final thread? when thread.titled => thread.title,
+    _ => null,
+  };
+  UsageLedger.projectOf = (session) => workspace.threads
+      .where((thread) => thread.id == session)
+      .firstOrNull
+      ?.project
+      .name;
   // Claude Code's skills, agents, commands, rules, servers, hooks and
   // plugins: the Customize view beside the chat, and Settings → Customize.
   final customizations = CustomizationStore();
   // The phones paired with this computer (Settings → Mobile): listening
   // for them, if they are allowed to connect.
+  // The user's bots: agents that chat as a person does, with the phones.
+  final bots = kIsWeb
+      ? null
+      : Bots(
+          workspace: workspace,
+          store: PreferenceStore.file(
+            p.join(DataDirectory.current.botsDir, 'bots.json'),
+          ),
+          chinese:
+              (locale.locale ?? AppLocale.systemLocale()).languageCode == 'zh',
+        );
+  unawaited(bots?.start());
   final link = kIsWeb
       ? null
-      : LinkHost(workspace: workspace, customizations: customizations);
+      : LinkHost(
+          workspace: workspace,
+          customizations: customizations,
+          bots: bots,
+        );
+  if (bots != null && link != null) {
+    // The bots are the phones': with none paired, told of nothing.
+    var paired = false;
+    bots.hasPhone = () => link.phones.isNotEmpty;
+    link.addListener(() {
+      if (link.phones.isNotEmpty == paired) return;
+      paired = !paired;
+      bots.phonesChanged();
+    });
+  }
   unawaited(link?.load());
   // The first frame is in the kept theme, restored from storage as VS Code
   // does before the workbench shows; its file is read after. The setting
@@ -383,6 +342,10 @@ Future<void> main(List<String> arguments) async {
         http: IoForgeHttp(),
         read: () => files.storage.get<List<Object?>>(forgeAccountsKey),
         write: (json) => files.storage.set(forgeAccountsKey, json),
+        readCertificates: () =>
+            files.storage.get<Map<Object?, Object?>>(forgeCertificatesKey),
+        writeCertificates: (json) =>
+            files.storage.set(forgeCertificatesKey, json),
       ),
     );
     StashForge.current = stash.forge;
@@ -404,6 +367,10 @@ Future<void> main(List<String> arguments) async {
         .layoutAtLaunch(workspace.layout);
   }
   WindowControls.trackActiveView();
+  // What an editor copies, its tags and all, on the clipboard itself.
+  if (WindowControls.isDesktop) {
+    MdClipboard.instance = const NativeMdClipboard();
+  }
   // An older `code` script opened windows for `code --version`.
   unawaited(ShellCommand.refresh());
   final ColorThemeStorage colorTheme = files == null
@@ -413,6 +380,7 @@ Future<void> main(List<String> arguments) async {
     ..restore(
       setting: colorTheme.colorThemeSetting,
       data: colorTheme.colorThemeData,
+      autoDetectColorScheme: colorTheme.autoDetectColorScheme,
     )
     ..storage = colorTheme
     // A theme of an extension applies once they are read.
@@ -443,7 +411,7 @@ Future<void> main(List<String> arguments) async {
       link: link,
       customizations: customizations,
     );
-    _startTelemetry(files);
+    _startTelemetry(files, link);
   }
   // The theme extensions (lib/extensions/): color and file icon themes
   // from Open VSX or a .vsix, `workbench.iconTheme` followed as
@@ -495,6 +463,190 @@ Future<void> main(List<String> arguments) async {
   } else {
     runApp(app);
   }
+}
+
+/// Has the app follow the user's settings files: what each setting
+/// changes, read as it is needed or followed as it changes. Also the
+/// showcase app's (tool/showcase/), on a data folder of its own.
+void followSettingsFiles(SettingsFiles files) {
+  // Read as each agent starts.
+  CommitAttribution.current = () =>
+      CommitAttribution.parse(files.settings[CommitAttribution.settingKey]);
+  // Read as each message is sent.
+  QueuedMessages.current = () =>
+      QueuedMessages.parse(files.settings[QueuedMessages.settingKey]);
+  // Read as each agent starts, and as each message is sent.
+  PromptSuggestions.current = () =>
+      PromptSuggestions.enabled(files.settings[PromptSuggestions.settingKey]);
+  // The composer's Polish button, shown or not as it changes.
+  ComposerPolishSetting.current = () => ComposerPolishSetting.enabled(
+    files.settings[ComposerPolishSetting.settingKey],
+  );
+  ComposerPolishSetting.changes = files.settings;
+  // The turn under way's line of figures, shown or not as it changes.
+  LiveTurnStatsSetting.current = () => LiveTurnStatsSetting.enabled(
+    files.settings[LiveTurnStatsSetting.settingKey],
+  );
+  LiveTurnStatsSetting.changes = files.settings;
+  // An agent stopped at the usage limit: whether it goes on once it
+  // resets, set in the model picker.
+  ResumeAfterResetSetting.current = () => ResumeAfterResetSetting.enabled(
+    files.settings[ResumeAfterResetSetting.settingKey],
+  );
+  ResumeAfterResetSetting.changes = files.settings;
+  ResumeAfterResetSetting.write = (on) => unawaited(
+    files.settings
+        .update(
+          ResumeAfterResetSetting.settingKey,
+          on ? ResumeAfterResetSetting.on : null,
+        )
+        .catchError((Object error) {
+          // A settings file that does not parse is left as it is; its
+          // error is shown.
+          debugPrint('${ResumeAfterResetSetting.settingKey} not kept: $error');
+        }),
+  );
+  // A message edited and sent again: whether the files changed after it
+  // go back, asked unless set (there, or in its prompt).
+  RewindFilesSetting.current = () =>
+      RewindFilesSetting.parse(files.settings[RewindFilesSetting.settingKey]);
+  RewindFilesSetting.write = (value) => unawaited(
+    files.settings
+        .update(
+          RewindFilesSetting.settingKey,
+          value == RewindFilesSetting.fallback ? null : value.name,
+        )
+        .catchError((Object error) {
+          debugPrint('${RewindFilesSetting.settingKey} not kept: $error');
+        }),
+  );
+  // Settings → Customize's switches: the skills, MCP servers and tools
+  // turned off, given each agent at start and as they change.
+  ExtensionSwitches.current = () =>
+      ExtensionSwitches.parse(files.settings.values);
+  ExtensionSwitches.changes = files.settings;
+  ExtensionSwitches.save = (switches) async {
+    final before = ExtensionSwitches.current().toSettings();
+    for (final MapEntry(:key, :value) in switches.toSettings().entries) {
+      if (jsonEncode(before[key]) != jsonEncode(value)) {
+        await files.settings.update(key, value);
+      }
+    }
+  };
+  // Settings → General → Claude Code: the build to run, read as each
+  // agent starts.
+  ClaudePathSetting.current = () =>
+      ClaudePathSetting.parse(files.settings[ClaudePathSetting.settingKey]);
+  // Settings → General → Claude Code: the core sessions run on (BaoCode's
+  // own, or the CLI), read as each agent starts. Unset, the CLI where it
+  // is installed (looked for on the app's PATH, then the shell's), else
+  // the built-in core.
+  ClaudeCore.cliInstalled = localClaudeInstalled;
+  unawaited(lookForLocalClaude());
+  ClaudeCore.current = () =>
+      ClaudeCore.parse(files.settings[ClaudeCore.settingKey]);
+  ClaudeCore.changes = files.settings;
+  // Settings → Models: the upstreams, kept in settings.json.
+  ModelProviders.current = ModelProviders.settings(files.settings);
+  // The upstream that follows magpie: its models got again as it starts,
+  // and now and then.
+  MagpieFollow.current = MagpieFollow()..start();
+  // Claude Code's own models as it last listed them: in the picker
+  // before a session on them starts.
+  ClaudeCodeKernel.modelCache = files.storage;
+  // Whether the welcome to setting a model up has shown by itself.
+  ModelWelcome.storage = files.storage;
+  // What each turn took and spent, for its footer when the session is
+  // opened again: in the data folder, a file per session.
+  ClaudeCodeKernel.turnStats = turnStatsIn(
+    p.join(DataDirectory.current.path, 'turn-stats'),
+  );
+  // The calls to custom upstreams (Settings → Usage, the side panel's
+  // Usage page): in the data folder, a file a day, kept as long as the
+  // user says.
+  UsageLedger.current = UsageLedger(
+    usageStorageIn(p.join(DataDirectory.current.path, 'usage')),
+  )..follow(files.settings);
+  unawaited(UsageLedger.current.prune());
+  // The models' prices, the calls' costs worked out from them.
+  UsagePrices.current = UsagePrices()..follow(files.settings);
+  // The upstreams' sites' icons, for those that show no other: in the
+  // cache, fetched as soon as one is added.
+  SiteIcons.current = SiteIcons(
+    library: IconLibrary(
+      storage: IconStorage.directory(
+        p.join(DataDirectory.current.cacheDir, 'site-icons'),
+      ),
+    ),
+  );
+  prefetchProviderIcons(ModelProviders.current, SiteIcons.current);
+  // The logos of the sites listed, for their upstreams' icons, as kept
+  // last time (Settings → Models gets the list again).
+  unawaited(FeaturedUpstream.readKept());
+  // Settings → Appearance: how wide the conversation grows.
+  ChatWidth.follow(files.settings, () => files.settings[ChatWidth.settingKey]);
+  // Settings → Appearance: how the user's messages show.
+  UserMessageStyle.follow(
+    files.settings,
+    () => files.settings[UserMessageStyle.settingKey],
+  );
+  // Settings → Appearance: how a file edit shows.
+  EditDetail.follow(
+    files.settings,
+    () => files.settings[EditDetail.settingKey],
+  );
+  // Settings → Appearance: where a conversation stays as a reply comes.
+  ReplyScroll.keep(
+    files.settings,
+    () => files.settings[ReplyScroll.settingKey],
+  );
+  // Settings → Appearance: whether the conversation has a minimap, how
+  // opaque its glass is and how much it stretches.
+  ChatMinimap.follow(files.settings, (key) => files.settings[key]);
+  // Settings → Appearance: what an agent and a subagent show running.
+  PixelLoaderRole.follow(files.settings, (key) => files.settings[key]);
+  // Settings → Appearance: whether the windows are blurred underneath.
+  WindowBlur.follow(
+    files.settings,
+    () => files.settings[WindowBlur.settingKey],
+  );
+  // Settings → Appearance: whether the sidebar's agents show their times.
+  SidebarTimes.follow(
+    files.settings,
+    () => files.settings[SidebarTimes.settingKey],
+  );
+  // Settings → Browser: whether the agents may use the user's browsers.
+  BrowserBridge.instance.follow(
+    files.settings,
+    () => files.settings[BrowserBridge.settingKey],
+  );
+  // Settings → Browser: whether the history keeps bodies and steps too.
+  BrowserHistory.instance.follow(
+    files.settings,
+    () => files.settings[BrowserHistory.detailedKey],
+  );
+  // Settings → Appearance: the code's font, size and ligatures, and the
+  // window's text size.
+  CodeFont.follow(files.settings, (key) => files.settings[key]);
+  // Interface Size as it changes, in the event log, with what
+  // settings.json held then: a window seen going back to 100% unasked
+  // tells there why.
+  var scale = CodeFont.uiScale.value;
+  CodeFont.uiScale.addListener(() {
+    final kept = files.settings[CodeFont.uiScaleSettingKey];
+    appEvent(
+      'zoom',
+      '$scale% -> ${CodeFont.uiScale.value}% '
+          '(settings.json: ${kept ?? 'unset'}, '
+          '${files.settings.values.length} settings'
+          '${files.settings.error == null ? '' : ', does not parse'})',
+    );
+    scale = CodeFont.uiScale.value;
+  });
+  // Whether the editors wrap long lines.
+  EditorWordWrap.follow(files.settings);
+  // Whether the code editors show their minimap.
+  EditorMinimap.follow(files.settings);
 }
 
 /// The app's updates (lib/update/): looked for as settings.json's
@@ -590,7 +742,7 @@ void _openChannelGate(SettingsFiles files) {
 
 /// The app's usage data (lib/telemetry/): once a UTC day it is in front.
 /// None in a debug build.
-void _startTelemetry(SettingsFiles files) {
+void _startTelemetry(SettingsFiles files, LinkHost? link) {
   final platform = platformTelemetry();
   if (platform == null) return;
   // The setup's, read back as it was set.
@@ -610,6 +762,8 @@ void _startTelemetry(SettingsFiles files) {
     inFront: inFront,
     edition: () => ChannelSetup.editionOf(channel),
     attribution: () => channel.attribution?.toJson(),
+    linkPaths: () => link?.pathCounts.pending,
+    linkPathsSent: link?.pathCountsSent,
   )..start();
   // Back in front: a new day, if it is one. For the app's whole run.
   AppLifecycleListener(onResume: telemetry.markActive);
@@ -667,22 +821,32 @@ class BaoCodeApp extends StatefulWidget {
   /// What the IDE's terminals run on; none when null.
   final TerminalBackend? terminalBackend;
 
+  /// Whether each window's app has no semantics (see
+  /// _BaoCodeAppState._withoutSemantics): on Windows itself, unless a test
+  /// says. Tests that target Windows from another host keep theirs, to find
+  /// widgets by.
+  @visibleForTesting
+  static bool? debugWithoutSemantics;
+
   @override
   State<BaoCodeApp> createState() => _BaoCodeAppState();
 }
 
-class _BaoCodeAppState extends State<BaoCodeApp> {
+class _BaoCodeAppState extends State<BaoCodeApp>
+    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   late final Workspace _workspace =
       widget.workspace ??
       (Workspace(preferences: PreferenceStore.file())..load());
 
   late final AppLocale _locale = widget.appLocale ?? AppLocale();
 
-  /// The code's font, size and ligatures: what restyles all code.
+  /// The code's font, size and ligatures: what restyles all code; and the
+  /// windows' blur, which every surface over it is tinted for.
   static final Listenable _codeFont = Listenable.merge([
     CodeFont.families,
     CodeFont.size,
     CodeFont.ligatures,
+    WindowBlur.enabled,
   ]);
 
   late final AppSettings _settings =
@@ -703,16 +867,20 @@ class _BaoCodeAppState extends State<BaoCodeApp> {
   /// terminals' shells are hung up, as closing their window would.
   late final AppLifecycleListener _lifecycle = AppLifecycleListener(
     onExitRequested: () async {
+      appEvent('app', 'quit requested');
       // The unsaved files of all windows asked about at once, then the
       // agents at work; in the window in front.
       final updates = _settings.updates?.service;
       if (!await _windows.confirmQuit()) {
+        appEvent('app', 'quit cancelled');
         updates?.disarm();
         return AppExitResponse.cancel;
       }
       // Restart to Update: the installer waits for the app to go. One that
       // will not start keeps the app (and says why).
+      final updating = updates?.armed ?? false;
       if (updates != null && !await updates.launchArmed()) {
+        appEvent('app', 'quit cancelled: the update would not start');
         return AppExitResponse.cancel;
       }
       await Future.wait([
@@ -722,20 +890,53 @@ class _BaoCodeAppState extends State<BaoCodeApp> {
         stopLspProcesses(),
         ?widget.themeExtensions?.dispose(),
         stopPtyProcesses(),
+        ?_settings.link?.stopAdvertising(),
       ]);
       // The remote hosts' servers end, and all they run with them.
       await SshHosts.instance.closeAll();
+      appExit(updating ? 'quit to update' : 'quit');
       return AppExitResponse.exit;
     },
   );
 
   final WorkbenchThemeService _themes = WorkbenchThemeService.instance;
+  late final _themeTransition = ColorThemeTransition(vsync: this);
   bool? _darkAppearance;
+
+  void _transitionTheme(WorkbenchColors colors, VoidCallback apply) {
+    _themeTransition.change(
+      from: AppColors.windowCanvas,
+      to: AppColors.usesSystemMaterial
+          ? Colors.transparent
+          : colors['sideBar.background'],
+      apply: apply,
+      animate:
+          !identical(colors.theme, _themes.colorTheme) &&
+          !WidgetsBinding
+              .instance
+              .platformDispatcher
+              .accessibilityFeatures
+              .disableAnimations,
+    );
+  }
+
+  @override
+  void didChangeAccessibilityFeatures() {
+    if (WidgetsBinding
+        .instance
+        .platformDispatcher
+        .accessibilityFeatures
+        .disableAnimations) {
+      _themeTransition.finish();
+    }
+  }
 
   @override
   void initState() {
     super.initState();
     _lifecycle;
+    WidgetsBinding.instance.addObserver(this);
+    _themes.transition = _transitionTheme;
     _themes.addListener(_colorThemeChanged);
     _colorThemeChanged();
     _locale.addListener(_windows.relabel);
@@ -746,13 +947,28 @@ class _BaoCodeAppState extends State<BaoCodeApp> {
     );
   }
 
+  @override
+  void didChangePlatformBrightness() {
+    unawaited(
+      _themes
+          .setPlatformBrightness(
+            WidgetsBinding.instance.platformDispatcher.platformBrightness,
+          )
+          .catchError((Object error) {
+            debugPrint('System color theme not applied: $error');
+          }),
+    );
+  }
+
   /// The terminals take the theme's colors (`getXtermTheme`); the window's
-  /// own parts follow its type.
+  /// own parts follow its type. The panel's on a card as the editors are,
+  /// of their color: without `terminal.background`, theirs.
   void _colorThemeChanged() {
     final colors = _themes.colors;
     terminalColorTheme.value = TerminalColorTheme.resolve(
       colors.get,
       type: colors.type,
+      inEditor: true,
     );
     editorTerminalColorTheme.value = TerminalColorTheme.resolve(
       colors.get,
@@ -767,6 +983,9 @@ class _BaoCodeAppState extends State<BaoCodeApp> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _themes.transition = null;
+    _themeTransition.dispose();
     _themes.removeListener(_colorThemeChanged);
     _locale.removeListener(_windows.relabel);
     _settings.files?.settings.removeListener(_windows.settingsChanged);
@@ -804,7 +1023,7 @@ class _BaoCodeAppState extends State<BaoCodeApp> {
                       ])
                         if (_windows.host.viewOf(window.viewId)
                             case final view?)
-                          View(
+                          QuietView(
                             key: ValueKey(window.viewId),
                             view: view,
                             child: _app(window),
@@ -820,71 +1039,93 @@ class _BaoCodeAppState extends State<BaoCodeApp> {
 
   /// A window's app: its own navigator, dialogs, overlay and focus; what
   /// it shows built anew as its folder changes.
-  Widget _app(AppWindow window) => MaterialApp(
-    title: 'Morning Mist',
-    debugShowCheckedModeBanner: false,
-    theme: buildAppTheme(),
-    scrollBehavior: const BaoScrollBehavior(),
-    builder: (context, child) => ValueListenableBuilder<int>(
-      valueListenable: CodeFont.uiScale,
-      builder: (context, percent, scaled) {
-        // The whole window is zoomed, not its text alone: its fixed heights,
-        // icons and gaps grow with the text they hold.
-        final zoom = percent / 100;
-        final media = UiZoom.zoomed(MediaQuery.of(context), zoom);
-        // The traffic lights, level with the title bar as it grows.
-        WindowControls.setTitleBarDrop(
-          AppMetrics.titleBarHeight * (zoom - 1) / 2,
-          viewId: window.viewId,
-        );
-        // Windows blurs glyphs drawn at a fractional pixel size.
-        TextScaler snapped(TextScaler scaler) => AppPlatform.isWindows
-            ? PixelSnappedTextScaler(scaler, media.devicePixelRatio)
-            : scaler;
-        final system = media.textScaler;
-        return SystemTextScale(
-          // Code at its own size: the zoom taken back off.
-          scaler: snapped(
-            zoom == 1 ? system : TextScaler.linear(system.scale(1) / zoom),
-          ),
-          child: MediaQuery(
-            data: media.copyWith(textScaler: snapped(system)),
-            child: UiZoom(scale: zoom, child: scaled),
-          ),
-        );
-      },
-      child: child,
-    ),
-    locale: _locale.locale,
-    supportedLocales: AppLocale.supportedLocales,
-    localizationsDelegates: const [
-      AppLocalizations.delegate,
-      GlobalMaterialLocalizations.delegate,
-      GlobalCupertinoLocalizations.delegate,
-      GlobalWidgetsLocalizations.delegate,
-      FlutterQuillLocalizations.delegate,
-    ],
-    home: window.isStash
-        ? Material(
-            type: MaterialType.transparency,
-            child: StashPanelView(
-              controller: StashController.current!,
-              viewId: window.viewId,
+  Widget _app(AppWindow window) => _withoutSemantics(
+    MaterialApp(
+      title: 'Morning Mist',
+      debugShowCheckedModeBanner: false,
+      theme: buildAppTheme(),
+      themeAnimationDuration: Duration.zero,
+      scrollBehavior: const BaoScrollBehavior(),
+      builder: (context, child) => ValueListenableBuilder<int>(
+        valueListenable: CodeFont.uiScale,
+        builder: (context, percent, scaled) {
+          // The whole window is zoomed, not its text alone: its fixed heights,
+          // icons and gaps grow with the text they hold.
+          final zoom = percent / 100;
+          final media = UiZoom.zoomed(MediaQuery.of(context), zoom);
+          // The traffic lights in the middle of the title bar, as it grows.
+          WindowControls.setTitleBarDrop(
+            (AppMetrics.titleBarHeight * zoom -
+                    AppMetrics.nativeTitleBarHeight) /
+                2,
+            viewId: window.viewId,
+          );
+          // Windows blurs glyphs drawn at a fractional pixel size.
+          TextScaler snapped(TextScaler scaler) => AppPlatform.isWindows
+              ? PixelSnappedTextScaler(scaler, media.devicePixelRatio)
+              : scaler;
+          final system = media.textScaler;
+          return SystemTextScale(
+            // A terminal at a size of its own: the zoom taken back off.
+            scaler: snapped(
+              zoom == 1 ? system : TextScaler.linear(system.scale(1) / zoom),
             ),
-          )
-        : Workbench(
-            key: ValueKey((window.viewId, window.generation)),
-            workspace: _workspace,
-            windows: _windows,
-            window: window,
-            languagesFor: widget.languagesFor,
-            themeExtensions: widget.themeExtensions,
-            gitFor: widget.gitFor,
-            repositoriesIn: widget.repositoriesIn,
-            terminalBackend: widget.terminalBackend,
-            settings: _settings,
-            conversations: widget.conversations ?? const NoConversationSearch(),
-            customizations: widget.customizations,
-          ),
+            child: MediaQuery(
+              data: media.copyWith(textScaler: snapped(system)),
+              child: UiZoom(scale: zoom, child: scaled),
+            ),
+          );
+        },
+        child: _themeTransition.wrap(
+          child ?? const SizedBox.shrink(),
+          canvas: AppColors.windowCanvas,
+        ),
+      ),
+      locale: _locale.locale,
+      supportedLocales: AppLocale.supportedLocales,
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+      ],
+      home: window.isStash
+          ? Material(
+              type: MaterialType.transparency,
+              child: StashPanelView(
+                controller: StashController.current!,
+                viewId: window.viewId,
+              ),
+            )
+          : Workbench(
+              key: ValueKey((window.viewId, window.generation)),
+              workspace: _workspace,
+              windows: _windows,
+              window: window,
+              languagesFor: widget.languagesFor,
+              themeExtensions: widget.themeExtensions,
+              gitFor: widget.gitFor,
+              repositoriesIn: widget.repositoriesIn,
+              terminalBackend: widget.terminalBackend,
+              settings: _settings,
+              conversations:
+                  widget.conversations ?? const NoConversationSearch(),
+              customizations: widget.customizations,
+            ),
+    ),
   );
+
+  /// [app] with no semantics on Windows: only a screen reader would read
+  /// them, and the app makes no claim to work with one. Windows' engine
+  /// turns them on at another app's first question for the view's
+  /// accessibility (input methods and translators ask too, before the view
+  /// answers them itself, see view_window.cpp), and its bridge then
+  /// crashes on the tree as the app's changes move it: on a node with no
+  /// parent in CreateRemoveReparentedNodesUpdate (at every start on 1.9.4,
+  /// on some machines), or in HitTestSync. With nothing under the root
+  /// there is nothing to move, and no tree to keep up each frame.
+  static Widget _withoutSemantics(Widget app) =>
+      (BaoCodeApp.debugWithoutSemantics ?? AppPlatform.isWindowsHost)
+      ? ExcludeSemantics(child: app)
+      : app;
 }

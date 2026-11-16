@@ -1,7 +1,10 @@
 @TestOn('vm')
 library;
 
+import 'dart:convert';
 import 'dart:io';
+import 'dart:math' as math;
+import 'dart:typed_data';
 
 import 'package:bao_remote/local.dart' show runGit;
 import 'package:flutter_test/flutter_test.dart';
@@ -38,7 +41,9 @@ void main() {
   setUp(() async {
     temp = await Directory.systemTemp.createTemp('baocode_git_');
     root = p.normalize((await temp.resolveSymbolicLinks()));
-    await git(['init', '-q', '-b', 'main']);
+    // Not `init -b` (Git 2.28+): the tests run on older Gits too (#311).
+    await git(['init', '-q']);
+    await git(['symbolic-ref', 'HEAD', 'refs/heads/main']);
     final hooks = await Directory(p.join(root, '.no-hooks')).create();
     for (final (key, value) in [
       ('user.name', 'Ada'),
@@ -145,6 +150,28 @@ void main() {
     expect(tag.details!.subject, 'Second commit');
     expect(refs.singleWhere((r) => r.name == 'older').details, isNull);
 
+    // Not `git branch --format` (Git 2.13+, #735); a remote's HEAD left out.
+    await git([
+      'symbolic-ref',
+      'refs/remotes/origin/HEAD',
+      'refs/remotes/origin/topic',
+    ]);
+    expect(
+      [
+        for (final r in await service.branchesContaining(first))
+          (r.name, r.kind),
+      ],
+      [
+        ('main', IdeGitRefKind.branch),
+        ('older', IdeGitRefKind.branch),
+        ('origin/topic', IdeGitRefKind.remote),
+      ],
+    );
+    expect(
+      [for (final r in await service.branchesContaining(second)) r.name],
+      ['main'],
+    );
+
     // A remote branch is checked out as a new branch tracking it.
     expect(await service.trackingBranches('origin/topic'), isEmpty);
     await service.checkout('origin/topic', track: true);
@@ -167,7 +194,7 @@ void main() {
     for (var i = 0; i < 300; i++) {
       await write('many/f$i.txt', '');
     }
-    const status = ['status', '-z', '--porcelain=v1', '--untracked-files=all'];
+    const status = ['status', '-z', '--porcelain', '--untracked-files=all'];
     final cut = await runGit(status, workingDirectory: root, limit: 100);
     expect(cut.truncated, isTrue);
     expect('\x00'.allMatches(cut.stdout).length, 100);
@@ -202,6 +229,41 @@ void main() {
     expect(log.first.subject, 'Everything');
   }, skip: hasGit ? false : 'Git is not installed');
 
+  test('an image is read whole at HEAD and in the index', () async {
+    final service = IdeGitService(root);
+    // Bytes Git takes for binary, of no multiple of 4, and not deflated
+    // much: lines of the binary patch to put together.
+    final random = math.Random(7);
+    final committed = Uint8List.fromList([
+      0x89, 0x50, 0x4e, 0x47, 0, //
+      for (var i = 0; i < 70003; i++) random.nextInt(256),
+    ]);
+    final staged = Uint8List.fromList([0, 1, 2]);
+    final image = p.join(root, 'img', 'a b.png');
+    await Directory(p.dirname(image)).create();
+    await File(image).writeAsBytes(committed);
+    await write('img/icon.svg', '<svg>\n</svg>');
+    await git(['add', '-A']);
+    await git(['commit', '-q', '-m', 'Images']);
+    await File(image).writeAsBytes(staged);
+    await git(['add', '-A']);
+    await File(image).writeAsBytes([9]);
+
+    expect(await service.showBytes('HEAD', image), committed);
+    expect(await service.showBytes('', image), staged);
+    // Text, where Git takes it for that.
+    expect(
+      utf8.decode(
+        await service.showBytes('HEAD', p.join(root, 'img/icon.svg')),
+      ),
+      '<svg>\n</svg>',
+    );
+    await expectLater(
+      service.showBytes('HEAD', p.join(root, 'img/none.png')),
+      throwsA(isA<IdeGitException>()),
+    );
+  }, skip: hasGit ? false : 'Git is not installed');
+
   test('blame gives the commits of the lines on disk', () async {
     final service = IdeGitService(root);
     await write('lib/a.dart', 'a\nb\n');
@@ -218,5 +280,52 @@ void main() {
 
     await write('lib/new.dart', 'new\n');
     expect(await service.blame(p.join(root, 'lib/new.dart')), isNull);
+  }, skip: hasGit ? false : 'Git is not installed');
+
+  test('a rebase goes on with what is checked staged; changes left '
+      'unchecked are said to be in the way', () async {
+    await git(['checkout', '-q', '-b', 'feature']);
+    await write('lib/a.dart', 'feature\n');
+    await git(['commit', '-q', '-am', 'Feature']);
+    await git(['checkout', '-q', 'main']);
+    await write('lib/a.dart', 'main\n');
+    await write('lib/b.dart', 'b\n');
+    await git(['add', '-A']);
+    await git(['commit', '-q', '-m', 'Main']);
+    await git(['checkout', '-q', 'feature']);
+    final rebase = await Process.run('git', [
+      'rebase',
+      'main',
+    ], workingDirectory: root);
+    expect(rebase.exitCode, isNot(0));
+    // Resolved on disk, not staged; another file changed besides.
+    await write('lib/a.dart', 'both\n');
+    await write('lib/b.dart', 'b, edited\n');
+    final service = IdeGitService(root);
+    final a = p.join(root, 'lib/a.dart');
+    await expectLater(
+      service.continueOperation(IdeGitOperation.rebase, include: [a]),
+      throwsA(
+        isA<IdeGitException>().having(
+          (e) => e.message,
+          'message',
+          contains('not checked to be committed'),
+        ),
+      ),
+    );
+
+    await service.continueOperation(
+      IdeGitOperation.rebase,
+      include: [a, p.join(root, 'lib/b.dart')],
+    );
+    final state = (await service.status())!;
+    // Done, though Git leaves REBASE_HEAD.
+    expect(state.operation, isNull);
+    expect(state.resources, isEmpty);
+    expect([for (final c in await service.log()) c.subject].take(2), [
+      'Feature',
+      'Main',
+    ]);
+    expect(await File(a).readAsString(), 'both\n');
   }, skip: hasGit ? false : 'Git is not installed');
 }

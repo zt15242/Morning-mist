@@ -14,32 +14,52 @@ class UserMessageItem extends ChatItem {
     this.images = const [],
     this.worked,
     this.usage,
+    this.stopped = false,
+    this.sentAt,
+    this.fromAgent,
   });
 
   final String text;
 
+  /// Sent by a subagent (SendMessage), not typed: what it was given to do,
+  /// else its id. Shown as its, and not to be edited.
+  final String? fromAgent;
+
   /// Pictures sent with it (screenshots, mockups…).
   final List<ImageAttachment> images;
+
+  /// When it was sent, where known: a chat app's times between messages.
+  final DateTime? sentAt;
 
   /// Sent while the agent was busy: waits for its turn, and can be taken
   /// back until then.
   final bool queued;
 
-  /// How long the agent worked on it, once its turn ended as it should
-  /// (not stopped): the work before its answer folds into that.
+  /// How long the agent worked on it, once its turn ended: the work before
+  /// its answer folds into that.
   final Duration? worked;
 
   /// What its turn spent, kept with [worked], when the kernel said.
   final TurnUsage? usage;
 
-  UserMessageItem copyWith({Duration? worked, TurnUsage? usage}) =>
-      UserMessageItem(
-        text: text,
-        queued: queued,
-        images: images,
-        worked: worked ?? this.worked,
-        usage: usage ?? this.usage,
-      );
+  /// The user stopped its turn, [worked] in: all its work folds, an answer
+  /// or not.
+  final bool stopped;
+
+  UserMessageItem copyWith({
+    Duration? worked,
+    TurnUsage? usage,
+    bool? stopped,
+  }) => UserMessageItem(
+    text: text,
+    queued: queued,
+    images: images,
+    worked: worked ?? this.worked,
+    usage: usage ?? this.usage,
+    stopped: stopped ?? this.stopped,
+    sentAt: sentAt,
+    fromAgent: fromAgent,
+  );
 }
 
 /// What a turn spent, as its kernel reported at its end.
@@ -368,7 +388,7 @@ class PlanItem extends ChatItem {
     this.feedback,
   });
 
-  /// The plan's file.
+  /// The plan's file; empty when the plan was sent rather than written.
   final String path;
 
   /// Which round of the conversation's planning it is, from 1.
@@ -677,6 +697,28 @@ final class OriginalByPatch extends FileOriginal {
   final String diff;
 }
 
+/// The edits made, in order, each a text put in place of another once (an
+/// Edit's, a MultiEdit's, as their input tells them): taken back out of the
+/// file as they left it, the last first, where each text put in is there
+/// once (else what it was is not known).
+final class OriginalByEdits extends FileOriginal {
+  const OriginalByEdits(this.edits);
+
+  final List<({String before, String after})> edits;
+
+  /// The text before them, from [text] as they left it; null where it
+  /// cannot be told.
+  String? undo(String text) {
+    for (final edit in edits.reversed) {
+      if (edit.after.isEmpty) return null;
+      final at = text.indexOf(edit.after);
+      if (at < 0 || text.indexOf(edit.after, at + 1) >= 0) return null;
+      text = text.replaceRange(at, at + edit.after.length, edit.before);
+    }
+    return text;
+  }
+}
+
 /// A file an agent changed, with its line counts.
 class FileChange {
   const FileChange({
@@ -697,17 +739,17 @@ class FileChange {
   /// No line counts: a binary file.
   final bool binary;
 
-  /// Whether what it was before is known, to be undone; not when the
-  /// agent did not tell, or it is too large or outside the project.
+  /// Whether what it was before is known, to be undone; not when it was
+  /// too large to keep and the agent did not tell.
   final bool tracked;
 
   /// It changed again since the agent left it, and Undo could not carry
   /// that over.
   final bool conflict;
 
-  String get fileName => path.split('/').last;
+  String get fileName => path.split(RegExp(r'[/\\]')).last;
   String get directory {
-    final index = path.lastIndexOf('/');
+    final index = path.lastIndexOf(RegExp(r'[/\\]'));
     return index < 0 ? '' : path.substring(0, index);
   }
 }

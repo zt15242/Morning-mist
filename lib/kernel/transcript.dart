@@ -17,6 +17,7 @@ class Transcript {
     this.history,
     List<FileChange> changes = const [],
     this.usage,
+    this.queuedInPlace = false,
   }) : _historyCount = history == null ? 0 : historyCount,
        edits = [
          for (final change in changes) (seq: 0, change: change, turnId: null),
@@ -34,7 +35,13 @@ class Transcript {
 
   /// Messages sent while the agent works, waiting their turn: not in the
   /// conversation until taken up, where they go after all before them.
+  /// Unless [queuedInPlace].
   final Map<String, UserMessageItem> _queued = {};
+
+  /// Whether a message sent while the agent works is in the conversation
+  /// at once, where it was sent (as a chat app has it), and stays there
+  /// when taken up: not apart until then.
+  final bool queuedInPlace;
 
   /// Highest event sequence applied.
   int lastSeq = 0;
@@ -88,7 +95,6 @@ class Transcript {
   ContextUsage? usage;
   UsageStats? stats;
   List<KernelTask> tasks = const [];
-  List<TodoEntry> todos = const [];
 
   /// The session's goal, if it has one (or just met one).
   KernelGoal? goal;
@@ -111,6 +117,34 @@ class Transcript {
   List<(String, UserMessageItem)> get queued => [
     for (final MapEntry(:key, :value) in _queued.entries) (key, value),
   ];
+
+  /// Puts the queued messages in the order [ids] gives; returns whether
+  /// that changed it.
+  bool _reorderQueued(List<String> ids) {
+    final order = <String, UserMessageItem>{
+      for (final id in ids) id: ?_queued[id],
+    };
+    // Those not named keep their places after them.
+    for (final MapEntry(:key, :value) in _queued.entries) {
+      order.putIfAbsent(key, () => value);
+    }
+    if (_sameOrder(order.keys, _queued.keys)) return false;
+    _queued
+      ..clear()
+      ..addAll(order);
+    return true;
+  }
+
+  static bool _sameOrder(Iterable<String> a, Iterable<String> b) {
+    final left = a.iterator;
+    final right = b.iterator;
+    while (true) {
+      final hasLeft = left.moveNext();
+      if (hasLeft != right.moveNext()) return false;
+      if (!hasLeft) return true;
+      if (left.current != right.current) return false;
+    }
+  }
 
   /// The items of this session (not the earlier history), with their ids.
   Iterable<(String, ChatItem)> get liveItems sync* {
@@ -148,7 +182,9 @@ class Transcript {
         lastTurnInterrupted = interrupted;
         _pending.clear();
         _settleStreaming();
-        if (!interrupted && worked != null) _timeTurn(turnId, worked, usage);
+        if (worked != null) {
+          _timeTurn(turnId, worked, usage, stopped: interrupted);
+        }
       case ItemUpserted(:final id, :final item, :final streaming):
         _put(id, item);
         streaming ? _streaming.add(id) : _streaming.remove(id);
@@ -159,6 +195,8 @@ class Transcript {
         if (!_streaming.remove(id) && item == null) return false;
       case ItemRemoved(:final id):
         if (!_remove(id)) return false;
+      case QueueReordered(:final ids):
+        if (!_reorderQueued(ids)) return false;
       case HistoryPrepended(:final items):
         if (!_prepend(items)) return false;
       case InteractionRequested(:final request):
@@ -186,13 +224,12 @@ class Transcript {
         usage = reported;
       case TasksReported(tasks: final reported):
         tasks = reported;
-      case TodosReported(todos: final reported):
-        todos = reported;
       case GoalReported(goal: final reported):
         goal = reported;
       case StatsReported(stats: final reported):
         stats = reported;
-      case KernelInfoChanged():
+      // The session's, not the conversation's (see ChatSession.takeRenamed).
+      case KernelInfoChanged() || SessionRenamed():
         return false;
     }
     version++;
@@ -202,10 +239,27 @@ class Transcript {
   void _put(String id, ChatItem item) {
     final index = _indexOf[id];
     if (index != null) {
-      _items[index] = item;
+      _items[index] = switch ((_items[index], item)) {
+        // Taken up where it was sent: when it was.
+        (
+          UserMessageItem(queued: true, sentAt: final sent?),
+          final UserMessageItem taken,
+        )
+            when !taken.queued =>
+          UserMessageItem(
+            text: taken.text,
+            images: taken.images,
+            worked: taken.worked,
+            usage: taken.usage,
+            stopped: taken.stopped,
+            sentAt: sent,
+            fromAgent: taken.fromAgent,
+          ),
+        _ => item,
+      };
       return;
     }
-    if (item case UserMessageItem(queued: true)) {
+    if (item case UserMessageItem(queued: true) when !queuedInPlace) {
       _queued[id] = item;
       return;
     }
@@ -284,11 +338,30 @@ class Transcript {
 
   /// Keeps how long turn [id] took, and what it spent, on the message that
   /// began it.
-  void _timeTurn(String id, Duration worked, TurnUsage? usage) {
+  /// The message that started turn [turnId] (its item's id); null when it
+  /// is not listed.
+  UserMessageItem? turnMessage(String turnId) => switch (_indexOf[turnId]) {
+    final index? => switch (_items[index]) {
+      final UserMessageItem message => message,
+      _ => null,
+    },
+    null => null,
+  };
+
+  void _timeTurn(
+    String id,
+    Duration worked,
+    TurnUsage? usage, {
+    required bool stopped,
+  }) {
     final index = _indexOf[id];
     if (index == null) return;
     if (_items[index] case final UserMessageItem message) {
-      _items[index] = message.copyWith(worked: worked, usage: usage);
+      _items[index] = message.copyWith(
+        worked: worked,
+        usage: usage,
+        stopped: stopped,
+      );
     }
   }
 

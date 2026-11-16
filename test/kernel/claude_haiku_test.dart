@@ -73,7 +73,7 @@ void main() {
         arguments.indexOf('--tools'),
         2 + arguments.indexOf('--tools'),
       ),
-      ['--tools', 'Read,Glob,Grep'],
+      ['--tools', 'Read'],
     );
     expect(arguments.join(' '), contains('--max-turns 16'));
     expect(tools.settings, {
@@ -84,12 +84,40 @@ void main() {
     expect(const ClaudeHaikuTools().settings, isEmpty);
   });
 
+  test('the answer is read from verbose output\'s array of events, not '
+      'taken from stderr', () {
+    final output = jsonEncode([
+      {'type': 'system', 'subtype': 'init'},
+      {'type': 'assistant'},
+      {'type': 'result', 'is_error': false, 'result': 'Tidied.'},
+    ]);
+    expect(
+      claudeHaikuAnswer(output, '[claude-code:unrecognized_model] {}', 0),
+      'Tidied.',
+    );
+    expect(
+      () => claudeHaikuAnswer('[{"type":"system"}]', 'It broke.', 1),
+      throwsA(
+        isA<ClaudeHaikuException>().having(
+          (e) => e.message,
+          'message',
+          'It broke.',
+        ),
+      ),
+    );
+  });
+
   group('on BaoCode\'s own core', () {
     late FakeApi api;
     late Directory root;
     final previous = ModelProviders.current;
 
     setUp(() async {
+      // The upstreams' proxy is in this isolate: real sockets, not the test
+      // binding's 400s.
+      final overrides = HttpOverrides.current;
+      HttpOverrides.global = null;
+      addTearDown(() => HttpOverrides.global = overrides);
       root = Directory.systemTemp.createTempSync('baocode-haiku-');
       api = await FakeApi.start(errands: (_) => Reply.text('Short answer'));
       // The machine's own setup: a key and a Haiku of its own.

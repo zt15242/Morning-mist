@@ -3,6 +3,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../base/step_clock.dart';
 import '../icons/brand_logos.dart';
 import '../ide/ide_button.dart';
 import '../l10n/l10n.dart';
@@ -89,19 +90,24 @@ class _ModelWelcomeState extends State<ModelWelcome>
   )..forward();
 
   /// The ring turning, slowly, once in.
-  late final AnimationController _turn = AnimationController(
-    vsync: this,
-    duration: const Duration(seconds: 60),
-  );
+  // On the shared clock's frames, not every vsync: it goes on for as
+  // long as the page shows.
+  final StepLoop _turn = StepLoop(const Duration(seconds: 60));
 
   @override
   void initState() {
     super.initState();
     _intro.addStatusListener((status) {
       if (status == AnimationStatus.completed && mounted) {
-        unawaited(_turn.repeat());
+        _turn.start(context);
       }
     });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _turn.keepTo(context);
   }
 
   @override
@@ -189,7 +195,7 @@ class _ModelWelcomeState extends State<ModelWelcome>
             text: switch (ready) {
               (final ModelProvider provider, final ProviderModel model) =>
                 l10n.modelWelcomeReady(
-                  '${provider.name} · ${model.displayName}',
+                  '${provider.name} · ${provider.labelOf(model)}',
                 ),
               null => l10n.modelWelcomeStep,
             },

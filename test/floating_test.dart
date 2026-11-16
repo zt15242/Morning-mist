@@ -9,17 +9,35 @@ import 'package:baocode/chat/chat_history_view.dart';
 import 'package:baocode/chat/chat_models.dart';
 import 'package:baocode/chat/composer/composer_picker.dart';
 import 'package:baocode/chat/composer/suggestion_menu.dart';
+import 'package:baocode/chat/floating/floating_layer.dart';
 import 'package:baocode/chat/floating/floating_placement.dart';
 import 'package:baocode/chat/floating/hover_tooltip.dart';
 import 'package:baocode/chat/floating/floating_registry.dart';
 import 'package:baocode/chat/widgets/fold_line.dart';
 import 'package:baocode/chat/widgets/tool_call_row.dart';
 import 'package:baocode/chat/widgets/user_message_bubble.dart';
+import 'package:baocode/theme/app_theme.dart' show AppMetrics;
 
 import 'composer_test.dart' show pumpScreen, settleAnimations, typeText;
 
 void main() {
   tearDown(FloatingRegistry.reset);
+
+  // #198: the window drags itself by the header Windows draws, so nothing
+  // floating over it could be clicked.
+  testWidgets('bounds keep below the window\'s own header on Windows', (
+    tester,
+  ) async {
+    final bounds = FloatingLayer.boundsIn(const Size(400, 300));
+    expect(bounds, Rect.fromLTRB(8, AppMetrics.headerHeight, 392, 292));
+  }, variant: TargetPlatformVariant.only(TargetPlatform.windows));
+
+  test('bounds keep an inset from the window\'s edges elsewhere', () {
+    expect(
+      FloatingLayer.boundsIn(const Size(400, 300)),
+      const Rect.fromLTRB(8, 8, 392, 292),
+    );
+  });
 
   group('computeFloatingPosition', () {
     const bounds = Rect.fromLTWH(0, 0, 400, 300);
@@ -295,8 +313,12 @@ void main() {
 
     Future<void> setUpScreen(WidgetTester tester) async {
       await pumpScreen(tester);
-      // The last turn's read is folded with its thought and search: open it.
-      await tester.tap(find.byType(StepsFoldLine).last);
+      // The last turn's read is folded with its thought and search: open it,
+      // clear of the turn's message stuck at the top.
+      final fold = find.byType(StepsFoldLine, skipOffstage: false).last;
+      await Scrollable.ensureVisible(tester.element(fold), alignment: 0.5);
+      await tester.pump();
+      await tester.tap(fold);
       await tester.pump();
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));

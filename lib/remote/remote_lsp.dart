@@ -7,13 +7,13 @@
 import 'dart:async';
 
 import 'package:bao_remote/client.dart';
-import 'package:path/path.dart' as p;
 
 import '../ide/lsp/catalog/standard_lsp.dart';
 import '../ide/lsp/install/mason_registry.dart';
 import '../ide/lsp/install/mason_server_provider.dart';
 import '../ide/lsp/lsp_manager.dart';
 import '../ide/lsp/lsp_server_definition.dart';
+import 'remote_location.dart';
 import 'remote_services.dart';
 import 'ssh_host.dart';
 
@@ -64,7 +64,9 @@ class RemoteLspProvider implements LspServerProvider {
       throw LspInstallException('$name is not in the registry');
     }
     final client = await host.ready;
-    onProgress?.call('Installing $name on ${host.host}…');
+    onProgress?.call(
+      'Installing $name on ${RemoteLocation.hostName(host.host)}…',
+    );
     await client.installLanguageServer(package, onProgress: onProgress);
   }
 }
@@ -97,7 +99,7 @@ class RemoteLspManager extends LspManager {
             return const [];
           }
         },
-        paths: p.posix,
+        paths: RemoteLocation.pathsFor(root),
         processId: () => host.hello?.pid,
       ) {
     // What ran over a lost connection is gone with it: started again.
@@ -117,6 +119,7 @@ class RemoteLspManager extends LspManager {
       loading.then((lsp) {
         catalog.loaded = lsp.catalog;
         manager.reloadCatalog();
+        lsp.follow(manager);
       }, onError: (Object _) {}),
     );
     return manager;

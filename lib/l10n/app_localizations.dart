@@ -350,6 +350,54 @@ abstract class AppLocalizations {
   /// **'Focus Previous Pane'**
   String get cmdChatFocusPreviousPane;
 
+  /// No description provided for @cmdChatFocusPaneLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'Focus Left Pane'**
+  String get cmdChatFocusPaneLeft;
+
+  /// No description provided for @cmdChatFocusPaneRight.
+  ///
+  /// In en, this message translates to:
+  /// **'Focus Right Pane'**
+  String get cmdChatFocusPaneRight;
+
+  /// No description provided for @cmdChatFocusPaneUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Focus Above Pane'**
+  String get cmdChatFocusPaneUp;
+
+  /// No description provided for @cmdChatFocusPaneDown.
+  ///
+  /// In en, this message translates to:
+  /// **'Focus Below Pane'**
+  String get cmdChatFocusPaneDown;
+
+  /// No description provided for @cmdChatNextPaneTab.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Next Tab in Pane'**
+  String get cmdChatNextPaneTab;
+
+  /// No description provided for @cmdChatPreviousPaneTab.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Previous Tab in Pane'**
+  String get cmdChatPreviousPaneTab;
+
+  /// No description provided for @cmdChatTogglePaneTabs.
+  ///
+  /// In en, this message translates to:
+  /// **'Toggle Pane Tabs'**
+  String get cmdChatTogglePaneTabs;
+
+  /// No description provided for @workspacePaneTabs.
+  ///
+  /// In en, this message translates to:
+  /// **'Show as Tabs'**
+  String get workspacePaneTabs;
+
   /// No description provided for @cmdChatSearch.
   ///
   /// In en, this message translates to:
@@ -475,6 +523,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Add Context…'**
   String get cmdChatAttachContext;
+
+  /// No description provided for @cmdChatAttachSelection.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Selection to Chat'**
+  String get cmdChatAttachSelection;
 
   /// No description provided for @cmdChatPasteRaw.
   ///
@@ -2102,6 +2156,54 @@ abstract class AppLocalizations {
   /// **'Toggle Chat'**
   String get cmdToggleChat;
 
+  /// No description provided for @cmdToggleFullScreen.
+  ///
+  /// In en, this message translates to:
+  /// **'Toggle Full Screen'**
+  String get cmdToggleFullScreen;
+
+  /// No description provided for @cmdZoomIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Zoom In'**
+  String get cmdZoomIn;
+
+  /// No description provided for @cmdZoomOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Zoom Out'**
+  String get cmdZoomOut;
+
+  /// No description provided for @cmdZoomReset.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset Zoom'**
+  String get cmdZoomReset;
+
+  /// No description provided for @cmdToggleWordWrap.
+  ///
+  /// In en, this message translates to:
+  /// **'Toggle Word Wrap'**
+  String get cmdToggleWordWrap;
+
+  /// No description provided for @menuWordWrap.
+  ///
+  /// In en, this message translates to:
+  /// **'Word Wrap'**
+  String get menuWordWrap;
+
+  /// No description provided for @cmdToggleMinimap.
+  ///
+  /// In en, this message translates to:
+  /// **'Toggle Minimap'**
+  String get cmdToggleMinimap;
+
+  /// No description provided for @menuMinimap.
+  ///
+  /// In en, this message translates to:
+  /// **'Minimap'**
+  String get menuMinimap;
+
   /// No description provided for @cmdTogglePanel.
   ///
   /// In en, this message translates to:
@@ -2335,6 +2437,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Open Keyboard Shortcuts'**
   String get cmdOpenKeyboardShortcuts;
+
+  /// No description provided for @cmdOpenLspSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Language Server Settings (JSON)'**
+  String get cmdOpenLspSettings;
 
   /// No description provided for @cmdJumpToBracket.
   ///
@@ -2810,6 +2918,12 @@ abstract class AppLocalizations {
   /// **'Show Agent Files'**
   String get cmdSidePanelFiles;
 
+  /// No description provided for @cmdSidePanelUsage.
+  ///
+  /// In en, this message translates to:
+  /// **'Show Conversation Usage'**
+  String get cmdSidePanelUsage;
+
   /// No description provided for @cmdSidePanelTerminal.
   ///
   /// In en, this message translates to:
@@ -3002,35 +3116,41 @@ abstract class AppLocalizations {
   /// **'Hide side panel'**
   String get sidePanelHide;
 
-  /// No description provided for @sidePanelMoveLeft.
+  /// No description provided for @chatLayout.
   ///
   /// In en, this message translates to:
-  /// **'Move to the Left of the Conversation'**
-  String get sidePanelMoveLeft;
+  /// **'Layout'**
+  String get chatLayout;
 
-  /// No description provided for @sidePanelMoveRight.
+  /// No description provided for @chatLayoutSidebarChatPanel.
   ///
   /// In en, this message translates to:
-  /// **'Move to the Right of the Conversation'**
-  String get sidePanelMoveRight;
+  /// **'Sidebar · Chat · Panel'**
+  String get chatLayoutSidebarChatPanel;
+
+  /// No description provided for @chatLayoutSidebarPanelChat.
+  ///
+  /// In en, this message translates to:
+  /// **'Sidebar · Panel · Chat'**
+  String get chatLayoutSidebarPanelChat;
+
+  /// No description provided for @chatLayoutPanelChatSidebar.
+  ///
+  /// In en, this message translates to:
+  /// **'Panel · Chat · Sidebar'**
+  String get chatLayoutPanelChatSidebar;
+
+  /// No description provided for @chatLayoutChatPanelSidebar.
+  ///
+  /// In en, this message translates to:
+  /// **'Chat · Panel · Sidebar'**
+  String get chatLayoutChatPanelSidebar;
 
   /// The side panel's tab listing the files the agent changed.
   ///
   /// In en, this message translates to:
   /// **'Changes'**
   String get sidePanelChanges;
-
-  /// The side panel's Changes tab while the agent changed nothing.
-  ///
-  /// In en, this message translates to:
-  /// **'No changes yet'**
-  String get sidePanelNoChanges;
-
-  /// Under sidePanelNoChanges.
-  ///
-  /// In en, this message translates to:
-  /// **'Changes in the project\'s Git working tree and index show here.'**
-  String get sidePanelNoChangesDetail;
 
   /// Hover of a file read in the conversation: a click opens it in the side panel.
   ///
@@ -3068,11 +3188,11 @@ abstract class AppLocalizations {
   /// **'Source'**
   String get sidePanelSource;
 
-  /// Shows a markdown file's text in the side panel, to edit.
+  /// Under a /command's description: opens its file (a skill's SKILL.md, a command's markdown) in the side panel.
   ///
   /// In en, this message translates to:
-  /// **'Edit'**
-  String get sidePanelEdit;
+  /// **'Open details'**
+  String get commandOpenDetails;
 
   /// Over a side panel preview asked for a diff it cannot show.
   ///
@@ -3110,6 +3230,18 @@ abstract class AppLocalizations {
   /// **'Add to Chat'**
   String get sidePanelAddToChat;
 
+  /// No description provided for @termClearTask.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get termClearTask;
+
+  /// No description provided for @termClearEndedTasks.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear All Ended Tasks'**
+  String get termClearEndedTasks;
+
   /// The side panel's terminal page: the group of the agent's background commands in its list.
   ///
   /// In en, this message translates to:
@@ -3121,12 +3253,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Select a file to preview it'**
   String get sidePanelSelectFile;
-
-  /// The side panel's changes page with no file's changes open.
-  ///
-  /// In en, this message translates to:
-  /// **'Select a changed file to see its changes'**
-  String get sidePanelSelectChange;
 
   /// The side panel's terminal page with no command's output open.
   ///
@@ -3212,6 +3338,24 @@ abstract class AppLocalizations {
   /// **'Image'**
   String get agentImageUntitled;
 
+  /// In the list under a chat's title being renamed: has a model title the conversation from what the user asked.
+  ///
+  /// In en, this message translates to:
+  /// **'Summarize into a new title'**
+  String get chatTitleSummarize;
+
+  /// In place of Summarize into a new title while the model writes one.
+  ///
+  /// In en, this message translates to:
+  /// **'Summarizing…'**
+  String get chatTitleSummarizing;
+
+  /// In place of Summarize into a new title when the model gave none.
+  ///
+  /// In en, this message translates to:
+  /// **'No title could be had. Try again'**
+  String get chatTitleSummarizeFailed;
+
   /// Button that starts a new agent.
   ///
   /// In en, this message translates to:
@@ -3253,6 +3397,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'By status'**
   String get sidebarByStatus;
+
+  /// Sidebar menu: projects ordered by their latest agent, the most recent first.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent activity'**
+  String get sidebarProjectSortRecent;
+
+  /// Sidebar menu: projects in the order the user dragged them.
+  ///
+  /// In en, this message translates to:
+  /// **'Manual'**
+  String get sidebarProjectSortManual;
 
   /// Compact relative time in the agents list.
   ///
@@ -3338,6 +3494,12 @@ abstract class AppLocalizations {
   /// **'Unread'**
   String get sidebarUnread;
 
+  /// A conversation's hover in the sidebar: the model it runs on.
+  ///
+  /// In en, this message translates to:
+  /// **'Model: {model}'**
+  String sidebarHoverModel(String model);
+
   /// No description provided for @sidebarDone.
   ///
   /// In en, this message translates to:
@@ -3361,6 +3523,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Agents'**
   String get sidebarAgents;
+
+  /// No description provided for @sidebarCollapseAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Collapse All'**
+  String get sidebarCollapseAll;
+
+  /// No description provided for @sidebarExpandAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Expand All'**
+  String get sidebarExpandAll;
 
   /// No description provided for @sidebarNoMatchingAgents.
   ///
@@ -3553,6 +3727,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Fork'**
   String get sidebarFork;
+
+  /// The menu of a conversation asked beside another with /btw, listed under it in the sidebar: makes it a conversation of its own.
+  ///
+  /// In en, this message translates to:
+  /// **'Detach from Conversation'**
+  String get sidebarDetachAside;
+
+  /// After the message asking to delete an agent that has conversations asked beside it with /btw.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Its /btw conversation is deleted with it.} other{Its {count} /btw conversations are deleted with it.}}'**
+  String sidebarDeleteAsidesToo(int count);
+
+  /// The /btw command in the composer's command list: what follows is asked in a new conversation copied from this one, listed under it.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask in a conversation of its own, beside this one'**
+  String get btwCommandDetail;
+
+  /// The /fork command in the composer's command list: the conversation is copied into a new one (as the sidebar's Fork), which opens; what follows the command is sent there.
+  ///
+  /// In en, this message translates to:
+  /// **'Fork this conversation and open the copy'**
+  String get forkCommandDetail;
+
+  /// Shown when /fork is sent in a conversation that cannot be copied (nothing sent yet, or its kernel cannot fork).
+  ///
+  /// In en, this message translates to:
+  /// **'This conversation can\'t be forked: it needs a message first, and its agent has to support forking.'**
+  String get forkUnavailable;
+
+  /// The arrow on a sidebar row with conversations asked beside it (/btw) listed under it: no longer lists them.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide /btw Conversations'**
+  String get sidebarFoldAsides;
+
+  /// The arrow, or the tag, on a sidebar row whose conversations asked beside it (/btw) are hidden: lists them under it again.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Show its /btw conversation} other{Show its {count} /btw conversations}}'**
+  String sidebarUnfoldAsides(int count);
 
   /// No description provided for @sidebarShowMore.
   ///
@@ -3986,6 +4202,18 @@ abstract class AppLocalizations {
   /// **'Subagent {description}, {status}'**
   String chatSubagentSemantics(String description, String status);
 
+  /// No description provided for @chatAgentMessageSent.
+  ///
+  /// In en, this message translates to:
+  /// **'sent'**
+  String get chatAgentMessageSent;
+
+  /// No description provided for @chatAgentMessageSemantics.
+  ///
+  /// In en, this message translates to:
+  /// **'Message from subagent {agent}'**
+  String chatAgentMessageSemantics(String agent);
+
   /// No description provided for @chatOpensItsConversation.
   ///
   /// In en, this message translates to:
@@ -3997,6 +4225,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Load earlier messages'**
   String get chatLoadEarlier;
+
+  /// Over a kept conversation, once its session was talked in elsewhere (e.g. in a terminal) since it was read: reads it anew.
+  ///
+  /// In en, this message translates to:
+  /// **'Reload (continued elsewhere)'**
+  String get chatReload;
 
   /// No description provided for @chatStop.
   ///
@@ -4135,6 +4369,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Updated todos'**
   String get toolUpdatedTodos;
+
+  /// No description provided for @todoCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Todos {done}/{total}'**
+  String todoCount(int done, int total);
+
+  /// No description provided for @todoAllDone.
+  ///
+  /// In en, this message translates to:
+  /// **'All done'**
+  String get todoAllDone;
+
+  /// No description provided for @todoNone.
+  ///
+  /// In en, this message translates to:
+  /// **'List empty'**
+  String get todoNone;
+
+  /// No description provided for @todoAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'Added todo'**
+  String get todoAdded;
+
+  /// No description provided for @todoStarted.
+  ///
+  /// In en, this message translates to:
+  /// **'Started todo'**
+  String get todoStarted;
+
+  /// No description provided for @todoCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed todo'**
+  String get todoCompleted;
+
+  /// No description provided for @todoRemoved.
+  ///
+  /// In en, this message translates to:
+  /// **'Removed todo'**
+  String get todoRemoved;
+
+  /// No description provided for @todoUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Updated todo'**
+  String get todoUpdated;
+
+  /// No description provided for @todoChecked.
+  ///
+  /// In en, this message translates to:
+  /// **'Checked todos'**
+  String get todoChecked;
 
   /// No description provided for @toolSending.
   ///
@@ -4495,6 +4783,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Worked for {duration}'**
   String turnWorked(String duration);
+
+  /// A turn the user stopped, its work folded, e.g. "Stopped after 4m 32s".
+  ///
+  /// In en, this message translates to:
+  /// **'Stopped after {duration}'**
+  String turnStopped(String duration);
 
   /// Over a round of planning's card in the conversation.
   ///
@@ -4931,7 +5225,7 @@ abstract class AppLocalizations {
   /// No description provided for @stripChangeUntracked.
   ///
   /// In en, this message translates to:
-  /// **'What it was before is not known (the agent did not tell, it is too large, or outside the project): it can be kept, not undone.'**
+  /// **'What it was before is not known (too large to keep, or the agent did not tell): it can be kept, not undone.'**
   String get stripChangeUntracked;
 
   /// Label of the diff editor comparing a file before the agent changed it with the file now.
@@ -5305,12 +5599,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Started and greeted with MCP\'s initialize, as `claude mcp list` checks it.'**
   String get mcpProbeNote;
-
-  /// No description provided for @todoCount.
-  ///
-  /// In en, this message translates to:
-  /// **'Todos {done}/{total}'**
-  String todoCount(int done, int total);
 
   /// No description provided for @queuedMessages.
   ///
@@ -5975,7 +6263,7 @@ abstract class AppLocalizations {
   /// No description provided for @generalSettingsClaudeCoreDescription.
   ///
   /// In en, this message translates to:
-  /// **'Claude Code CLI: Anthropic\'s own program, with this machine\'s sign-in and setup; pick it to use a Claude subscription. Built-in: comes with Morning Mist, and uses only the models added in Settings → Models. The CLI is the default when Claude Code is installed here, the built-in core otherwise. Changes apply to new sessions.'**
+  /// **'Claude Code CLI: Anthropic\'s own program, with this machine\'s sign-in and setup; pick it to use a Claude subscription. Built-in: comes with Morning Mist, and uses only the models added in Settings → Models. By default, the CLI where this machine has Claude Code, else the built-in core; the CLI, picked where there is none, is downloaded for you. Changes apply to new sessions.'**
   String get generalSettingsClaudeCoreDescription;
 
   /// Claude Code core choice: Morning Mist's own agent core, written in Dart and run inside the app.
@@ -6290,6 +6578,12 @@ abstract class AppLocalizations {
   /// **'Open Anyway'**
   String get placeholderOpenAnyway;
 
+  /// No description provided for @changeOpenWith.
+  ///
+  /// In en, this message translates to:
+  /// **'Open With'**
+  String get changeOpenWith;
+
   /// Hands a file the IDE does not show (a PDF, a video…) to the app the system opens it with.
   ///
   /// In en, this message translates to:
@@ -6368,10 +6662,22 @@ abstract class AppLocalizations {
   /// **'high contrast themes'**
   String get themeHighContrastThemes;
 
+  /// No description provided for @themeAuto.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto'**
+  String get themeAuto;
+
+  /// No description provided for @themeFollowSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'Follow system'**
+  String get themeFollowSystem;
+
   /// No description provided for @themeSelectPlaceholder.
   ///
   /// In en, this message translates to:
-  /// **'Select Color Theme (detect system color mode disabled)'**
+  /// **'Select Color Theme'**
   String get themeSelectPlaceholder;
 
   /// A time within half a minute of now.
@@ -7725,6 +8031,18 @@ abstract class AppLocalizations {
   /// **'{kind, select, definition{No definition found for \'{word}\'} typeDefinition{No type definition found for \'{word}\'} implementation{No implementation found for \'{word}\'} other{No references found for \'{word}\'}}'**
   String langNoneFoundFor(String kind, String word);
 
+  /// No description provided for @langNavigationUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No language server is available for code navigation in this file.'**
+  String get langNavigationUnavailable;
+
+  /// No description provided for @langNavigationInstall.
+  ///
+  /// In en, this message translates to:
+  /// **'Install the \'{id}\' language server to enable code navigation in this file.'**
+  String langNavigationInstall(String id);
+
   /// No description provided for @langReferences.
   ///
   /// In en, this message translates to:
@@ -7976,6 +8294,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Kill Terminal'**
   String get termKillTerminal;
+
+  /// No description provided for @termKillOtherTerminals.
+  ///
+  /// In en, this message translates to:
+  /// **'Kill Other Terminals'**
+  String get termKillOtherTerminals;
+
+  /// No description provided for @termKillAllTerminals.
+  ///
+  /// In en, this message translates to:
+  /// **'Kill All Terminals'**
+  String get termKillAllTerminals;
+
+  /// No description provided for @termStopAllTasks.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop All Running Tasks'**
+  String get termStopAllTasks;
+
+  /// No description provided for @termRunInNewTerminal.
+  ///
+  /// In en, this message translates to:
+  /// **'Run in New Terminal'**
+  String get termRunInNewTerminal;
+
+  /// No description provided for @termNoTerminals.
+  ///
+  /// In en, this message translates to:
+  /// **'No terminals'**
+  String get termNoTerminals;
 
   /// No description provided for @termNewTerminal.
   ///
@@ -8241,6 +8589,12 @@ abstract class AppLocalizations {
   /// **'({count} selected)'**
   String wbSelectedCount(int count);
 
+  /// No description provided for @wbSelectedLines.
+  ///
+  /// In en, this message translates to:
+  /// **'({lines} lines, {count} selected)'**
+  String wbSelectedLines(int lines, int count);
+
   /// No description provided for @wbGoToLineColumn.
   ///
   /// In en, this message translates to:
@@ -8348,6 +8702,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Close pane'**
   String get workspaceClosePane;
+
+  /// A pane's close button, where it covers another conversation, which shows again once it closes.
+  ///
+  /// In en, this message translates to:
+  /// **'Close pane, back to {title}'**
+  String workspaceCloseBackTo(String title);
+
+  /// Shown while dropping a conversation over a pane of several.
+  ///
+  /// In en, this message translates to:
+  /// **'Over {title}, which shows again once this closes'**
+  String workspaceCovers(String title);
+
+  /// A pane's button that lists the conversations it covers, to show one again.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 conversation under this one} other{{count} conversations under this one}}'**
+  String workspaceCovered(int count);
 
   /// No description provided for @workspaceLoadingProjects.
   ///
@@ -9375,18 +9747,6 @@ abstract class AppLocalizations {
   /// **'Fast IDE'**
   String get generalSettingsIde;
 
-  /// No description provided for @generalSettingsAutoOpenChanges.
-  ///
-  /// In en, this message translates to:
-  /// **'Show agent changes as diffs'**
-  String get generalSettingsAutoOpenChanges;
-
-  /// No description provided for @generalSettingsAutoOpenChangesDescription.
-  ///
-  /// In en, this message translates to:
-  /// **'While the IDE shows, a file the agent changes opens as a diff of it against its text before, as the agent edits it.'**
-  String get generalSettingsAutoOpenChangesDescription;
-
   /// No description provided for @explorerExcludeSetting.
   ///
   /// In en, this message translates to:
@@ -9450,7 +9810,7 @@ abstract class AppLocalizations {
   /// No description provided for @claudePathMissing.
   ///
   /// In en, this message translates to:
-  /// **'None found yet: Claude Code is downloaded as the first conversation starts.'**
+  /// **'None found yet: with the Claude Code CLI picked, it is downloaded as the first conversation starts.'**
   String get claudePathMissing;
 
   /// No description provided for @generalSettingsIdeWindows.
@@ -10383,6 +10743,54 @@ abstract class AppLocalizations {
   /// **'Add Upstream'**
   String get modelsAddProvider;
 
+  /// No description provided for @modelsMagpieJoin.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect magpie'**
+  String get modelsMagpieJoin;
+
+  /// No description provided for @modelsMagpieBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Follows magpie'**
+  String get modelsMagpieBadge;
+
+  /// No description provided for @modelsMagpieGateway.
+  ///
+  /// In en, this message translates to:
+  /// **'magpie Gateway'**
+  String get modelsMagpieGateway;
+
+  /// No description provided for @modelsMagpieGatewayDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Models, accounts and routing are set up in magpie, and this list follows it. New routing groups, image models and the models magpie gives Claude Code are turned on as they come; tick any other below.'**
+  String get modelsMagpieGatewayDescription;
+
+  /// No description provided for @modelsMagpieRunning.
+  ///
+  /// In en, this message translates to:
+  /// **'Running'**
+  String get modelsMagpieRunning;
+
+  /// No description provided for @modelsMagpieNotRunning.
+  ///
+  /// In en, this message translates to:
+  /// **'magpie isn\'t running'**
+  String get modelsMagpieNotRunning;
+
+  /// No description provided for @modelsMagpieNotRunningDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Open magpie, or run magpie serve. Sessions on its models fail until it runs.'**
+  String get modelsMagpieNotRunningDetail;
+
+  /// No description provided for @modelsMagpieSync.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync Models'**
+  String get modelsMagpieSync;
+
   /// No description provided for @modelsNewProviderName.
   ///
   /// In en, this message translates to:
@@ -10437,6 +10845,78 @@ abstract class AppLocalizations {
   /// **'Opens ChatGPT\'s sign-in page in the browser.'**
   String get modelsAddAccountDescription;
 
+  /// No description provided for @modelsAccountsImport.
+  ///
+  /// In en, this message translates to:
+  /// **'Import'**
+  String get modelsAccountsImport;
+
+  /// No description provided for @modelsAccountsImportTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Import Accounts'**
+  String get modelsAccountsImportTitle;
+
+  /// No description provided for @modelsAccountsImportFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose File…'**
+  String get modelsAccountsImportFile;
+
+  /// No description provided for @modelsAccountsImportDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter account credentials as JSON or choose a JSON file.'**
+  String get modelsAccountsImportDescription;
+
+  /// No description provided for @modelsAccountsPaste.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter JSON…'**
+  String get modelsAccountsPaste;
+
+  /// No description provided for @modelsAccountsPastePlaceholder.
+  ///
+  /// In en, this message translates to:
+  /// **'Type or paste your JSON credentials here.'**
+  String get modelsAccountsPastePlaceholder;
+
+  /// No description provided for @modelsAccountsImportConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Import these ChatGPT credentials?'**
+  String get modelsAccountsImportConfirm;
+
+  /// No description provided for @modelsAccountsImportConfirmDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'BaoCode will keep the credentials securely without changing the original file or actively refreshing tokens during import. Renewing them later may rotate the refresh token and require the original tool to sign in again. Only import credentials you are authorized to use.'**
+  String get modelsAccountsImportConfirmDetail;
+
+  /// No description provided for @modelsAccountsImportFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The credentials could not be read or imported.'**
+  String get modelsAccountsImportFailed;
+
+  /// No description provided for @modelsAccountsImportSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Accounts imported: {count}'**
+  String modelsAccountsImportSummary(int count);
+
+  /// No description provided for @modelsAccountsImportKept.
+  ///
+  /// In en, this message translates to:
+  /// **'Already here, kept as signed in: {count}'**
+  String modelsAccountsImportKept(int count);
+
+  /// No description provided for @modelsAccountsImportItemFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Entry {index}: {error}'**
+  String modelsAccountsImportItemFailed(int index, String error);
+
   /// No description provided for @modelsAccountSigningIn.
   ///
   /// In en, this message translates to:
@@ -10464,8 +10944,14 @@ abstract class AppLocalizations {
   /// No description provided for @modelsRefreshQuota.
   ///
   /// In en, this message translates to:
-  /// **'Refresh Quota'**
+  /// **'Refresh All Quotas'**
   String get modelsRefreshQuota;
+
+  /// No description provided for @modelsAccountRefreshQuota.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh quota for {name}'**
+  String modelsAccountRefreshQuota(String name);
 
   /// No description provided for @modelsAccountRemove.
   ///
@@ -10491,6 +10977,12 @@ abstract class AppLocalizations {
   /// **'Use {name}'**
   String modelsAccountEnable(String name);
 
+  /// No description provided for @modelsAccountDisabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Disabled'**
+  String get modelsAccountDisabled;
+
   /// No description provided for @modelsAccountLimited.
   ///
   /// In en, this message translates to:
@@ -10502,6 +10994,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Quota not known yet'**
   String get modelsAccountQuotaUnknown;
+
+  /// No description provided for @modelsQuotaShortWindow.
+  ///
+  /// In en, this message translates to:
+  /// **'Short window'**
+  String get modelsQuotaShortWindow;
+
+  /// No description provided for @modelsQuotaLongWindow.
+  ///
+  /// In en, this message translates to:
+  /// **'Long window'**
+  String get modelsQuotaLongWindow;
+
+  /// No description provided for @modelsQuotaLastUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Last updated {time}'**
+  String modelsQuotaLastUpdated(String time);
 
   /// No description provided for @modelsQuotaWeek.
   ///
@@ -10526,6 +11036,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{percent}% used'**
   String modelsQuotaUsed(int percent);
+
+  /// No description provided for @modelsQuotaRemaining.
+  ///
+  /// In en, this message translates to:
+  /// **'{percent}% left'**
+  String modelsQuotaRemaining(int percent);
+
+  /// No description provided for @quotaBarWindowLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'{window} {percent}% left'**
+  String quotaBarWindowLeft(String window, int percent);
+
+  /// No description provided for @quotaBarAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'{count}/{total} available'**
+  String quotaBarAvailable(int count, int total);
+
+  /// No description provided for @quotaBarAllOut.
+  ///
+  /// In en, this message translates to:
+  /// **'All accounts out of quota · back {time}'**
+  String quotaBarAllOut(String time);
+
+  /// No description provided for @quotaBarBackAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Out of quota · back {time}'**
+  String quotaBarBackAt(String time);
+
+  /// No description provided for @quotaBarNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No account can be used'**
+  String get quotaBarNone;
+
+  /// No description provided for @quotaBarThisChat.
+  ///
+  /// In en, this message translates to:
+  /// **'This chat'**
+  String get quotaBarThisChat;
+
+  /// No description provided for @quotaBarRefresh.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh Quota'**
+  String get quotaBarRefresh;
 
   /// No description provided for @modelsQuotaResetsIn.
   ///
@@ -10683,6 +11241,48 @@ abstract class AppLocalizations {
   /// **'As the upstream documents it; without a version in its path (…/v1), /v1 is added.'**
   String get modelsBaseUrlOpenAIHint;
 
+  /// No description provided for @modelsCustomUrls.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom URLs'**
+  String get modelsCustomUrls;
+
+  /// No description provided for @modelsCustomUrlsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Where models are listed and conversations go is made from the Base URL. When the upstream has them elsewhere, give them in full here.'**
+  String get modelsCustomUrlsDescription;
+
+  /// No description provided for @modelsModelsUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'Models URL'**
+  String get modelsModelsUrl;
+
+  /// No description provided for @modelsModelsUrlDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Testing the connection and fetching models GET it. Empty, the one in grey (from the Base URL) is used.'**
+  String get modelsModelsUrlDescription;
+
+  /// No description provided for @modelsEndpointUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'Endpoint URL'**
+  String get modelsEndpointUrl;
+
+  /// No description provided for @modelsEndpointUrlDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Every conversation is POSTed to it. Empty, the one in grey (from the Base URL) is used. A model of another endpoint type still goes by the Base URL.'**
+  String get modelsEndpointUrlDescription;
+
+  /// No description provided for @modelsEndpointUrlAnthropicDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Every conversation is POSTed to it, Claude Code through the local proxy. Empty, the one in grey (from the Base URL) is used. A model of another endpoint type still goes by the Base URL.'**
+  String get modelsEndpointUrlAnthropicDescription;
+
   /// No description provided for @modelsApiKey.
   ///
   /// In en, this message translates to:
@@ -10791,6 +11391,18 @@ abstract class AppLocalizations {
   /// **'No longer listed by the upstream; kept until you remove it.'**
   String get modelsMissingTooltip;
 
+  /// No description provided for @modelsRemoveMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove Gone ({count})'**
+  String modelsRemoveMissing(int count);
+
+  /// No description provided for @modelsRemoveMissingConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove {count} models the upstream no longer lists?'**
+  String modelsRemoveMissingConfirm(int count);
+
   /// No description provided for @modelsCustom.
   ///
   /// In en, this message translates to:
@@ -10820,6 +11432,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Edit…'**
   String get modelsEdit;
+
+  /// No description provided for @modelsDuplicate.
+  ///
+  /// In en, this message translates to:
+  /// **'Duplicate…'**
+  String get modelsDuplicate;
 
   /// No description provided for @modelsRemove.
   ///
@@ -10878,7 +11496,7 @@ abstract class AppLocalizations {
   /// No description provided for @modelsRolesDescription.
   ///
   /// In en, this message translates to:
-  /// **'Which model Claude Code uses for each part of its work. Unset, the model picked stands in.'**
+  /// **'Which model Claude Code uses for each part of its work. Unset, the model picked stands in. All but the main model may be another upstream\'s: BaoCode\'s local proxy sends their requests there.'**
   String get modelsRolesDescription;
 
   /// No description provided for @modelsRoleUnset.
@@ -10950,13 +11568,13 @@ abstract class AppLocalizations {
   /// No description provided for @modelsRoleSubagentDescription.
   ///
   /// In en, this message translates to:
-  /// **'CLAUDE_CODE_SUBAGENT_MODEL: the model every subagent runs on, over the one its definition or the agent\'s call names (but inherit). It may be another upstream\'s: Morning Mist\'s local proxy sends its requests there.'**
+  /// **'CLAUDE_CODE_SUBAGENT_MODEL: the model every subagent runs on, the built-in Explore and Plan and those defined as inherit too, over the one its definition or the agent\'s call names.'**
   String get modelsRoleSubagentDescription;
 
   /// Under a role that picks another upstream's model, once that upstream or model is gone.
   ///
   /// In en, this message translates to:
-  /// **'This model is no longer one of its upstream\'s: subagents\' requests to it will fail.'**
+  /// **'This model is no longer one of its upstream\'s: requests to it will fail.'**
   String get modelsRoleMissing;
 
   /// No description provided for @modelsAdvanced.
@@ -11055,11 +11673,23 @@ abstract class AppLocalizations {
   /// **'One Name: Value a line, sent on every request to this upstream. Values may use the CLAUDE_SESSION_ID variable (this conversation\'s session) and ANTHROPIC_MODEL (the model asked for), each between double braces; over the direct Anthropic protocol those two go as written, so only fixed values work there. Auth headers (Authorization, x-api-key) are ignored here: the key is set above.'**
   String get modelsHeadersDescription;
 
-  /// No description provided for @modelsHeadersPlaceholder.
+  /// No description provided for @modelsDuplicateProvider.
   ///
   /// In en, this message translates to:
-  /// **'x-session-id: my-session'**
-  String get modelsHeadersPlaceholder;
+  /// **'Duplicate Upstream'**
+  String get modelsDuplicateProvider;
+
+  /// No description provided for @modelsDuplicateProviderDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'A copy of this upstream, with its models, settings and key.'**
+  String get modelsDuplicateProviderDescription;
+
+  /// No description provided for @modelsDuplicateName.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} Copy'**
+  String modelsDuplicateName(String name);
 
   /// No description provided for @modelsDelete.
   ///
@@ -11306,6 +11936,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Image models are not offered in the model picker: agents make pictures with them through the generate_image tool.'**
   String get modelsKindDescription;
+
+  /// No description provided for @modelsEndpoint.
+  ///
+  /// In en, this message translates to:
+  /// **'Endpoint'**
+  String get modelsEndpoint;
+
+  /// The endpoint choice of a model that follows its upstream's protocol, that protocol's name in it.
+  ///
+  /// In en, this message translates to:
+  /// **'As the upstream ({protocol})'**
+  String modelsEndpointUpstream(String protocol);
+
+  /// No description provided for @modelsEndpointDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Which API this model\'s requests go to, at the upstream\'s base URL and with its key: on a relay that serves several, its Claude models at the Anthropic one and its GPT at Responses, say.'**
+  String get modelsEndpointDescription;
+
+  /// No description provided for @modelsModelEndpointUrlDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Where this model\'s requests go, in full. Apart from the endpoint type: that says how a request is made, this only where it goes. Empty, the one in grey is used.'**
+  String get modelsModelEndpointUrlDescription;
 
   /// No description provided for @modelsImageBadge.
   ///
@@ -11604,7 +12258,7 @@ abstract class AppLocalizations {
   /// No description provided for @diagnosticsDescription.
   ///
   /// In en, this message translates to:
-  /// **'Send Morning Mist\'s error logs to its developers to help track down a problem. Nothing is sent until you upload.'**
+  /// **'Send Morning Mist\'s error logs and the crash and hang reports the system kept of it to its developers to help track down a problem. Nothing is sent until you upload.'**
   String get diagnosticsDescription;
 
   /// No description provided for @diagnosticsUpload.
@@ -11997,6 +12651,36 @@ abstract class AppLocalizations {
   /// **'Your messages: {style}'**
   String appearanceSettingsUserMessageStyleLabel(String style);
 
+  /// No description provided for @appearanceSettingsEditDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'File Edits'**
+  String get appearanceSettingsEditDetail;
+
+  /// No description provided for @appearanceSettingsEditDetailDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'How the agent\'s edits to files show in the conversation: as a card of the changes, always open; or as one line that opens to them.'**
+  String get appearanceSettingsEditDetailDescription;
+
+  /// No description provided for @appearanceSettingsEditDetailCard.
+  ///
+  /// In en, this message translates to:
+  /// **'Card with changes'**
+  String get appearanceSettingsEditDetailCard;
+
+  /// No description provided for @appearanceSettingsEditDetailCompact.
+  ///
+  /// In en, this message translates to:
+  /// **'Compact'**
+  String get appearanceSettingsEditDetailCompact;
+
+  /// No description provided for @appearanceSettingsEditDetailLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'File edits: {detail}'**
+  String appearanceSettingsEditDetailLabel(String detail);
+
   /// No description provided for @appearanceSettingsReplyScroll.
   ///
   /// In en, this message translates to:
@@ -12038,6 +12722,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'A minimap of the whole conversation at the left of its column, where you are in it shown as you scroll; click or drag it to get somewhere. It stands in for the scrollbar, and is not shown in a window too narrow for it. Off: the scrollbar.'**
   String get appearanceSettingsMinimapDescription;
+
+  /// No description provided for @appearanceSettingsWindowBlur.
+  ///
+  /// In en, this message translates to:
+  /// **'Native Window Blur'**
+  String get appearanceSettingsWindowBlur;
+
+  /// No description provided for @appearanceSettingsWindowBlurDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'The system\'s blur under the windows (macOS\'s sidebar material, Windows 11\'s acrylic): what is behind them shows through the sidebar and the conversation. Off: the windows are opaque.'**
+  String get appearanceSettingsWindowBlurDescription;
 
   /// No description provided for @appearanceSettingsSidebarTimes.
   ///
@@ -12150,7 +12846,7 @@ abstract class AppLocalizations {
   /// No description provided for @appearanceSettingsCodeSizeDescription.
   ///
   /// In en, this message translates to:
-  /// **'The size of code in the IDE editor and the side panel\'s file and changes views. Code in the chat follows the interface size; the terminal has its own size.'**
+  /// **'The size of code in the IDE editor and the side panel\'s file and changes views at 100% interface size; zooming the interface scales it in proportion. Code in the chat follows the interface size; the terminal has its own size.'**
   String get appearanceSettingsCodeSizeDescription;
 
   /// No description provided for @appearanceSettingsCodeSizeLabel.
@@ -12171,6 +12867,30 @@ abstract class AppLocalizations {
   /// **'Draws sequences such as => and != as one glyph where the font has one. The terminal does not.'**
   String get appearanceSettingsLigaturesDescription;
 
+  /// No description provided for @appearanceSettingsWordWrap.
+  ///
+  /// In en, this message translates to:
+  /// **'Word Wrap'**
+  String get appearanceSettingsWordWrap;
+
+  /// No description provided for @appearanceSettingsWordWrapDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Wraps long lines at the editor\'s width, in every editor. An editor\'s context menu and the Command Palette (Toggle Word Wrap) switch it too. Files of more than 5,000 lines are not wrapped.'**
+  String get appearanceSettingsWordWrapDescription;
+
+  /// No description provided for @appearanceSettingsCodeMinimap.
+  ///
+  /// In en, this message translates to:
+  /// **'Code Minimap'**
+  String get appearanceSettingsCodeMinimap;
+
+  /// No description provided for @appearanceSettingsCodeMinimapDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'A minimap of the file at the right of the code editor, in every editor; it is not shown in an editor too narrow for it. An editor tab\'s context menu and the Command Palette (Toggle Minimap) switch it too.'**
+  String get appearanceSettingsCodeMinimapDescription;
+
   /// No description provided for @appearanceSettingsUiScale.
   ///
   /// In en, this message translates to:
@@ -12180,7 +12900,7 @@ abstract class AppLocalizations {
   /// No description provided for @appearanceSettingsUiScaleDescription.
   ///
   /// In en, this message translates to:
-  /// **'Zooms the whole interface (its text, icons and spacing), code in the chat, and terminal text while the terminal size follows it. Code in the IDE editor and side panel files and changes keeps its own size.'**
+  /// **'Zooms the whole interface (its text, icons and spacing) and the code in it, and terminal text while the terminal size follows it. Code in the editor zooms from its code size.'**
   String get appearanceSettingsUiScaleDescription;
 
   /// No description provided for @appearanceSettingsUiScaleLabel.
@@ -12381,6 +13101,12 @@ abstract class AppLocalizations {
   /// **'A folder on {host}: pick one, or type a path'**
   String remoteFolderPlaceholder(String host);
 
+  /// The button at the right of the quick pick browsing a remote host's folders: it lists the folder again, e.g. one made in a terminal since.
+  ///
+  /// In en, this message translates to:
+  /// **'Read the folders again'**
+  String get remoteFolderRefresh;
+
   /// No description provided for @remoteOpenThisFolder.
   ///
   /// In en, this message translates to:
@@ -12404,6 +13130,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Could not list {path}'**
   String remoteListFailed(String path);
+
+  /// No description provided for @remoteReadingFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'Reading {path}…'**
+  String remoteReadingFolder(String path);
 
   /// No description provided for @remoteFileHostPlaceholder.
   ///
@@ -12450,32 +13182,38 @@ abstract class AppLocalizations {
   /// No description provided for @remoteStatus.
   ///
   /// In en, this message translates to:
-  /// **'SSH: {host}'**
-  String remoteStatus(String host);
+  /// **'{kind}: {host}'**
+  String remoteStatus(String kind, String host);
 
   /// No description provided for @remoteStatusConnecting.
   ///
   /// In en, this message translates to:
-  /// **'SSH: {host} (connecting...)'**
-  String remoteStatusConnecting(String host);
+  /// **'{kind}: {host} (connecting...)'**
+  String remoteStatusConnecting(String kind, String host);
 
   /// No description provided for @remoteStatusReconnecting.
   ///
   /// In en, this message translates to:
-  /// **'SSH: {host} (reconnecting...)'**
-  String remoteStatusReconnecting(String host);
+  /// **'{kind}: {host} (reconnecting...)'**
+  String remoteStatusReconnecting(String kind, String host);
 
   /// No description provided for @remoteStatusFailed.
   ///
   /// In en, this message translates to:
-  /// **'SSH: {host} (disconnected)'**
-  String remoteStatusFailed(String host);
+  /// **'{kind}: {host} (disconnected)'**
+  String remoteStatusFailed(String kind, String host);
 
   /// No description provided for @remoteStatusInstalling.
   ///
   /// In en, this message translates to:
-  /// **'SSH: {host} (installing Claude Code {percent}%)'**
-  String remoteStatusInstalling(String host, int percent);
+  /// **'{kind}: {host} (installing Claude Code {percent}%)'**
+  String remoteStatusInstalling(String kind, String host, int percent);
+
+  /// The status bar while Claude Code is installed on a host, its size not known yet (no percentage).
+  ///
+  /// In en, this message translates to:
+  /// **'{kind}: {host} (installing Claude Code...)'**
+  String remoteStatusInstallingUnsized(String kind, String host);
 
   /// Shown while Claude Code is put on a remote host where it was not installed, before the agent starts.
   ///
@@ -12504,14 +13242,26 @@ abstract class AppLocalizations {
   /// No description provided for @remoteStatusTooltip.
   ///
   /// In en, this message translates to:
-  /// **'Connected to {host} over SSH'**
-  String remoteStatusTooltip(String host);
+  /// **'Connected to {host} over {kind}'**
+  String remoteStatusTooltip(String kind, String host);
+
+  /// No description provided for @remoteStatusSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'System: {platform}'**
+  String remoteStatusSystem(String platform);
 
   /// No description provided for @remoteStatusTooltipLost.
   ///
   /// In en, this message translates to:
   /// **'The connection to {host} is lost: click to reconnect now'**
   String remoteStatusTooltipLost(String host);
+
+  /// No description provided for @remoteStatusTooltipResuming.
+  ///
+  /// In en, this message translates to:
+  /// **'The connection to {host} is lost, and being made again: its terminals and Claude Code keep running there meanwhile. Click to reconnect now'**
+  String remoteStatusTooltipResuming(String host);
 
   /// No description provided for @remoteReconnect.
   ///
@@ -12522,8 +13272,8 @@ abstract class AppLocalizations {
   /// No description provided for @remoteProjectTooltip.
   ///
   /// In en, this message translates to:
-  /// **'On {host}, over SSH'**
-  String remoteProjectTooltip(String host);
+  /// **'On {host}, over {kind}'**
+  String remoteProjectTooltip(String kind, String host);
 
   /// No description provided for @quitConfirmRemote.
   ///
@@ -12830,6 +13580,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Delete Workspace'**
   String get sidebarDeleteWorkspace;
+
+  /// A project's menu item: its name and folder, in a dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Project…'**
+  String get sidebarEditProject;
+
+  /// No description provided for @projectEditTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Project'**
+  String get projectEditTitle;
+
+  /// The label of a project's folder in its dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Location'**
+  String get projectLocation;
+
+  /// No description provided for @projectLocationDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Moved or renamed the folder? Point the project at it here, and its conversations move along. The folder itself is not moved.'**
+  String get projectLocationDescription;
+
+  /// No description provided for @projectChooseFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose in {app}…'**
+  String projectChooseFolder(String app);
+
+  /// No description provided for @projectFolderNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'There is no folder at this path.'**
+  String get projectFolderNotFound;
+
+  /// No description provided for @projectRelocateBusy.
+  ///
+  /// In en, this message translates to:
+  /// **'An agent of this project is still working, or open in a window of its own. Change its location once it is done.'**
+  String get projectRelocateBusy;
+
+  /// No description provided for @projectRelocateFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t move this project\'s conversations.'**
+  String get projectRelocateFailed;
+
+  /// No description provided for @projectRelocating.
+  ///
+  /// In en, this message translates to:
+  /// **'Moving Conversations…'**
+  String get projectRelocating;
 
   /// The title of the explorer's folders when the IDE shows a workspace, as VS Code's.
   ///
@@ -13686,7 +14490,7 @@ abstract class AppLocalizations {
   /// No description provided for @mobileSettingsDescription.
   ///
   /// In en, this message translates to:
-  /// **'Follow and drive this computer\'s agents from Morning Mist on your phone, over the local network or the internet. What goes between them is end-to-end encrypted.'**
+  /// **'Follow and drive this computer\'s agents from Morning Mist on your phone: directly on the same network, across the internet through a hole punched in the routers between them, or through Morning Mist\'s relay when neither works. What goes between them is end-to-end encrypted; a relay cannot read it.'**
   String get mobileSettingsDescription;
 
   /// No description provided for @mobileAllow.
@@ -13698,7 +14502,7 @@ abstract class AppLocalizations {
   /// No description provided for @mobileAllowDescription.
   ///
   /// In en, this message translates to:
-  /// **'Phones paired with this computer connect to it directly.'**
+  /// **'Phones paired with this computer can connect to it, wherever they are.'**
   String get mobileAllowDescription;
 
   /// No description provided for @mobileStatus.
@@ -13719,89 +14523,23 @@ abstract class AppLocalizations {
   /// **'Starting…'**
   String get mobileStatusStarting;
 
-  /// No description provided for @mobileStatusListening.
-  ///
-  /// In en, this message translates to:
-  /// **'Listening on port {port}'**
-  String mobileStatusListening(int port);
-
   /// No description provided for @mobileStatusFailed.
   ///
   /// In en, this message translates to:
-  /// **'Could not listen: {error}'**
+  /// **'Could not start: {error}'**
   String mobileStatusFailed(String error);
-
-  /// No description provided for @mobileAddresses.
-  ///
-  /// In en, this message translates to:
-  /// **'Addresses'**
-  String get mobileAddresses;
-
-  /// No description provided for @mobileAddressesDescription.
-  ///
-  /// In en, this message translates to:
-  /// **'Where phones reach this computer, in the order they try them: the local network first, then the internet.'**
-  String get mobileAddressesDescription;
-
-  /// No description provided for @mobileAddressesNone.
-  ///
-  /// In en, this message translates to:
-  /// **'No network found.'**
-  String get mobileAddressesNone;
-
-  /// No description provided for @mobileAddressesRefresh.
-  ///
-  /// In en, this message translates to:
-  /// **'Refresh'**
-  String get mobileAddressesRefresh;
-
-  /// No description provided for @mobilePort.
-  ///
-  /// In en, this message translates to:
-  /// **'Port'**
-  String get mobilePort;
-
-  /// No description provided for @mobilePortDescription.
-  ///
-  /// In en, this message translates to:
-  /// **'The port phones connect to. Forward it on the router to reach this computer from the internet.'**
-  String get mobilePortDescription;
-
-  /// No description provided for @mobilePortInvalid.
-  ///
-  /// In en, this message translates to:
-  /// **'Not a port: {text}. Enter a number from 1 to 65535.'**
-  String mobilePortInvalid(String text);
-
-  /// No description provided for @mobilePublicAddress.
-  ///
-  /// In en, this message translates to:
-  /// **'Public Address'**
-  String get mobilePublicAddress;
-
-  /// No description provided for @mobilePublicAddressDescription.
-  ///
-  /// In en, this message translates to:
-  /// **'A domain or IP this computer can be reached at from the internet (with the port forwarded), put in the QR code; several separated by commas. Behind a proxy that only takes HTTPS (such as a Cloudflare Tunnel), write it as wss://domain. Public IPv6 addresses are found by themselves.'**
-  String get mobilePublicAddressDescription;
 
   /// No description provided for @mobileRelay.
   ///
   /// In en, this message translates to:
-  /// **'Relay'**
+  /// **'Relays'**
   String get mobileRelay;
 
   /// No description provided for @mobileRelayDescription.
   ///
   /// In en, this message translates to:
-  /// **'Reach this computer through Morning Mist\'s relay when none of its addresses can be reached. Coming later.'**
+  /// **'Phones that cannot reach this computer directly go through one. It only passes along what is sealed between the two. Nothing to set on the phone: it learns them when paired, and again each time it connects.'**
   String get mobileRelayDescription;
-
-  /// No description provided for @mobileRelayUnavailable.
-  ///
-  /// In en, this message translates to:
-  /// **'Not Available Yet'**
-  String get mobileRelayUnavailable;
 
   /// No description provided for @mobilePair.
   ///
@@ -13838,6 +14576,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Copy Link'**
   String get mobilePairCopyLink;
+
+  /// No description provided for @mobilePairQrHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Click to copy the link, to paste on the phone'**
+  String get mobilePairQrHint;
+
+  /// No description provided for @mobileGetApp.
+  ///
+  /// In en, this message translates to:
+  /// **'Get the Phone App'**
+  String get mobileGetApp;
+
+  /// No description provided for @mobileGetAppDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan with the phone\'s camera: the same downloads as on baocode.dev.'**
+  String get mobileGetAppDescription;
+
+  /// No description provided for @mobileGetAndroidDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'The APK; it keeps itself up to date'**
+  String get mobileGetAndroidDetail;
+
+  /// No description provided for @mobileGetIos.
+  ///
+  /// In en, this message translates to:
+  /// **'iPhone and iPad'**
+  String get mobileGetIos;
+
+  /// No description provided for @mobileGetIosDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'The beta, on TestFlight'**
+  String get mobileGetIosDetail;
+
+  /// No description provided for @mobileGetOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Click to open {url}'**
+  String mobileGetOpen(String url);
 
   /// No description provided for @mobilePairCopied.
   ///
@@ -13959,6 +14739,174 @@ abstract class AppLocalizations {
   /// **'Allow'**
   String get mobilePairAllow;
 
+  /// No description provided for @mobileStatusOnline.
+  ///
+  /// In en, this message translates to:
+  /// **'On, reachable through {relay}'**
+  String mobileStatusOnline(String relay);
+
+  /// No description provided for @mobileStatusNoRelay.
+  ///
+  /// In en, this message translates to:
+  /// **'On; no relay reached yet, so only phones on the same network can connect'**
+  String get mobileStatusNoRelay;
+
+  /// No description provided for @mobileStatusDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'On, but the relay turned this computer away: {reason}'**
+  String mobileStatusDenied(String reason);
+
+  /// No description provided for @mobileRelayInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Not a relay address; one looks like https://relay.example.com'**
+  String get mobileRelayInvalid;
+
+  /// No description provided for @mobileRelayPinned.
+  ///
+  /// In en, this message translates to:
+  /// **'Relay Used'**
+  String get mobileRelayPinned;
+
+  /// No description provided for @mobileRelayCustom.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom'**
+  String get mobileRelayCustom;
+
+  /// No description provided for @mobileRelayCustomAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom Address'**
+  String get mobileRelayCustomAddress;
+
+  /// No description provided for @mobileRelayCustomDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'The address of a relay you run yourself (baocode-relay).'**
+  String get mobileRelayCustomDescription;
+
+  /// No description provided for @mobileRelayMode.
+  ///
+  /// In en, this message translates to:
+  /// **'How'**
+  String get mobileRelayMode;
+
+  /// No description provided for @mobileRelayModeAuto.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic'**
+  String get mobileRelayModeAuto;
+
+  /// No description provided for @mobileRelayModeAutoDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'BaoCode\'s relays, the nearest that answers.'**
+  String get mobileRelayModeAutoDescription;
+
+  /// No description provided for @mobileRelayModePinned.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick One'**
+  String get mobileRelayModePinned;
+
+  /// No description provided for @mobileRelayModePinnedDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Only the one picked: one of BaoCode\'s, or a custom address.'**
+  String get mobileRelayModePinnedDescription;
+
+  /// No description provided for @mobileRelayModeDirect.
+  ///
+  /// In en, this message translates to:
+  /// **'Direct Only'**
+  String get mobileRelayModeDirect;
+
+  /// No description provided for @mobileRelayModeDirectDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'No relay: phones connect straight to this computer. It needs a public address, or the port below forwarded to it.'**
+  String get mobileRelayModeDirectDescription;
+
+  /// No description provided for @mobileDirectPort.
+  ///
+  /// In en, this message translates to:
+  /// **'Direct Port'**
+  String get mobileDirectPort;
+
+  /// No description provided for @mobileDirectPortDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'The UDP port phones connect to. Forward it to this computer at the router, and allow it in the firewall.'**
+  String get mobileDirectPortDescription;
+
+  /// No description provided for @mobileDirectPortInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'A port from 1024 to 65535.'**
+  String get mobileDirectPortInvalid;
+
+  /// No description provided for @mobileDirectAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'Direct Address'**
+  String get mobileDirectAddress;
+
+  /// No description provided for @mobileDirectAddressDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'It goes in the pairing code and in every connection after.'**
+  String get mobileDirectAddressDescription;
+
+  /// No description provided for @mobileDirectAddressNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No public address yet: check again once this computer is online, or forward the port to it if it is behind a router.'**
+  String get mobileDirectAddressNone;
+
+  /// No description provided for @mobileStatusDirect.
+  ///
+  /// In en, this message translates to:
+  /// **'On, direct only'**
+  String get mobileStatusDirect;
+
+  /// No description provided for @mobilePathLan.
+  ///
+  /// In en, this message translates to:
+  /// **'Same network'**
+  String get mobilePathLan;
+
+  /// No description provided for @mobilePathDirect.
+  ///
+  /// In en, this message translates to:
+  /// **'Direct'**
+  String get mobilePathDirect;
+
+  /// No description provided for @mobilePathRelay.
+  ///
+  /// In en, this message translates to:
+  /// **'Through the relay'**
+  String get mobilePathRelay;
+
+  /// No description provided for @mobilePathRtt.
+  ///
+  /// In en, this message translates to:
+  /// **'{ms} ms'**
+  String mobilePathRtt(int ms);
+
+  /// No description provided for @mobileLegacyPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Needs pairing again: paired before the connection was rebuilt'**
+  String get mobileLegacyPhone;
+
+  /// No description provided for @mobileLegacyRepair.
+  ///
+  /// In en, this message translates to:
+  /// **'Pair Again'**
+  String get mobileLegacyRepair;
+
   /// No description provided for @settingsSectionStash.
   ///
   /// In en, this message translates to:
@@ -14006,6 +14954,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Edit link'**
   String get stashLinkEdit;
+
+  /// No description provided for @stashLinkCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy link address'**
+  String get stashLinkCopy;
+
+  /// No description provided for @stashLinkRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove link'**
+  String get stashLinkRemove;
+
+  /// No description provided for @stashFormatMenu.
+  ///
+  /// In en, this message translates to:
+  /// **'Format'**
+  String get stashFormatMenu;
 
   /// No description provided for @stashDraft.
   ///
@@ -14157,6 +15123,114 @@ abstract class AppLocalizations {
   /// **'Code block'**
   String get stashFormatCodeBlock;
 
+  /// Menu of a markdown table's row (from its handle) and column: what it does to them.
+  ///
+  /// In en, this message translates to:
+  /// **'Insert row above'**
+  String get markdownTableInsertRowAbove;
+
+  /// No description provided for @markdownTableInsertRowBelow.
+  ///
+  /// In en, this message translates to:
+  /// **'Insert row below'**
+  String get markdownTableInsertRowBelow;
+
+  /// No description provided for @markdownTableDeleteRow.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete row'**
+  String get markdownTableDeleteRow;
+
+  /// No description provided for @markdownTableInsertColumnLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'Insert column left'**
+  String get markdownTableInsertColumnLeft;
+
+  /// No description provided for @markdownTableInsertColumnRight.
+  ///
+  /// In en, this message translates to:
+  /// **'Insert column right'**
+  String get markdownTableInsertColumnRight;
+
+  /// No description provided for @markdownTableDeleteColumn.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete column'**
+  String get markdownTableDeleteColumn;
+
+  /// No description provided for @markdownTableAlignLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'Align left'**
+  String get markdownTableAlignLeft;
+
+  /// No description provided for @markdownTableAlignCenter.
+  ///
+  /// In en, this message translates to:
+  /// **'Align center'**
+  String get markdownTableAlignCenter;
+
+  /// No description provided for @markdownTableAlignRight.
+  ///
+  /// In en, this message translates to:
+  /// **'Align right'**
+  String get markdownTableAlignRight;
+
+  /// No description provided for @markdownTableDuplicateRow.
+  ///
+  /// In en, this message translates to:
+  /// **'Duplicate row'**
+  String get markdownTableDuplicateRow;
+
+  /// No description provided for @markdownTableMoveRowUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Move row up'**
+  String get markdownTableMoveRowUp;
+
+  /// No description provided for @markdownTableMoveRowDown.
+  ///
+  /// In en, this message translates to:
+  /// **'Move row down'**
+  String get markdownTableMoveRowDown;
+
+  /// No description provided for @markdownTableClearRow.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear row'**
+  String get markdownTableClearRow;
+
+  /// No description provided for @markdownTableDuplicateColumn.
+  ///
+  /// In en, this message translates to:
+  /// **'Duplicate column'**
+  String get markdownTableDuplicateColumn;
+
+  /// No description provided for @markdownTableMoveColumnLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'Move column left'**
+  String get markdownTableMoveColumnLeft;
+
+  /// No description provided for @markdownTableMoveColumnRight.
+  ///
+  /// In en, this message translates to:
+  /// **'Move column right'**
+  String get markdownTableMoveColumnRight;
+
+  /// No description provided for @markdownTableClearColumn.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear column'**
+  String get markdownTableClearColumn;
+
+  /// No description provided for @markdownTableDeleteTable.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete table'**
+  String get markdownTableDeleteTable;
+
   /// No description provided for @stashFormatClear.
   ///
   /// In en, this message translates to:
@@ -14184,37 +15258,37 @@ abstract class AppLocalizations {
   /// No description provided for @composerPolish.
   ///
   /// In en, this message translates to:
-  /// **'Polish'**
+  /// **'Enhance prompt'**
   String get composerPolish;
 
   /// No description provided for @composerPolishing.
   ///
   /// In en, this message translates to:
-  /// **'Polishing…'**
+  /// **'Enhancing…'**
   String get composerPolishing;
 
   /// No description provided for @composerPolishHint.
   ///
   /// In en, this message translates to:
-  /// **'Polish: the auxiliary model makes the message clearer, in your words; pictures, files, code and links stay as they are; Undo takes it back'**
+  /// **'Enhance prompt: the auxiliary model makes the message a clearer, more specific prompt for the agent, filling in what you left vague; pictures, files, code and links stay as they are; Undo takes it back'**
   String get composerPolishHint;
 
   /// No description provided for @composerPolishFailed.
   ///
   /// In en, this message translates to:
-  /// **'Could not polish: {error}'**
+  /// **'Could not enhance the prompt: {error}'**
   String composerPolishFailed(String error);
 
   /// No description provided for @generalSettingsComposerPolish.
   ///
   /// In en, this message translates to:
-  /// **'Polish button'**
+  /// **'Enhance Prompt button'**
   String get generalSettingsComposerPolish;
 
   /// No description provided for @generalSettingsComposerPolishDescription.
   ///
   /// In en, this message translates to:
-  /// **'A button in the message box that has the auxiliary model make what you wrote clearer before you send it'**
+  /// **'A button in the message box that has the auxiliary model make what you wrote a clearer, more specific prompt before you send it'**
   String get generalSettingsComposerPolishDescription;
 
   /// No description provided for @generalSettingsLiveTurnStats.
@@ -14997,12 +16071,6 @@ abstract class AppLocalizations {
   /// **'Detached HEAD'**
   String get branchBarDetached;
 
-  /// Tooltip of the branch under the chat input while the agent is working.
-  ///
-  /// In en, this message translates to:
-  /// **'Branches can\'t be switched while the agent works'**
-  String get branchBarRunning;
-
   /// Message of the dialog shown when Git refused to check out or create the branch {branch}; Git's own message is the detail.
   ///
   /// In en, this message translates to:
@@ -15036,7 +16104,7 @@ abstract class AppLocalizations {
   /// No description provided for @accountsDescription.
   ///
   /// In en, this message translates to:
-  /// **'Sign in to GitHub or GitLab to see the state of the issues and pull requests linked in Stash, import issues as stashes, and reply to them once you confirm.'**
+  /// **'Sign in to GitHub, GitLab or Gitee to see the state of the issues and pull requests linked in Stash, import issues as stashes, and reply to them once you confirm.'**
   String get accountsDescription;
 
   /// No description provided for @accountsSignedIn.
@@ -15054,7 +16122,7 @@ abstract class AppLocalizations {
   /// No description provided for @accountsKeptLocally.
   ///
   /// In en, this message translates to:
-  /// **'Tokens are kept in this computer\'s keychain and are sent only to the GitHub or GitLab they are for. Nothing is posted without your confirmation.'**
+  /// **'Tokens are kept in this computer\'s keychain and are sent only to the GitHub, GitLab or Gitee they are for. Nothing is posted without your confirmation.'**
   String get accountsKeptLocally;
 
   /// No description provided for @accountsGitHubHosts.
@@ -15066,8 +16134,14 @@ abstract class AppLocalizations {
   /// No description provided for @accountsGitLabHosts.
   ///
   /// In en, this message translates to:
-  /// **'gitlab.com, or a self-managed GitLab'**
+  /// **'gitlab.com, or a self-managed GitLab (http:// or https://, with its port)'**
   String get accountsGitLabHosts;
+
+  /// No description provided for @accountsGiteeHosts.
+  ///
+  /// In en, this message translates to:
+  /// **'gitee.com, with a personal access token'**
+  String get accountsGiteeHosts;
 
   /// No description provided for @accountsSignInBrowser.
   ///
@@ -15132,7 +16206,7 @@ abstract class AppLocalizations {
   /// No description provided for @accountsHost.
   ///
   /// In en, this message translates to:
-  /// **'Host'**
+  /// **'Server'**
   String get accountsHost;
 
   /// No description provided for @accountsToken.
@@ -15153,6 +16227,12 @@ abstract class AppLocalizations {
   /// **'A personal access token with the api scope.'**
   String get accountsTokenGitLabScopes;
 
+  /// No description provided for @accountsTokenGiteeScopes.
+  ///
+  /// In en, this message translates to:
+  /// **'A personal access token with the user_info, projects, pull_requests, issues and notes scopes.'**
+  String get accountsTokenGiteeScopes;
+
   /// No description provided for @accountsTokenCreate.
   ///
   /// In en, this message translates to:
@@ -15164,6 +16244,28 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The token was not accepted. Check that it is complete and has not expired.'**
   String get accountsTokenRefused;
+
+  /// Title of the dialog asking whether to trust a forge server's certificate.
+  ///
+  /// In en, this message translates to:
+  /// **'Untrusted Certificate'**
+  String get accountsCertificateTitle;
+
+  /// What a self-signed or privately issued forge certificate is, before the user confirms it.
+  ///
+  /// In en, this message translates to:
+  /// **'The certificate of {host} cannot be verified ({issuer}).\n\nSHA-256 fingerprint:\n{fingerprint}\n\nTrusting it lets BaoCode reach this server, and only the certificate with this fingerprint is accepted. You are asked again if the certificate changes.'**
+  String accountsCertificateDetail(
+    String host,
+    String issuer,
+    String fingerprint,
+  );
+
+  /// Button that trusts the certificate shown, and only that one.
+  ///
+  /// In en, this message translates to:
+  /// **'Trust and Continue'**
+  String get accountsCertificateTrust;
 
   /// No description provided for @accountsBrowserTitle.
   ///
@@ -15432,7 +16534,7 @@ abstract class AppLocalizations {
   /// No description provided for @stashImportNotALink.
   ///
   /// In en, this message translates to:
-  /// **'Not a GitHub or GitLab issue or pull request link.'**
+  /// **'Not a GitHub, GitLab or Gitee issue or pull request link.'**
   String get stashImportNotALink;
 
   /// No description provided for @stashImportSignIn.
@@ -15480,7 +16582,7 @@ abstract class AppLocalizations {
   /// No description provided for @stashImportNoRepos.
   ///
   /// In en, this message translates to:
-  /// **'No project has a GitHub or GitLab remote. Paste an issue link above.'**
+  /// **'No project has a GitHub, GitLab or Gitee remote. Paste an issue link above.'**
   String get stashImportNoRepos;
 
   /// No description provided for @stashImportNone.
@@ -15558,7 +16660,7 @@ abstract class AppLocalizations {
   /// No description provided for @stashWelcomeTrack.
   ///
   /// In en, this message translates to:
-  /// **'Cards show their conversations live, and the GitHub and GitLab issues and pull requests they link to stay in sync.'**
+  /// **'Cards show their conversations live, and the GitHub, GitLab and Gitee issues and pull requests they link to stay in sync.'**
   String get stashWelcomeTrack;
 
   /// No description provided for @stashWelcomeStart.
@@ -15710,6 +16812,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The extension is newer than this Morning Mist. Update Morning Mist.'**
   String get browserSettingsAppOld;
+
+  /// No description provided for @browserSettingsNoFileAccess.
+  ///
+  /// In en, this message translates to:
+  /// **'File access is off'**
+  String get browserSettingsNoFileAccess;
+
+  /// No description provided for @browserSettingsNoFileAccessDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Agents can\'t open local HTML files or upload files. In chrome://extensions, click Details on Morning Mist and turn on Allow access to file URLs.'**
+  String get browserSettingsNoFileAccessDescription;
 
   /// No description provided for @browserSettingsInstall.
   ///
@@ -16419,6 +17533,12 @@ abstract class AppLocalizations {
   /// **'The server could not be reached: check the address, port and network.'**
   String get remoteFailUnreachable;
 
+  /// No description provided for @remoteFailWsl.
+  ///
+  /// In en, this message translates to:
+  /// **'WSL could not start this distribution: check that WSL is installed and that the distribution is listed by wsl --list.'**
+  String get remoteFailWsl;
+
   /// No description provided for @channelSetupTitle.
   ///
   /// In en, this message translates to:
@@ -16820,6 +17940,4746 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Open'**
   String get aboutOpen;
+
+  /// No description provided for @stashSettingsIssueSync.
+  ///
+  /// In en, this message translates to:
+  /// **'Issues as stashes'**
+  String get stashSettingsIssueSync;
+
+  /// No description provided for @stashSettingsIssueSyncDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'A project that is a Git repository on GitHub, GitLab or Gitee (signed in under Accounts): its open issues are stashes, each once, kept in step both ways. A stash deleted, or unlinked from its issue, does not come back.'**
+  String get stashSettingsIssueSyncDescription;
+
+  /// No description provided for @stashIssueSyncMine.
+  ///
+  /// In en, this message translates to:
+  /// **'Only those assigned to or opened by me'**
+  String get stashIssueSyncMine;
+
+  /// No description provided for @stashIssueSyncOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Off: imported or published ones only'**
+  String get stashIssueSyncOff;
+
+  /// No description provided for @stashIssueLocal.
+  ///
+  /// In en, this message translates to:
+  /// **'Local only'**
+  String get stashIssueLocal;
+
+  /// No description provided for @stashIssueAllow.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow publishing as an issue'**
+  String get stashIssueAllow;
+
+  /// No description provided for @stashIssueNotPublished.
+  ///
+  /// In en, this message translates to:
+  /// **'Not an issue yet'**
+  String get stashIssueNotPublished;
+
+  /// No description provided for @stashIssuePublishTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Publish as an issue of {repo}…'**
+  String stashIssuePublishTo(String repo);
+
+  /// No description provided for @stashIssueKeepLocal.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep it local'**
+  String get stashIssueKeepLocal;
+
+  /// No description provided for @stashIssuePush.
+  ///
+  /// In en, this message translates to:
+  /// **'Push changes to the issue…'**
+  String get stashIssuePush;
+
+  /// No description provided for @stashIssuePushShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Push'**
+  String get stashIssuePushShort;
+
+  /// No description provided for @stashIssueTakeRemote.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard local changes, use the issue\'s'**
+  String get stashIssueTakeRemote;
+
+  /// No description provided for @stashIssueUnlinkOwn.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlink, keep it local'**
+  String get stashIssueUnlinkOwn;
+
+  /// No description provided for @stashIssueConflict.
+  ///
+  /// In en, this message translates to:
+  /// **'{tag} was changed on the forge too. Which version to keep?'**
+  String stashIssueConflict(String tag);
+
+  /// No description provided for @stashIssueKeepMine.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep mine (push)'**
+  String get stashIssueKeepMine;
+
+  /// No description provided for @stashIssueKeepTheirs.
+  ///
+  /// In en, this message translates to:
+  /// **'Use the issue\'s'**
+  String get stashIssueKeepTheirs;
+
+  /// No description provided for @stashIssueChangedHere.
+  ///
+  /// In en, this message translates to:
+  /// **'Changes here are not on {tag} yet.'**
+  String stashIssueChangedHere(String tag);
+
+  /// No description provided for @stashIssueDiscard.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard'**
+  String get stashIssueDiscard;
+
+  /// No description provided for @stashIssuePublishTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Publish as an issue of {repo}'**
+  String stashIssuePublishTitle(String repo);
+
+  /// No description provided for @stashIssuePushTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Push changes to {tag}'**
+  String stashIssuePushTitle(String tag);
+
+  /// No description provided for @stashIssuePublish.
+  ///
+  /// In en, this message translates to:
+  /// **'Publish'**
+  String get stashIssuePublish;
+
+  /// No description provided for @stashIssueNoText.
+  ///
+  /// In en, this message translates to:
+  /// **'(no description)'**
+  String get stashIssueNoText;
+
+  /// No description provided for @stashIssuePicturesGitHub.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 picture is uploaded to the repository\'s {branch} branch, for the issue to show it.} other{{count} pictures are uploaded to the repository\'s {branch} branch, for the issue to show them.}}'**
+  String stashIssuePicturesGitHub(int count, String branch);
+
+  /// No description provided for @stashIssuePicturesGitLab.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 picture is uploaded to the project, for the issue to show it.} other{{count} pictures are uploaded to the project, for the issue to show them.}}'**
+  String stashIssuePicturesGitLab(int count);
+
+  /// No description provided for @stashImplementShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Implement'**
+  String get stashImplementShort;
+
+  /// No description provided for @stashImplementIssue.
+  ///
+  /// In en, this message translates to:
+  /// **'It is issue {issue}: the pull request should say it fixes it.'**
+  String stashImplementIssue(String issue);
+
+  /// No description provided for @stashIssueSyncAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All open issues'**
+  String get stashIssueSyncAll;
+
+  /// No description provided for @stashIssueChecking.
+  ///
+  /// In en, this message translates to:
+  /// **'Looking for its repository…'**
+  String get stashIssueChecking;
+
+  /// No description provided for @stashIssueRefresh.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh now'**
+  String get stashIssueRefresh;
+
+  /// No description provided for @stashIssuePublishButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Publish as Issue'**
+  String get stashIssuePublishButton;
+
+  /// No description provided for @stashIssuePushButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Push to Issue'**
+  String get stashIssuePushButton;
+
+  /// No description provided for @stashIssueLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading…'**
+  String get stashIssueLoading;
+
+  /// No description provided for @stashSyncing.
+  ///
+  /// In en, this message translates to:
+  /// **'Syncing issues…'**
+  String get stashSyncing;
+
+  /// No description provided for @stashSyncingRepo.
+  ///
+  /// In en, this message translates to:
+  /// **'Syncing the issues of {repo} ({index}/{total})…'**
+  String stashSyncingRepo(String repo, int index, int total);
+
+  /// No description provided for @stashSyncTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync issues now'**
+  String get stashSyncTooltip;
+
+  /// No description provided for @stashSyncTooltipLast.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync issues now · last at {time}'**
+  String stashSyncTooltipLast(String time);
+
+  /// No description provided for @stashSyncFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not sync the issues of {repo}: {error}'**
+  String stashSyncFailed(String repo, String error);
+
+  /// No description provided for @stashSyncSignIn.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Sign in to {forge} for the issues of {repo} to be stashes.} other{Sign in to {forge} for the issues of {repo} and {count} more repositories to be stashes.}}'**
+  String stashSyncSignIn(String forge, String repo, int count);
+
+  /// No description provided for @stashSyncingEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Syncing the projects\' issues…'**
+  String get stashSyncingEmpty;
+
+  /// No description provided for @stashFilterAnyIssue.
+  ///
+  /// In en, this message translates to:
+  /// **'Any source'**
+  String get stashFilterAnyIssue;
+
+  /// No description provided for @stashFilterIssue.
+  ///
+  /// In en, this message translates to:
+  /// **'Issues'**
+  String get stashFilterIssue;
+
+  /// No description provided for @stashFilterNotIssue.
+  ///
+  /// In en, this message translates to:
+  /// **'Local only'**
+  String get stashFilterNotIssue;
+
+  /// No description provided for @stashImplementEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Write something first, then implement it in BaoCode'**
+  String get stashImplementEmpty;
+
+  /// No description provided for @stashIssueDuplicateBanner.
+  ///
+  /// In en, this message translates to:
+  /// **'{issue}, of stash {stash} merged into this one, is still open. Close it as a duplicate?'**
+  String stashIssueDuplicateBanner(String issue, String stash);
+
+  /// No description provided for @stashIssueCloseDuplicate.
+  ///
+  /// In en, this message translates to:
+  /// **'Close as duplicate…'**
+  String get stashIssueCloseDuplicate;
+
+  /// No description provided for @stashIssueDuplicateNoIssue.
+  ///
+  /// In en, this message translates to:
+  /// **'Merged into another note; closing as a duplicate.'**
+  String get stashIssueDuplicateNoIssue;
+
+  /// No description provided for @stashNewsOpened.
+  ///
+  /// In en, this message translates to:
+  /// **'New issue'**
+  String get stashNewsOpened;
+
+  /// No description provided for @stashNewsChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Changed on the forge'**
+  String get stashNewsChanged;
+
+  /// No description provided for @stashNewsCommented.
+  ///
+  /// In en, this message translates to:
+  /// **'New comments'**
+  String get stashNewsCommented;
+
+  /// No description provided for @stashNewsClosed.
+  ///
+  /// In en, this message translates to:
+  /// **'Closed on the forge'**
+  String get stashNewsClosed;
+
+  /// No description provided for @stashNewsReopened.
+  ///
+  /// In en, this message translates to:
+  /// **'Reopened on the forge'**
+  String get stashNewsReopened;
+
+  /// No description provided for @stashNewsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 update} other{{count} updates}}'**
+  String stashNewsCount(int count);
+
+  /// No description provided for @stashNewsCountTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Show only the updates about you: your issues and pull requests, those assigned to you or naming you'**
+  String get stashNewsCountTooltip;
+
+  /// No description provided for @stashNewsCountTooltipOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Showing only the updates about you; click for all'**
+  String get stashNewsCountTooltipOn;
+
+  /// No description provided for @stashFilterNews.
+  ///
+  /// In en, this message translates to:
+  /// **'About you'**
+  String get stashFilterNews;
+
+  /// No description provided for @stashMarkAllSeen.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark all as seen'**
+  String get stashMarkAllSeen;
+
+  /// No description provided for @stashIssueComments.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 comment} other{{count} comments}}'**
+  String stashIssueComments(int count);
+
+  /// No description provided for @stashIssueDiscussion.
+  ///
+  /// In en, this message translates to:
+  /// **'Discussion'**
+  String get stashIssueDiscussion;
+
+  /// No description provided for @stashIssueDiscussionAll.
+  ///
+  /// In en, this message translates to:
+  /// **'See all {count} on {forge}'**
+  String stashIssueDiscussionAll(int count, String forge);
+
+  /// No description provided for @stashIssueDiscussionFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load the comments.'**
+  String get stashIssueDiscussionFailed;
+
+  /// No description provided for @stashIssueDiscussionLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading the comments…'**
+  String get stashIssueDiscussionLoading;
+
+  /// No description provided for @stashDeleteAndClose.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete and close {issue}…'**
+  String stashDeleteAndClose(String issue);
+
+  /// No description provided for @stashDeleteOpenIssue.
+  ///
+  /// In en, this message translates to:
+  /// **'Its issue {issue} stays open on the forge unless closed too.'**
+  String stashDeleteOpenIssue(String issue);
+
+  /// No description provided for @stashIssueInSync.
+  ///
+  /// In en, this message translates to:
+  /// **'Same as {issue}'**
+  String stashIssueInSync(String issue);
+
+  /// No description provided for @stashIssueSyncedAt.
+  ///
+  /// In en, this message translates to:
+  /// **'synced {time}'**
+  String stashIssueSyncedAt(String time);
+
+  /// No description provided for @stashIssueNotPushed.
+  ///
+  /// In en, this message translates to:
+  /// **'Changed here, not pushed yet'**
+  String get stashIssueNotPushed;
+
+  /// No description provided for @stashIssueRemoteNewer.
+  ///
+  /// In en, this message translates to:
+  /// **'Changed on the forge'**
+  String get stashIssueRemoteNewer;
+
+  /// No description provided for @stashIssueBothChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Changed both here and on the forge'**
+  String get stashIssueBothChanged;
+
+  /// No description provided for @stashIssueDiscussionEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No comments yet'**
+  String get stashIssueDiscussionEmpty;
+
+  /// No description provided for @stashNewsMerged.
+  ///
+  /// In en, this message translates to:
+  /// **'Pull request merged'**
+  String get stashNewsMerged;
+
+  /// No description provided for @stashNewsChangesRequested.
+  ///
+  /// In en, this message translates to:
+  /// **'Changes requested'**
+  String get stashNewsChangesRequested;
+
+  /// No description provided for @stashNewsChecksFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Checks failed'**
+  String get stashNewsChecksFailed;
+
+  /// No description provided for @stashNewsMarked.
+  ///
+  /// In en, this message translates to:
+  /// **'Marked as unread'**
+  String get stashNewsMarked;
+
+  /// No description provided for @stashNewsOther.
+  ///
+  /// In en, this message translates to:
+  /// **'{news} (not about you)'**
+  String stashNewsOther(String news);
+
+  /// No description provided for @stashNewsSidebar.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 update about you} other{{count} updates about you}}'**
+  String stashNewsSidebar(int count);
+
+  /// No description provided for @stashFilterAllNews.
+  ///
+  /// In en, this message translates to:
+  /// **'Any updates'**
+  String get stashFilterAllNews;
+
+  /// No description provided for @stashMarkSeen.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark as Read'**
+  String get stashMarkSeen;
+
+  /// No description provided for @stashMarkUnseen.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark as Unread'**
+  String get stashMarkUnseen;
+
+  /// No description provided for @stashPullChecksFailedBanner.
+  ///
+  /// In en, this message translates to:
+  /// **'The checks of {pull} failed.'**
+  String stashPullChecksFailedBanner(String pull);
+
+  /// No description provided for @stashPullChangesBanner.
+  ///
+  /// In en, this message translates to:
+  /// **'Changes were requested on {pull}.'**
+  String stashPullChangesBanner(String pull);
+
+  /// No description provided for @stashPullMergedBanner.
+  ///
+  /// In en, this message translates to:
+  /// **'{pull} was merged. Is this done too?'**
+  String stashPullMergedBanner(String pull);
+
+  /// No description provided for @stashPullFix.
+  ///
+  /// In en, this message translates to:
+  /// **'Fix in Its Conversation'**
+  String get stashPullFix;
+
+  /// No description provided for @stashPullView.
+  ///
+  /// In en, this message translates to:
+  /// **'View'**
+  String get stashPullView;
+
+  /// No description provided for @stashPullFixChecks.
+  ///
+  /// In en, this message translates to:
+  /// **'The checks of {pull} failed. Find out what failed and fix it.'**
+  String stashPullFixChecks(String pull);
+
+  /// No description provided for @stashPullFixChanges.
+  ///
+  /// In en, this message translates to:
+  /// **'Changes were requested on {pull}. Read the review and make them.'**
+  String stashPullFixChanges(String pull);
+
+  /// No description provided for @stashWriteManyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Comment on {count} issues'**
+  String stashWriteManyTitle(int count);
+
+  /// No description provided for @stashWriteCloseManyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Close {count} issues'**
+  String stashWriteCloseManyTitle(int count);
+
+  /// No description provided for @stashDeleteOpenIssues.
+  ///
+  /// In en, this message translates to:
+  /// **'Their issues {issues} stay open on the forge unless closed too.'**
+  String stashDeleteOpenIssues(int count, String issues);
+
+  /// No description provided for @stashDeleteAndCloseMany.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete and close {count} issues…'**
+  String stashDeleteAndCloseMany(int count);
+
+  /// No description provided for @gitLogRepository.
+  ///
+  /// In en, this message translates to:
+  /// **'Repository'**
+  String get gitLogRepository;
+
+  /// No description provided for @gitLogSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Search messages; separate several with |'**
+  String get gitLogSearch;
+
+  /// No description provided for @gitLogClearSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear Search'**
+  String get gitLogClearSearch;
+
+  /// No description provided for @gitLogUser.
+  ///
+  /// In en, this message translates to:
+  /// **'User'**
+  String get gitLogUser;
+
+  /// No description provided for @gitLogAllUsers.
+  ///
+  /// In en, this message translates to:
+  /// **'All Users'**
+  String get gitLogAllUsers;
+
+  /// No description provided for @gitLogMe.
+  ///
+  /// In en, this message translates to:
+  /// **'Me'**
+  String get gitLogMe;
+
+  /// No description provided for @gitLogDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get gitLogDate;
+
+  /// No description provided for @gitLogAnyDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Any Time'**
+  String get gitLogAnyDate;
+
+  /// No description provided for @gitLogLastDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Last 24 Hours'**
+  String get gitLogLastDay;
+
+  /// No description provided for @gitLogLastWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'Last 7 Days'**
+  String get gitLogLastWeek;
+
+  /// No description provided for @gitLogLastMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Last 30 Days'**
+  String get gitLogLastMonth;
+
+  /// No description provided for @gitLogLastYear.
+  ///
+  /// In en, this message translates to:
+  /// **'Last Year'**
+  String get gitLogLastYear;
+
+  /// No description provided for @gitLogHighlight.
+  ///
+  /// In en, this message translates to:
+  /// **'Highlight'**
+  String get gitLogHighlight;
+
+  /// No description provided for @gitLogHighlightNone.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing'**
+  String get gitLogHighlightNone;
+
+  /// No description provided for @gitLogHighlightMine.
+  ///
+  /// In en, this message translates to:
+  /// **'My Commits'**
+  String get gitLogHighlightMine;
+
+  /// No description provided for @gitLogClearFilters.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear Filters'**
+  String get gitLogClearFilters;
+
+  /// No description provided for @gitLogCheckout.
+  ///
+  /// In en, this message translates to:
+  /// **'Checkout to...'**
+  String get gitLogCheckout;
+
+  /// No description provided for @gitLogSortTopo.
+  ///
+  /// In en, this message translates to:
+  /// **'Topological Order'**
+  String get gitLogSortTopo;
+
+  /// No description provided for @gitLogSortDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Date Order'**
+  String get gitLogSortDate;
+
+  /// No description provided for @gitLogLocalBranches.
+  ///
+  /// In en, this message translates to:
+  /// **'Local Branches'**
+  String get gitLogLocalBranches;
+
+  /// No description provided for @gitLogRemoteBranches.
+  ///
+  /// In en, this message translates to:
+  /// **'Remote Branches'**
+  String get gitLogRemoteBranches;
+
+  /// No description provided for @gitLogTags.
+  ///
+  /// In en, this message translates to:
+  /// **'Tags'**
+  String get gitLogTags;
+
+  /// No description provided for @gitLogBackToLog.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to Log'**
+  String get gitLogBackToLog;
+
+  /// No description provided for @gitLogNoCommits.
+  ///
+  /// In en, this message translates to:
+  /// **'No commits match.'**
+  String get gitLogNoCommits;
+
+  /// No description provided for @gitLogLocalChanges.
+  ///
+  /// In en, this message translates to:
+  /// **'Local Changes'**
+  String get gitLogLocalChanges;
+
+  /// No description provided for @gitLogLocalChangesCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Local Changes ({count})'**
+  String gitLogLocalChangesCount(int count);
+
+  /// No description provided for @gitLogSelectCommit.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a commit to see its details.'**
+  String get gitLogSelectCommit;
+
+  /// No description provided for @gitLogParents.
+  ///
+  /// In en, this message translates to:
+  /// **'Parent: '**
+  String get gitLogParents;
+
+  /// No description provided for @gitLogFileCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 file} other{{count} files}}'**
+  String gitLogFileCount(int count);
+
+  /// No description provided for @gitLogInNoBranch.
+  ///
+  /// In en, this message translates to:
+  /// **'No branch has this commit.'**
+  String get gitLogInNoBranch;
+
+  /// No description provided for @gitLogInBranches.
+  ///
+  /// In en, this message translates to:
+  /// **'In {count, plural, =1{1 branch} other{{count} branches}}'**
+  String gitLogInBranches(int count);
+
+  /// No description provided for @gitLogList.
+  ///
+  /// In en, this message translates to:
+  /// **'List'**
+  String get gitLogList;
+
+  /// No description provided for @gitLogTree.
+  ///
+  /// In en, this message translates to:
+  /// **'Tree'**
+  String get gitLogTree;
+
+  /// No description provided for @gitLogFilterFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter files (* and ? match any)'**
+  String get gitLogFilterFiles;
+
+  /// No description provided for @gitLogCopyPath.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy Path'**
+  String get gitLogCopyPath;
+
+  /// No description provided for @gitLogCopyRelativePath.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy Relative Path'**
+  String get gitLogCopyRelativePath;
+
+  /// No description provided for @gitLogBinary.
+  ///
+  /// In en, this message translates to:
+  /// **'binary'**
+  String get gitLogBinary;
+
+  /// No description provided for @gitLogPreviousFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous File'**
+  String get gitLogPreviousFile;
+
+  /// No description provided for @gitLogNextFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Next File'**
+  String get gitLogNextFile;
+
+  /// No description provided for @gitLogOpenInEditor.
+  ///
+  /// In en, this message translates to:
+  /// **'Open in Editor'**
+  String get gitLogOpenInEditor;
+
+  /// No description provided for @checkpointsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Checkpoints'**
+  String get checkpointsTitle;
+
+  /// No description provided for @checkpointsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Snapshots of the projects agents work in, kept to undo their changes. A conversation\'s are tidied away 30 days after it last changed anything.'**
+  String get checkpointsDescription;
+
+  /// No description provided for @checkpointsSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Using {size}'**
+  String checkpointsSize(String size);
+
+  /// No description provided for @checkpointsMeasuring.
+  ///
+  /// In en, this message translates to:
+  /// **'Measuring…'**
+  String get checkpointsMeasuring;
+
+  /// No description provided for @checkpointsClear.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get checkpointsClear;
+
+  /// No description provided for @checkpointsClearing.
+  ///
+  /// In en, this message translates to:
+  /// **'Clearing…'**
+  String get checkpointsClearing;
+
+  /// No description provided for @checkpointsClearConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear the checkpoints?'**
+  String get checkpointsClearConfirm;
+
+  /// No description provided for @checkpointsClearDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'The changes agents made in conversations that are not open can no longer be undone. The files themselves stay as they are.'**
+  String get checkpointsClearDetail;
+
+  /// No description provided for @gitLogToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Today {time}'**
+  String gitLogToday(String time);
+
+  /// No description provided for @gitLogYesterday.
+  ///
+  /// In en, this message translates to:
+  /// **'Yesterday {time}'**
+  String gitLogYesterday(String time);
+
+  /// No description provided for @gitLogCheckoutRevision.
+  ///
+  /// In en, this message translates to:
+  /// **'Checkout Revision'**
+  String get gitLogCheckoutRevision;
+
+  /// No description provided for @gitLogNewBranch.
+  ///
+  /// In en, this message translates to:
+  /// **'New Branch…'**
+  String get gitLogNewBranch;
+
+  /// No description provided for @gitLogNewBranchAt.
+  ///
+  /// In en, this message translates to:
+  /// **'New branch at {commit}'**
+  String gitLogNewBranchAt(String commit);
+
+  /// No description provided for @gitLogCheckoutBranch.
+  ///
+  /// In en, this message translates to:
+  /// **'Checkout \'{branch}\''**
+  String gitLogCheckoutBranch(String branch);
+
+  /// No description provided for @gitLogCopyHash.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy the full hash'**
+  String get gitLogCopyHash;
+
+  /// No description provided for @gitLogCopyRefNames.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy Branch or Tag Name'**
+  String get gitLogCopyRefNames;
+
+  /// No description provided for @gitLogCopyName.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy \'{name}\''**
+  String gitLogCopyName(String name);
+
+  /// No description provided for @gitLogLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading history…'**
+  String get gitLogLoading;
+
+  /// No description provided for @gitLogWorktree.
+  ///
+  /// In en, this message translates to:
+  /// **'Worktree'**
+  String get gitLogWorktree;
+
+  /// No description provided for @gitLogWorktreeOf.
+  ///
+  /// In en, this message translates to:
+  /// **'Worktree: {path}'**
+  String gitLogWorktreeOf(String path);
+
+  /// No description provided for @gitLogFollowAgent.
+  ///
+  /// In en, this message translates to:
+  /// **'Follow the Agent'**
+  String get gitLogFollowAgent;
+
+  /// No description provided for @gitLogAgentHere.
+  ///
+  /// In en, this message translates to:
+  /// **'The agent works here'**
+  String get gitLogAgentHere;
+
+  /// No description provided for @gitLogWorktreeAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Checked out in worktree {name}\n{path}'**
+  String gitLogWorktreeAt(String name, String path);
+
+  /// No description provided for @gitLogMainWorktree.
+  ///
+  /// In en, this message translates to:
+  /// **'main worktree'**
+  String get gitLogMainWorktree;
+
+  /// No description provided for @gitLogWorktreeMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'missing'**
+  String get gitLogWorktreeMissing;
+
+  /// No description provided for @branchBarWorktree.
+  ///
+  /// In en, this message translates to:
+  /// **'In worktree {name}\n{path}'**
+  String branchBarWorktree(String name, String path);
+
+  /// No description provided for @gitCommitChanges.
+  ///
+  /// In en, this message translates to:
+  /// **'Changes'**
+  String get gitCommitChanges;
+
+  /// No description provided for @gitCommitUnversioned.
+  ///
+  /// In en, this message translates to:
+  /// **'Unversioned Files'**
+  String get gitCommitUnversioned;
+
+  /// No description provided for @gitCommitConflicts.
+  ///
+  /// In en, this message translates to:
+  /// **'Merge Conflicts'**
+  String get gitCommitConflicts;
+
+  /// No description provided for @gitCommitAmend.
+  ///
+  /// In en, this message translates to:
+  /// **'Amend'**
+  String get gitCommitAmend;
+
+  /// No description provided for @gitCommitMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Commit Message'**
+  String get gitCommitMessage;
+
+  /// No description provided for @gitCommitButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Commit'**
+  String get gitCommitButton;
+
+  /// No description provided for @gitCommitAndPush.
+  ///
+  /// In en, this message translates to:
+  /// **'Commit and Push'**
+  String get gitCommitAndPush;
+
+  /// No description provided for @gitCommitRollback.
+  ///
+  /// In en, this message translates to:
+  /// **'Rollback…'**
+  String get gitCommitRollback;
+
+  /// No description provided for @gitCommitRollbackConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Roll back the changes of {count, plural, =1{1 file} other{{count} files}}?'**
+  String gitCommitRollbackConfirm(int count);
+
+  /// No description provided for @gitCommitRollbackDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'They go back to how they were last committed; files not committed yet are deleted.'**
+  String get gitCommitRollbackDetail;
+
+  /// No description provided for @gitCommitRollbackButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Rollback'**
+  String get gitCommitRollbackButton;
+
+  /// No description provided for @gitCommitShowDiff.
+  ///
+  /// In en, this message translates to:
+  /// **'Show Diff'**
+  String get gitCommitShowDiff;
+
+  /// No description provided for @gitCommitJumpToSource.
+  ///
+  /// In en, this message translates to:
+  /// **'Jump to Source'**
+  String get gitCommitJumpToSource;
+
+  /// No description provided for @gitCommitAddToVcs.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to VCS'**
+  String get gitCommitAddToVcs;
+
+  /// No description provided for @gitCommitMarkResolved.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark Resolved'**
+  String get gitCommitMarkResolved;
+
+  /// No description provided for @gitCommitExpandAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Expand All'**
+  String get gitCommitExpandAll;
+
+  /// No description provided for @gitCommitCollapseAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Collapse All'**
+  String get gitCommitCollapseAll;
+
+  /// No description provided for @gitCommitEmptyMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a commit message.'**
+  String get gitCommitEmptyMessage;
+
+  /// No description provided for @gitCommitNothingSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'Check the files to commit.'**
+  String get gitCommitNothingSelected;
+
+  /// No description provided for @gitCommitNoChanges.
+  ///
+  /// In en, this message translates to:
+  /// **'No local changes'**
+  String get gitCommitNoChanges;
+
+  /// No description provided for @gitCommitSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'{checked} of {total} files checked'**
+  String gitCommitSelected(int checked, int total);
+
+  /// No description provided for @gitLogUndoCommit.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo Commit'**
+  String get gitLogUndoCommit;
+
+  /// No description provided for @branchBarNewWorktree.
+  ///
+  /// In en, this message translates to:
+  /// **'New Worktree…'**
+  String get branchBarNewWorktree;
+
+  /// No description provided for @branchBarNewWorktreeFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'A new branch from “{branch}”, in a worktree of its own beside “{folder}”: the agent works there, your checkout stays as it is'**
+  String branchBarNewWorktreeFrom(String branch, String folder);
+
+  /// No description provided for @branchBarInWorktree.
+  ///
+  /// In en, this message translates to:
+  /// **'In worktree {name}'**
+  String branchBarInWorktree(String name);
+
+  /// No description provided for @branchBarWorkIn.
+  ///
+  /// In en, this message translates to:
+  /// **'From now on, work in {path} (branch {branch}): read and edit the files and run the commands there.'**
+  String branchBarWorkIn(String path, String branch);
+
+  /// No description provided for @diffRevertChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo this change (back to the left side)'**
+  String get diffRevertChange;
+
+  /// No description provided for @diffRemoveChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo this change (remove the added lines)'**
+  String get diffRemoveChange;
+
+  /// No description provided for @diffPreviousDifference.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous Difference'**
+  String get diffPreviousDifference;
+
+  /// No description provided for @diffNextDifference.
+  ///
+  /// In en, this message translates to:
+  /// **'Next Difference'**
+  String get diffNextDifference;
+
+  /// No description provided for @diffDifferenceOf.
+  ///
+  /// In en, this message translates to:
+  /// **'{current} of {count}'**
+  String diffDifferenceOf(int current, int count);
+
+  /// No description provided for @diffDifferences.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No differences} =1{1 difference} other{{count} differences}}'**
+  String diffDifferences(int count);
+
+  /// No description provided for @diffSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Viewer Settings'**
+  String get diffSettings;
+
+  /// No description provided for @diffLayoutAuto.
+  ///
+  /// In en, this message translates to:
+  /// **'Side by Side When Wide Enough'**
+  String get diffLayoutAuto;
+
+  /// No description provided for @diffSideBySide.
+  ///
+  /// In en, this message translates to:
+  /// **'Side-by-Side Viewer'**
+  String get diffSideBySide;
+
+  /// No description provided for @diffUnified.
+  ///
+  /// In en, this message translates to:
+  /// **'Unified Viewer'**
+  String get diffUnified;
+
+  /// No description provided for @gitDetailsLayout.
+  ///
+  /// In en, this message translates to:
+  /// **'Details Position'**
+  String get gitDetailsLayout;
+
+  /// No description provided for @gitDetailsLayoutAuto.
+  ///
+  /// In en, this message translates to:
+  /// **'Right When Wide Enough'**
+  String get gitDetailsLayoutAuto;
+
+  /// No description provided for @gitDetailsLayoutBeside.
+  ///
+  /// In en, this message translates to:
+  /// **'Right'**
+  String get gitDetailsLayoutBeside;
+
+  /// No description provided for @gitDetailsLayoutBelow.
+  ///
+  /// In en, this message translates to:
+  /// **'Bottom'**
+  String get gitDetailsLayoutBelow;
+
+  /// No description provided for @diffIgnoreWhitespace.
+  ///
+  /// In en, this message translates to:
+  /// **'Ignore Whitespace at Line Ends'**
+  String get diffIgnoreWhitespace;
+
+  /// No description provided for @diffWhitespaceNone.
+  ///
+  /// In en, this message translates to:
+  /// **'Do Not Ignore Whitespace'**
+  String get diffWhitespaceNone;
+
+  /// No description provided for @diffIgnoreAllWhitespace.
+  ///
+  /// In en, this message translates to:
+  /// **'Ignore All Whitespace'**
+  String get diffIgnoreAllWhitespace;
+
+  /// No description provided for @diffCollapseUnchanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Collapse Unchanged Fragments'**
+  String get diffCollapseUnchanged;
+
+  /// No description provided for @diffUnchangedLines.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 unchanged line} other{{count} unchanged lines}}'**
+  String diffUnchangedLines(int count);
+
+  /// No description provided for @diffGoToFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to Changed File'**
+  String get diffGoToFile;
+
+  /// No description provided for @lineChangePrevious.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous Change'**
+  String get lineChangePrevious;
+
+  /// No description provided for @lineChangeNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next Change'**
+  String get lineChangeNext;
+
+  /// No description provided for @lineChangeRollback.
+  ///
+  /// In en, this message translates to:
+  /// **'Rollback'**
+  String get lineChangeRollback;
+
+  /// No description provided for @lineChangeShowDiff.
+  ///
+  /// In en, this message translates to:
+  /// **'Show Diff'**
+  String get lineChangeShowDiff;
+
+  /// No description provided for @lineChangeCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy Original Lines'**
+  String get lineChangeCopy;
+
+  /// No description provided for @cmdNextChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to Next Change'**
+  String get cmdNextChange;
+
+  /// No description provided for @cmdPreviousChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to Previous Change'**
+  String get cmdPreviousChange;
+
+  /// No description provided for @cmdShowNextChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Show Next Change'**
+  String get cmdShowNextChange;
+
+  /// No description provided for @cmdShowPreviousChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Show Previous Change'**
+  String get cmdShowPreviousChange;
+
+  /// No description provided for @gitAnnotate.
+  ///
+  /// In en, this message translates to:
+  /// **'Annotate with Git Blame'**
+  String get gitAnnotate;
+
+  /// No description provided for @gitCloseAnnotations.
+  ///
+  /// In en, this message translates to:
+  /// **'Close Annotations'**
+  String get gitCloseAnnotations;
+
+  /// No description provided for @gitLogCopyPatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy as Patch'**
+  String get gitLogCopyPatch;
+
+  /// No description provided for @gitLogCherryPick.
+  ///
+  /// In en, this message translates to:
+  /// **'Cherry-Pick'**
+  String get gitLogCherryPick;
+
+  /// No description provided for @gitLogCompareWithLocal.
+  ///
+  /// In en, this message translates to:
+  /// **'Compare with Local'**
+  String get gitLogCompareWithLocal;
+
+  /// No description provided for @gitLogResetToHere.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset Current Branch to Here'**
+  String get gitLogResetToHere;
+
+  /// No description provided for @gitLogResetSoft.
+  ///
+  /// In en, this message translates to:
+  /// **'Soft: keep the changes staged'**
+  String get gitLogResetSoft;
+
+  /// No description provided for @gitLogResetMixed.
+  ///
+  /// In en, this message translates to:
+  /// **'Mixed: keep the changes, not staged'**
+  String get gitLogResetMixed;
+
+  /// No description provided for @gitLogResetHard.
+  ///
+  /// In en, this message translates to:
+  /// **'Hard: discard the changes'**
+  String get gitLogResetHard;
+
+  /// No description provided for @gitLogResetKeep.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep: keep the local changes'**
+  String get gitLogResetKeep;
+
+  /// No description provided for @gitLogResetHardConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset “{branch}” to {commit} and discard every change since, committed or not?'**
+  String gitLogResetHardConfirm(String branch, String commit);
+
+  /// No description provided for @gitLogResetButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset'**
+  String get gitLogResetButton;
+
+  /// No description provided for @gitLogRevertCommit.
+  ///
+  /// In en, this message translates to:
+  /// **'Revert Commit'**
+  String get gitLogRevertCommit;
+
+  /// No description provided for @gitLogEditMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Commit Message…'**
+  String get gitLogEditMessage;
+
+  /// No description provided for @gitLogDropCommit.
+  ///
+  /// In en, this message translates to:
+  /// **'Drop Commit'**
+  String get gitLogDropCommit;
+
+  /// No description provided for @gitLogDropConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Take {commit} “{subject}” out of the branch?'**
+  String gitLogDropConfirm(String commit, String subject);
+
+  /// No description provided for @gitLogDropButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Drop'**
+  String get gitLogDropButton;
+
+  /// No description provided for @gitLogPushUpToHere.
+  ///
+  /// In en, this message translates to:
+  /// **'Push All up to Here'**
+  String get gitLogPushUpToHere;
+
+  /// No description provided for @gitLogNewTag.
+  ///
+  /// In en, this message translates to:
+  /// **'New Tag…'**
+  String get gitLogNewTag;
+
+  /// No description provided for @gitLogNewTagAt.
+  ///
+  /// In en, this message translates to:
+  /// **'New tag at {commit}'**
+  String gitLogNewTagAt(String commit);
+
+  /// No description provided for @gitTagName.
+  ///
+  /// In en, this message translates to:
+  /// **'Tag name'**
+  String get gitTagName;
+
+  /// No description provided for @gitTagMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Message (optional: an annotated tag)'**
+  String get gitTagMessage;
+
+  /// No description provided for @gitLogCreateTag.
+  ///
+  /// In en, this message translates to:
+  /// **'Create Tag'**
+  String get gitLogCreateTag;
+
+  /// No description provided for @gitLogGoToParent.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to Parent Commit'**
+  String get gitLogGoToParent;
+
+  /// No description provided for @gitLogGoToChild.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to Child Commit'**
+  String get gitLogGoToChild;
+
+  /// No description provided for @gitLogComparedWithLocal.
+  ///
+  /// In en, this message translates to:
+  /// **'{commit} ↔ Local'**
+  String gitLogComparedWithLocal(String commit);
+
+  /// No description provided for @gitLogNoDifferences.
+  ///
+  /// In en, this message translates to:
+  /// **'No differences from the working tree'**
+  String get gitLogNoDifferences;
+
+  /// No description provided for @gitLogCopyHashes.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy Commit Hashes'**
+  String get gitLogCopyHashes;
+
+  /// No description provided for @gitLogCherryPickCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Cherry-Pick {count} Commits'**
+  String gitLogCherryPickCount(int count);
+
+  /// No description provided for @gitLogCompareCommits.
+  ///
+  /// In en, this message translates to:
+  /// **'Compare Commits'**
+  String get gitLogCompareCommits;
+
+  /// No description provided for @gitLogRevertCommits.
+  ///
+  /// In en, this message translates to:
+  /// **'Revert {count} Commits'**
+  String gitLogRevertCommits(int count);
+
+  /// No description provided for @gitLogSquashCommits.
+  ///
+  /// In en, this message translates to:
+  /// **'Squash {count} Commits into One'**
+  String gitLogSquashCommits(int count);
+
+  /// No description provided for @gitLogCommitsSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} commits selected'**
+  String gitLogCommitsSelected(int count);
+
+  /// No description provided for @gitLogPaths.
+  ///
+  /// In en, this message translates to:
+  /// **'Paths'**
+  String get gitLogPaths;
+
+  /// No description provided for @gitLogAllPaths.
+  ///
+  /// In en, this message translates to:
+  /// **'All Paths'**
+  String get gitLogAllPaths;
+
+  /// No description provided for @gitLogCurrentFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Current File: {path}'**
+  String gitLogCurrentFile(String path);
+
+  /// No description provided for @gitLogCurrentFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'Its Folder: {path}'**
+  String gitLogCurrentFolder(String path);
+
+  /// No description provided for @gitLogPathCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} paths'**
+  String gitLogPathCount(int count);
+
+  /// No description provided for @gitLogLinesOf.
+  ///
+  /// In en, this message translates to:
+  /// **'{file}: lines {start}–{end}'**
+  String gitLogLinesOf(String file, int start, int end);
+
+  /// No description provided for @gitShowHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Show History'**
+  String get gitShowHistory;
+
+  /// No description provided for @gitShowHistoryForSelection.
+  ///
+  /// In en, this message translates to:
+  /// **'Show History for Selection'**
+  String get gitShowHistoryForSelection;
+
+  /// No description provided for @gitShowBranches.
+  ///
+  /// In en, this message translates to:
+  /// **'Show Branches'**
+  String get gitShowBranches;
+
+  /// No description provided for @gitHideBranches.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide Branches'**
+  String get gitHideBranches;
+
+  /// No description provided for @gitBranchesFilter.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter branches'**
+  String get gitBranchesFilter;
+
+  /// No description provided for @gitBranchesHead.
+  ///
+  /// In en, this message translates to:
+  /// **'HEAD (Current Branch)'**
+  String get gitBranchesHead;
+
+  /// No description provided for @gitBranchCheckout.
+  ///
+  /// In en, this message translates to:
+  /// **'Checkout'**
+  String get gitBranchCheckout;
+
+  /// No description provided for @gitBranchNewFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'New Branch from “{name}”…'**
+  String gitBranchNewFrom(String name);
+
+  /// No description provided for @gitBranchCheckoutRebase.
+  ///
+  /// In en, this message translates to:
+  /// **'Checkout and Rebase onto “{current}”'**
+  String gitBranchCheckoutRebase(String current);
+
+  /// No description provided for @gitBranchCompare.
+  ///
+  /// In en, this message translates to:
+  /// **'Compare with “{current}”'**
+  String gitBranchCompare(String current);
+
+  /// No description provided for @gitBranchDiffWorkingTree.
+  ///
+  /// In en, this message translates to:
+  /// **'Show Diff with Working Tree'**
+  String get gitBranchDiffWorkingTree;
+
+  /// No description provided for @gitBranchRebaseOnto.
+  ///
+  /// In en, this message translates to:
+  /// **'Rebase “{current}” onto “{name}”'**
+  String gitBranchRebaseOnto(String current, String name);
+
+  /// No description provided for @gitBranchMerge.
+  ///
+  /// In en, this message translates to:
+  /// **'Merge “{name}” into “{current}”'**
+  String gitBranchMerge(String name, String current);
+
+  /// No description provided for @gitBranchPullRebase.
+  ///
+  /// In en, this message translates to:
+  /// **'Pull into “{current}” Using Rebase'**
+  String gitBranchPullRebase(String current);
+
+  /// No description provided for @gitBranchPullMerge.
+  ///
+  /// In en, this message translates to:
+  /// **'Pull into “{current}” Using Merge'**
+  String gitBranchPullMerge(String current);
+
+  /// No description provided for @gitBranchUpdate.
+  ///
+  /// In en, this message translates to:
+  /// **'Update'**
+  String get gitBranchUpdate;
+
+  /// No description provided for @gitBranchPush.
+  ///
+  /// In en, this message translates to:
+  /// **'Push'**
+  String get gitBranchPush;
+
+  /// No description provided for @gitBranchPushTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Push to {upstream}'**
+  String gitBranchPushTo(String upstream);
+
+  /// No description provided for @gitBranchUpstream.
+  ///
+  /// In en, this message translates to:
+  /// **'Upstream'**
+  String get gitBranchUpstream;
+
+  /// No description provided for @gitBranchUnsetUpstream.
+  ///
+  /// In en, this message translates to:
+  /// **'Unset Upstream'**
+  String get gitBranchUnsetUpstream;
+
+  /// No description provided for @gitBranchRename.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename…'**
+  String get gitBranchRename;
+
+  /// No description provided for @gitBranchRenameTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename the branch “{name}”'**
+  String gitBranchRenameTitle(String name);
+
+  /// No description provided for @gitBranchRenameButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename'**
+  String get gitBranchRenameButton;
+
+  /// No description provided for @gitBranchFavorite.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to Favorites'**
+  String get gitBranchFavorite;
+
+  /// No description provided for @gitBranchUnfavorite.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove from Favorites'**
+  String get gitBranchUnfavorite;
+
+  /// No description provided for @gitBranchShowOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Show Only This in the Log'**
+  String get gitBranchShowOnly;
+
+  /// No description provided for @gitBranchDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get gitBranchDelete;
+
+  /// No description provided for @gitTagDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Tag'**
+  String get gitTagDelete;
+
+  /// No description provided for @gitBranchDeleteButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get gitBranchDeleteButton;
+
+  /// No description provided for @gitBranchDeleteRemoteConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete the branch “{name}” on its remote?'**
+  String gitBranchDeleteRemoteConfirm(String name);
+
+  /// No description provided for @gitBranchNotMergedConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'“{name}” has commits merged into no other branch. Delete it anyway?'**
+  String gitBranchNotMergedConfirm(String name);
+
+  /// No description provided for @gitBranchDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleted the branch “{name}”.'**
+  String gitBranchDeleted(String name);
+
+  /// No description provided for @gitTagDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleted the tag “{name}”.'**
+  String gitTagDeleted(String name);
+
+  /// No description provided for @gitBranchRestore.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore'**
+  String get gitBranchRestore;
+
+  /// No description provided for @gitBranchCompared.
+  ///
+  /// In en, this message translates to:
+  /// **'“{name}” has {ahead} commits “{current}” has not; “{current}” has {behind} it has not.'**
+  String gitBranchCompared(String name, String current, int ahead, int behind);
+
+  /// No description provided for @gitBranchCompareFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'Show Changed Files'**
+  String get gitBranchCompareFiles;
+
+  /// No description provided for @scmGraphRangeIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Commits in “{to}” Not in “{from}”'**
+  String scmGraphRangeIn(String to, String from);
+
+  /// No description provided for @gitBranchesRecent.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent'**
+  String get gitBranchesRecent;
+
+  /// No description provided for @gitBranchesSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Search for branches and actions'**
+  String get gitBranchesSearch;
+
+  /// No description provided for @gitUpdateProject.
+  ///
+  /// In en, this message translates to:
+  /// **'Update Project'**
+  String get gitUpdateProject;
+
+  /// No description provided for @gitCommitEllipsis.
+  ///
+  /// In en, this message translates to:
+  /// **'Commit…'**
+  String get gitCommitEllipsis;
+
+  /// No description provided for @gitPushEllipsis.
+  ///
+  /// In en, this message translates to:
+  /// **'Push…'**
+  String get gitPushEllipsis;
+
+  /// No description provided for @gitNewBranchEllipsis.
+  ///
+  /// In en, this message translates to:
+  /// **'New Branch…'**
+  String get gitNewBranchEllipsis;
+
+  /// No description provided for @gitCheckoutRevision.
+  ///
+  /// In en, this message translates to:
+  /// **'Checkout Tag or Revision…'**
+  String get gitCheckoutRevision;
+
+  /// No description provided for @gitBranchesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Git Branches'**
+  String get gitBranchesTitle;
+
+  /// No description provided for @gitRevisionPlaceholder.
+  ///
+  /// In en, this message translates to:
+  /// **'A tag, a branch or a commit hash'**
+  String get gitRevisionPlaceholder;
+
+  /// No description provided for @gitUpdateProjectDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Bring each repository\'s current branch up to its upstream: merge its new commits in, or rebase the branch\'s own onto them. Local changes are stashed meanwhile.'**
+  String get gitUpdateProjectDetail;
+
+  /// No description provided for @gitUpdateMerge.
+  ///
+  /// In en, this message translates to:
+  /// **'Merge'**
+  String get gitUpdateMerge;
+
+  /// No description provided for @gitUpdateRebase.
+  ///
+  /// In en, this message translates to:
+  /// **'Rebase'**
+  String get gitUpdateRebase;
+
+  /// No description provided for @gitDontAskAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Don\'t ask again'**
+  String get gitDontAskAgain;
+
+  /// No description provided for @gitPushTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Push Commits'**
+  String get gitPushTitle;
+
+  /// No description provided for @gitPushTags.
+  ///
+  /// In en, this message translates to:
+  /// **'Push tags'**
+  String get gitPushTags;
+
+  /// No description provided for @gitPushForce.
+  ///
+  /// In en, this message translates to:
+  /// **'Force Push'**
+  String get gitPushForce;
+
+  /// No description provided for @gitPushForceConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Force push to {targets}?'**
+  String gitPushForceConfirm(String targets);
+
+  /// No description provided for @gitPushForceDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'What is there is replaced by what you push (with lease: only as last fetched, so nobody\'s newer commits are lost).'**
+  String get gitPushForceDetail;
+
+  /// No description provided for @gitPushNothing.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing to push'**
+  String get gitPushNothing;
+
+  /// No description provided for @gitPushRemote.
+  ///
+  /// In en, this message translates to:
+  /// **'Remote'**
+  String get gitPushRemote;
+
+  /// No description provided for @gitPushNew.
+  ///
+  /// In en, this message translates to:
+  /// **'new'**
+  String get gitPushNew;
+
+  /// No description provided for @gitPushSelectCommit.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a commit to see its files'**
+  String get gitPushSelectCommit;
+
+  /// No description provided for @gitPushEllipsisCommand.
+  ///
+  /// In en, this message translates to:
+  /// **'Push…'**
+  String get gitPushEllipsisCommand;
+
+  /// No description provided for @gitOperationRebasing.
+  ///
+  /// In en, this message translates to:
+  /// **'Rebasing'**
+  String get gitOperationRebasing;
+
+  /// No description provided for @gitOperationMerging.
+  ///
+  /// In en, this message translates to:
+  /// **'Merging'**
+  String get gitOperationMerging;
+
+  /// No description provided for @gitOperationCherryPicking.
+  ///
+  /// In en, this message translates to:
+  /// **'Cherry-picking'**
+  String get gitOperationCherryPicking;
+
+  /// No description provided for @gitOperationReverting.
+  ///
+  /// In en, this message translates to:
+  /// **'Reverting'**
+  String get gitOperationReverting;
+
+  /// No description provided for @gitOperationConflicts.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 conflict left} other{{count} conflicts left}}'**
+  String gitOperationConflicts(int count);
+
+  /// No description provided for @gitOperationResolved.
+  ///
+  /// In en, this message translates to:
+  /// **'conflicts resolved'**
+  String get gitOperationResolved;
+
+  /// No description provided for @gitOperationContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get gitOperationContinue;
+
+  /// No description provided for @gitOperationSkip.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip'**
+  String get gitOperationSkip;
+
+  /// No description provided for @gitOperationAbort.
+  ///
+  /// In en, this message translates to:
+  /// **'Abort'**
+  String get gitOperationAbort;
+
+  /// No description provided for @gitOperationAbortConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Abort? {what} stops and what it did so far is undone.'**
+  String gitOperationAbortConfirm(String what);
+
+  /// No description provided for @gitConflictAcceptCurrent.
+  ///
+  /// In en, this message translates to:
+  /// **'Accept Current (Ours)'**
+  String get gitConflictAcceptCurrent;
+
+  /// No description provided for @gitConflictAcceptIncoming.
+  ///
+  /// In en, this message translates to:
+  /// **'Accept Incoming (Theirs)'**
+  String get gitConflictAcceptIncoming;
+
+  /// No description provided for @gitConflictMerge.
+  ///
+  /// In en, this message translates to:
+  /// **'Merge…'**
+  String get gitConflictMerge;
+
+  /// No description provided for @gitMergeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Merge Revisions for {path}'**
+  String gitMergeTitle(String path);
+
+  /// No description provided for @gitMergeOurs.
+  ///
+  /// In en, this message translates to:
+  /// **'Current (Ours)'**
+  String get gitMergeOurs;
+
+  /// No description provided for @gitMergeResult.
+  ///
+  /// In en, this message translates to:
+  /// **'Result'**
+  String get gitMergeResult;
+
+  /// No description provided for @gitMergeTheirs.
+  ///
+  /// In en, this message translates to:
+  /// **'Incoming (Theirs)'**
+  String get gitMergeTheirs;
+
+  /// No description provided for @gitMergeConflictsLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{All conflicts resolved} =1{1 conflict left} other{{count} conflicts left}}'**
+  String gitMergeConflictsLeft(int count);
+
+  /// No description provided for @gitMergeChangesApplied.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{} =1{1 change applied without conflict} other{{count} changes applied without conflict}}'**
+  String gitMergeChangesApplied(int count);
+
+  /// No description provided for @gitMergePrevious.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous Conflict'**
+  String get gitMergePrevious;
+
+  /// No description provided for @gitMergeNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next Conflict'**
+  String get gitMergeNext;
+
+  /// No description provided for @gitMergeApply.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply'**
+  String get gitMergeApply;
+
+  /// No description provided for @gitMergeAppend.
+  ///
+  /// In en, this message translates to:
+  /// **'Append'**
+  String get gitMergeAppend;
+
+  /// No description provided for @gitMergeIgnore.
+  ///
+  /// In en, this message translates to:
+  /// **'Ignore'**
+  String get gitMergeIgnore;
+
+  /// No description provided for @gitMergeAi.
+  ///
+  /// In en, this message translates to:
+  /// **'Merge with AI'**
+  String get gitMergeAi;
+
+  /// No description provided for @gitMergeAiAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Merge Conflicts with AI'**
+  String get gitMergeAiAll;
+
+  /// No description provided for @gitMergeAiFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'AI could not merge the conflict: {error}'**
+  String gitMergeAiFailed(String error);
+
+  /// No description provided for @gitMergeAiNoAnswer.
+  ///
+  /// In en, this message translates to:
+  /// **'the reply had no merged lines'**
+  String get gitMergeAiNoAnswer;
+
+  /// No description provided for @gitMergeAcceptOurs.
+  ///
+  /// In en, this message translates to:
+  /// **'Accept Current'**
+  String get gitMergeAcceptOurs;
+
+  /// No description provided for @gitMergeAcceptTheirs.
+  ///
+  /// In en, this message translates to:
+  /// **'Accept Incoming'**
+  String get gitMergeAcceptTheirs;
+
+  /// No description provided for @gitMergeUnresolved.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 conflict is not resolved.} other{{count} conflicts are not resolved.}}'**
+  String gitMergeUnresolved(int count);
+
+  /// No description provided for @gitMergeUnresolvedDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Save the result as it is and mark the file resolved?'**
+  String get gitMergeUnresolvedDetail;
+
+  /// No description provided for @gitMergeSaveAnyway.
+  ///
+  /// In en, this message translates to:
+  /// **'Save and Mark Resolved'**
+  String get gitMergeSaveAnyway;
+
+  /// No description provided for @gitMergeDiscard.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard the merge result?'**
+  String get gitMergeDiscard;
+
+  /// No description provided for @gitMergeDiscardButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard'**
+  String get gitMergeDiscardButton;
+
+  /// No description provided for @gitDiffExcludeChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave This Change Out of the Commit'**
+  String get gitDiffExcludeChange;
+
+  /// No description provided for @gitDiffIncludeChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Include This Change in the Commit'**
+  String get gitDiffIncludeChange;
+
+  /// No description provided for @gitDiffExcludeLine.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave This Line Out of the Commit'**
+  String get gitDiffExcludeLine;
+
+  /// No description provided for @gitDiffIncludeLine.
+  ///
+  /// In en, this message translates to:
+  /// **'Include This Line in the Commit'**
+  String get gitDiffIncludeLine;
+
+  /// No description provided for @gitChangelistActive.
+  ///
+  /// In en, this message translates to:
+  /// **'active'**
+  String get gitChangelistActive;
+
+  /// No description provided for @gitChangelistMoveTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Move to Another Changelist'**
+  String get gitChangelistMoveTo;
+
+  /// No description provided for @gitChangelistNew.
+  ///
+  /// In en, this message translates to:
+  /// **'New Changelist…'**
+  String get gitChangelistNew;
+
+  /// No description provided for @gitChangelistCreate.
+  ///
+  /// In en, this message translates to:
+  /// **'Create'**
+  String get gitChangelistCreate;
+
+  /// No description provided for @gitChangelistName.
+  ///
+  /// In en, this message translates to:
+  /// **'Changelist name'**
+  String get gitChangelistName;
+
+  /// No description provided for @gitChangelistCommitOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Commit Only This Changelist'**
+  String get gitChangelistCommitOnly;
+
+  /// No description provided for @gitChangelistSetActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Set Active Changelist'**
+  String get gitChangelistSetActive;
+
+  /// No description provided for @gitChangelistRename.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename Changelist…'**
+  String get gitChangelistRename;
+
+  /// No description provided for @gitChangelistRenameButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename'**
+  String get gitChangelistRenameButton;
+
+  /// No description provided for @gitChangelistDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Changelist'**
+  String get gitChangelistDelete;
+
+  /// No description provided for @gitStashChangesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Stash Changes'**
+  String get gitStashChangesTitle;
+
+  /// No description provided for @gitStashFilesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Stash 1 File} other{Stash {count} Files}}'**
+  String gitStashFilesTitle(int count);
+
+  /// No description provided for @gitStashButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Stash'**
+  String get gitStashButton;
+
+  /// No description provided for @gitStashMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Message (optional)'**
+  String get gitStashMessage;
+
+  /// No description provided for @gitStashUntracked.
+  ///
+  /// In en, this message translates to:
+  /// **'Include untracked files'**
+  String get gitStashUntracked;
+
+  /// No description provided for @gitStashBase.
+  ///
+  /// In en, this message translates to:
+  /// **'Base'**
+  String get gitStashBase;
+
+  /// No description provided for @gitStashApply.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply'**
+  String get gitStashApply;
+
+  /// No description provided for @gitStashPop.
+  ///
+  /// In en, this message translates to:
+  /// **'Pop'**
+  String get gitStashPop;
+
+  /// No description provided for @gitStashAsBranch.
+  ///
+  /// In en, this message translates to:
+  /// **'Unstash as Branch…'**
+  String get gitStashAsBranch;
+
+  /// No description provided for @gitStashCopyMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy Message'**
+  String get gitStashCopyMessage;
+
+  /// No description provided for @gitStashDrop.
+  ///
+  /// In en, this message translates to:
+  /// **'Drop…'**
+  String get gitStashDrop;
+
+  /// No description provided for @gitStashDropConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Drop {ref}?'**
+  String gitStashDropConfirm(String ref);
+
+  /// No description provided for @gitStashDropButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Drop'**
+  String get gitStashDropButton;
+
+  /// No description provided for @gitStashClear.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear Stashes…'**
+  String get gitStashClear;
+
+  /// No description provided for @gitStashClearConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Drop every stash?'**
+  String get gitStashClearConfirm;
+
+  /// No description provided for @gitStashClearButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get gitStashClearButton;
+
+  /// No description provided for @gitStashNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No stashes'**
+  String get gitStashNone;
+
+  /// No description provided for @gitStashTab.
+  ///
+  /// In en, this message translates to:
+  /// **'Stash'**
+  String get gitStashTab;
+
+  /// No description provided for @gitCommitTab.
+  ///
+  /// In en, this message translates to:
+  /// **'Commit'**
+  String get gitCommitTab;
+
+  /// No description provided for @gitCommitPanelFold.
+  ///
+  /// In en, this message translates to:
+  /// **'Fold'**
+  String get gitCommitPanelFold;
+
+  /// No description provided for @gitCommitPanelUnfold.
+  ///
+  /// In en, this message translates to:
+  /// **'Unfold'**
+  String get gitCommitPanelUnfold;
+
+  /// No description provided for @gitStashSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'Stash Selected Files…'**
+  String get gitStashSelected;
+
+  /// No description provided for @gitCommitIgnored.
+  ///
+  /// In en, this message translates to:
+  /// **'Ignored Files'**
+  String get gitCommitIgnored;
+
+  /// No description provided for @gitCommitShowIgnored.
+  ///
+  /// In en, this message translates to:
+  /// **'Show Ignored Files'**
+  String get gitCommitShowIgnored;
+
+  /// No description provided for @gitCommitLongSubject.
+  ///
+  /// In en, this message translates to:
+  /// **'The subject is longer than {limit} characters'**
+  String gitCommitLongSubject(int limit);
+
+  /// No description provided for @gitCommitNoBlankLine.
+  ///
+  /// In en, this message translates to:
+  /// **'Separate the subject from the body with a blank line'**
+  String get gitCommitNoBlankLine;
+
+  /// No description provided for @gitCommitMessageHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Commit Message History (Ctrl+M)'**
+  String get gitCommitMessageHistory;
+
+  /// No description provided for @gitCommitNoMessageHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'No messages yet'**
+  String get gitCommitNoMessageHistory;
+
+  /// No description provided for @gitCommitOptions.
+  ///
+  /// In en, this message translates to:
+  /// **'Commit Options'**
+  String get gitCommitOptions;
+
+  /// No description provided for @gitCommitAuthor.
+  ///
+  /// In en, this message translates to:
+  /// **'Author…'**
+  String get gitCommitAuthor;
+
+  /// No description provided for @gitCommitAuthorIs.
+  ///
+  /// In en, this message translates to:
+  /// **'Author: {author}'**
+  String gitCommitAuthorIs(String author);
+
+  /// No description provided for @gitCommitAuthorReset.
+  ///
+  /// In en, this message translates to:
+  /// **'Use the Configured Author'**
+  String get gitCommitAuthorReset;
+
+  /// No description provided for @gitCommitAuthorPlaceholder.
+  ///
+  /// In en, this message translates to:
+  /// **'Name <email>'**
+  String get gitCommitAuthorPlaceholder;
+
+  /// No description provided for @gitCommitSignOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign-off Commit'**
+  String get gitCommitSignOff;
+
+  /// No description provided for @gitCommitRunHooks.
+  ///
+  /// In en, this message translates to:
+  /// **'Run Git Hooks'**
+  String get gitCommitRunHooks;
+
+  /// No description provided for @gitCommitSignedOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Signed off'**
+  String get gitCommitSignedOff;
+
+  /// No description provided for @gitCommitNoHooks.
+  ///
+  /// In en, this message translates to:
+  /// **'Hooks skipped'**
+  String get gitCommitNoHooks;
+
+  /// No description provided for @gitLogInteractiveRebase.
+  ///
+  /// In en, this message translates to:
+  /// **'Interactively Rebase from Here…'**
+  String get gitLogInteractiveRebase;
+
+  /// No description provided for @gitRebaseTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Rebasing {count, plural, =1{1 Commit} other{{count} Commits}} from {base}'**
+  String gitRebaseTitle(int count, String base);
+
+  /// No description provided for @gitRebasePick.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick'**
+  String get gitRebasePick;
+
+  /// No description provided for @gitRebaseReword.
+  ///
+  /// In en, this message translates to:
+  /// **'Reword'**
+  String get gitRebaseReword;
+
+  /// No description provided for @gitRebaseEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get gitRebaseEdit;
+
+  /// No description provided for @gitRebaseSquash.
+  ///
+  /// In en, this message translates to:
+  /// **'Squash'**
+  String get gitRebaseSquash;
+
+  /// No description provided for @gitRebaseFixup.
+  ///
+  /// In en, this message translates to:
+  /// **'Fixup'**
+  String get gitRebaseFixup;
+
+  /// No description provided for @gitRebaseDrop.
+  ///
+  /// In en, this message translates to:
+  /// **'Drop'**
+  String get gitRebaseDrop;
+
+  /// No description provided for @gitRebaseMoveUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Move Up (Alt+Up)'**
+  String get gitRebaseMoveUp;
+
+  /// No description provided for @gitRebaseMoveDown.
+  ///
+  /// In en, this message translates to:
+  /// **'Move Down (Alt+Down)'**
+  String get gitRebaseMoveDown;
+
+  /// No description provided for @gitRebaseMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Commit message'**
+  String get gitRebaseMessage;
+
+  /// No description provided for @gitRebaseStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Start Rebasing'**
+  String get gitRebaseStart;
+
+  /// No description provided for @gitRebaseNothingBelow.
+  ///
+  /// In en, this message translates to:
+  /// **'The oldest commit kept cannot be squashed or fixed up: there is nothing below it.'**
+  String get gitRebaseNothingBelow;
+
+  /// No description provided for @gitRebaseStopped.
+  ///
+  /// In en, this message translates to:
+  /// **'The rebase stopped: amend the commit or resolve the conflicts, then Continue.'**
+  String get gitRebaseStopped;
+
+  /// No description provided for @gitRebaseCleanUpWithAi.
+  ///
+  /// In en, this message translates to:
+  /// **'Clean Up with AI'**
+  String get gitRebaseCleanUpWithAi;
+
+  /// No description provided for @gitRebaseCleanUpWithAiDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Let the model suggest what to fix up, squash and reword; you look it over before the rebase starts'**
+  String get gitRebaseCleanUpWithAiDetail;
+
+  /// No description provided for @gitRebaseAiPlanning.
+  ///
+  /// In en, this message translates to:
+  /// **'Planning… (click to stop)'**
+  String get gitRebaseAiPlanning;
+
+  /// No description provided for @gitRebaseAiNoPlan.
+  ///
+  /// In en, this message translates to:
+  /// **'The model\'s answer was not a rebase list of these commits.'**
+  String get gitRebaseAiNoPlan;
+
+  /// No description provided for @gitRebaseAiFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not clean up with AI: {error}'**
+  String gitRebaseAiFailed(String error);
+
+  /// No description provided for @gitTagPushTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Push Tag to {remote}'**
+  String gitTagPushTo(String remote);
+
+  /// No description provided for @gitTagDeleteOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Tag on {remote}'**
+  String gitTagDeleteOn(String remote);
+
+  /// No description provided for @gitTagDeleteOnConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete the tag {name} on {remote}?'**
+  String gitTagDeleteOnConfirm(String name, String remote);
+
+  /// No description provided for @gitRemotesManage.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage Remotes…'**
+  String get gitRemotesManage;
+
+  /// No description provided for @gitRemotesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Git Remotes'**
+  String get gitRemotesTitle;
+
+  /// No description provided for @gitRemotesNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No remotes'**
+  String get gitRemotesNone;
+
+  /// No description provided for @gitRemoteAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Remote'**
+  String get gitRemoteAdd;
+
+  /// No description provided for @gitRemoteEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Remote'**
+  String get gitRemoteEdit;
+
+  /// No description provided for @gitRemoteRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get gitRemoteRemove;
+
+  /// No description provided for @gitRemoteName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get gitRemoteName;
+
+  /// No description provided for @gitRemoteUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'URL'**
+  String get gitRemoteUrl;
+
+  /// No description provided for @gitRemoteRemoveConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove the remote {name}?'**
+  String gitRemoteRemoveConfirm(String name);
+
+  /// No description provided for @gitRemoteRemoveDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Its remote branches go with it; nothing on the server changes.'**
+  String get gitRemoteRemoveDetail;
+
+  /// No description provided for @gitCloneTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Get from Version Control'**
+  String get gitCloneTitle;
+
+  /// No description provided for @gitCloneUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'URL'**
+  String get gitCloneUrl;
+
+  /// No description provided for @gitCloneDirectory.
+  ///
+  /// In en, this message translates to:
+  /// **'Directory'**
+  String get gitCloneDirectory;
+
+  /// No description provided for @gitCloneBrowse.
+  ///
+  /// In en, this message translates to:
+  /// **'Browse…'**
+  String get gitCloneBrowse;
+
+  /// No description provided for @gitCloneButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Clone'**
+  String get gitCloneButton;
+
+  /// No description provided for @gitCloning.
+  ///
+  /// In en, this message translates to:
+  /// **'Cloning…'**
+  String get gitCloning;
+
+  /// No description provided for @gitCloneCommand.
+  ///
+  /// In en, this message translates to:
+  /// **'Clone Repository…'**
+  String get gitCloneCommand;
+
+  /// No description provided for @gitReviewWithAi.
+  ///
+  /// In en, this message translates to:
+  /// **'Review Changes with AI'**
+  String get gitReviewWithAi;
+
+  /// No description provided for @gitReviewStop.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop the Review'**
+  String get gitReviewStop;
+
+  /// No description provided for @gitReviewBeforeCommit.
+  ///
+  /// In en, this message translates to:
+  /// **'Review with AI Before Committing'**
+  String get gitReviewBeforeCommit;
+
+  /// No description provided for @gitReviewRunning.
+  ///
+  /// In en, this message translates to:
+  /// **'Reviewing the changes…'**
+  String get gitReviewRunning;
+
+  /// No description provided for @gitReviewClean.
+  ///
+  /// In en, this message translates to:
+  /// **'No problems found'**
+  String get gitReviewClean;
+
+  /// No description provided for @gitReviewFound.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 problem found} other{{count} problems found}}'**
+  String gitReviewFound(int count);
+
+  /// No description provided for @gitReviewCommitAnyway.
+  ///
+  /// In en, this message translates to:
+  /// **'Commit Anyway'**
+  String get gitReviewCommitAnyway;
+
+  /// No description provided for @gitReviewCommitAndPushAnyway.
+  ///
+  /// In en, this message translates to:
+  /// **'Commit and Push Anyway'**
+  String get gitReviewCommitAndPushAnyway;
+
+  /// No description provided for @gitReviewFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not review the changes: {error}'**
+  String gitReviewFailed(String error);
+
+  /// No description provided for @gitAskAiCommit.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask AI About This Commit'**
+  String get gitAskAiCommit;
+
+  /// No description provided for @gitAskAiCommitPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Explain commit {id} (“{subject}”): what it changes and why, and anything in it that looks risky. Read it with `git show {id}`.'**
+  String gitAskAiCommitPrompt(String id, String subject);
+
+  /// No description provided for @gitAskAiCommits.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Ask AI About This Commit} other{Ask AI About These {count} Commits}}'**
+  String gitAskAiCommits(int count);
+
+  /// No description provided for @gitAskAiCommitsPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Explain commits {ids}: what they change together, and anything in them that looks risky. Read them with `git show`.'**
+  String gitAskAiCommitsPrompt(String ids);
+
+  /// No description provided for @gitAskAiHunk.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask AI About This Change'**
+  String get gitAskAiHunk;
+
+  /// No description provided for @gitAskAiHunkPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'About this change in {path} at line {line}: explain what it does and whether anything in it is wrong.\n\n```diff\n{change}\n```'**
+  String gitAskAiHunkPrompt(String path, int line, String change);
+
+  /// No description provided for @gitAskAiChanges.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask AI About These Changes'**
+  String get gitAskAiChanges;
+
+  /// No description provided for @gitAskAiChangesPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Review my uncommitted changes in {paths} (`git diff HEAD -- {paths}`): explain what they do and point out anything wrong.'**
+  String gitAskAiChangesPrompt(String paths);
+
+  /// No description provided for @gitAskAiConflicts.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask AI to Resolve the Conflicts'**
+  String get gitAskAiConflicts;
+
+  /// No description provided for @gitAskAiConflictsPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Resolve the merge conflicts in {paths}: keep what both sides meant, then tell me what you chose. Don\'t stage or commit.'**
+  String gitAskAiConflictsPrompt(String paths);
+
+  /// No description provided for @gitLogFixup.
+  ///
+  /// In en, this message translates to:
+  /// **'Fixup with Checked Changes'**
+  String get gitLogFixup;
+
+  /// No description provided for @compareWith.
+  ///
+  /// In en, this message translates to:
+  /// **'Compare With'**
+  String get compareWith;
+
+  /// No description provided for @compareWithClipboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Clipboard'**
+  String get compareWithClipboard;
+
+  /// No description provided for @compareWithClipboardLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} (Clipboard ↔ File)'**
+  String compareWithClipboardLabel(String name);
+
+  /// No description provided for @gitCompareWithBranch.
+  ///
+  /// In en, this message translates to:
+  /// **'Branch or Tag…'**
+  String get gitCompareWithBranch;
+
+  /// No description provided for @gitCompareWithRevision.
+  ///
+  /// In en, this message translates to:
+  /// **'Revision…'**
+  String get gitCompareWithRevision;
+
+  /// No description provided for @gitCompareWithBranchPlaceholder.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a branch or tag to compare the file with'**
+  String get gitCompareWithBranchPlaceholder;
+
+  /// No description provided for @gitCompareWithRevisionPlaceholder.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a revision of the file to compare it with'**
+  String get gitCompareWithRevisionPlaceholder;
+
+  /// No description provided for @gitCompareLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} ({other} ↔ Working Tree)'**
+  String gitCompareLabel(String name, String other);
+
+  /// No description provided for @explorerSelectForCompare.
+  ///
+  /// In en, this message translates to:
+  /// **'Select for Compare'**
+  String get explorerSelectForCompare;
+
+  /// No description provided for @explorerCompareWithSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'Compare with \'{name}\''**
+  String explorerCompareWithSelected(String name);
+
+  /// No description provided for @compareFoldersSame.
+  ///
+  /// In en, this message translates to:
+  /// **'“{original}” and “{modified}” have the same files.'**
+  String compareFoldersSame(String original, String modified);
+
+  /// No description provided for @compareFoldersPick.
+  ///
+  /// In en, this message translates to:
+  /// **'Files “{original}” and “{modified}” differ in'**
+  String compareFoldersPick(String original, String modified);
+
+  /// No description provided for @compareFoldersOnlyIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Only in “{name}”'**
+  String compareFoldersOnlyIn(String name);
+
+  /// No description provided for @compareFoldersModified.
+  ///
+  /// In en, this message translates to:
+  /// **'Changed'**
+  String get compareFoldersModified;
+
+  /// No description provided for @compareWithLocalHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Local History…'**
+  String get compareWithLocalHistory;
+
+  /// No description provided for @localHistoryShow.
+  ///
+  /// In en, this message translates to:
+  /// **'Show Local History'**
+  String get localHistoryShow;
+
+  /// No description provided for @localHistoryNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No local history of “{name}” yet: it is kept as the file is saved.'**
+  String localHistoryNone(String name);
+
+  /// No description provided for @localHistoryPick.
+  ///
+  /// In en, this message translates to:
+  /// **'A version of “{name}” to compare with'**
+  String localHistoryPick(String name);
+
+  /// No description provided for @localHistoryLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} (Local History, {time})'**
+  String localHistoryLabel(String name, String time);
+
+  /// No description provided for @explorerCompareSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'Compare Selected'**
+  String get explorerCompareSelected;
+
+  /// No description provided for @compareFilesLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'{original} ↔ {modified}'**
+  String compareFilesLabel(String original, String modified);
+
+  /// No description provided for @settingsSectionUsage.
+  ///
+  /// In en, this message translates to:
+  /// **'Usage'**
+  String get settingsSectionUsage;
+
+  /// No description provided for @sidePanelUsage.
+  ///
+  /// In en, this message translates to:
+  /// **'Usage'**
+  String get sidePanelUsage;
+
+  /// No description provided for @ustatKeywords.
+  ///
+  /// In en, this message translates to:
+  /// **'usage statistics tokens cache calls cost dashboard upstream model'**
+  String get ustatKeywords;
+
+  /// No description provided for @ustatAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get ustatAll;
+
+  /// No description provided for @ustatAgent.
+  ///
+  /// In en, this message translates to:
+  /// **'Agent'**
+  String get ustatAgent;
+
+  /// No description provided for @ustatKind.
+  ///
+  /// In en, this message translates to:
+  /// **'Kind'**
+  String get ustatKind;
+
+  /// No description provided for @ustatModel.
+  ///
+  /// In en, this message translates to:
+  /// **'Model'**
+  String get ustatModel;
+
+  /// No description provided for @ustatUpstream.
+  ///
+  /// In en, this message translates to:
+  /// **'Upstream'**
+  String get ustatUpstream;
+
+  /// No description provided for @ustatConversation.
+  ///
+  /// In en, this message translates to:
+  /// **'Conversation'**
+  String get ustatConversation;
+
+  /// No description provided for @ustatFailedOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed only'**
+  String get ustatFailedOnly;
+
+  /// No description provided for @ustatResetFilters.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset filters'**
+  String get ustatResetFilters;
+
+  /// No description provided for @ustatRefresh.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh'**
+  String get ustatRefresh;
+
+  /// No description provided for @ustatUnpin.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to the whole range'**
+  String get ustatUnpin;
+
+  /// No description provided for @ustatRangeHour.
+  ///
+  /// In en, this message translates to:
+  /// **'Last hour'**
+  String get ustatRangeHour;
+
+  /// No description provided for @ustatRangeToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get ustatRangeToday;
+
+  /// No description provided for @ustatRangeDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Last 24 hours'**
+  String get ustatRangeDay;
+
+  /// No description provided for @ustatRangeWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'Last 7 days'**
+  String get ustatRangeWeek;
+
+  /// No description provided for @ustatRangeMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Last 30 days'**
+  String get ustatRangeMonth;
+
+  /// No description provided for @ustatRangeQuarter.
+  ///
+  /// In en, this message translates to:
+  /// **'Last 90 days'**
+  String get ustatRangeQuarter;
+
+  /// No description provided for @ustatRangeAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All time'**
+  String get ustatRangeAll;
+
+  /// No description provided for @ustatClassMain.
+  ///
+  /// In en, this message translates to:
+  /// **'Main agent'**
+  String get ustatClassMain;
+
+  /// No description provided for @ustatClassSubagent.
+  ///
+  /// In en, this message translates to:
+  /// **'Subagent'**
+  String get ustatClassSubagent;
+
+  /// No description provided for @ustatClassWorkflow.
+  ///
+  /// In en, this message translates to:
+  /// **'Workflow'**
+  String get ustatClassWorkflow;
+
+  /// No description provided for @ustatClassCompaction.
+  ///
+  /// In en, this message translates to:
+  /// **'Compaction'**
+  String get ustatClassCompaction;
+
+  /// No description provided for @ustatClassAuxiliary.
+  ///
+  /// In en, this message translates to:
+  /// **'Auxiliary'**
+  String get ustatClassAuxiliary;
+
+  /// No description provided for @ustatClassSideReply.
+  ///
+  /// In en, this message translates to:
+  /// **'Side reply'**
+  String get ustatClassSideReply;
+
+  /// No description provided for @ustatMainAgent.
+  ///
+  /// In en, this message translates to:
+  /// **'Main agent'**
+  String get ustatMainAgent;
+
+  /// No description provided for @ustatPartSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'System prompt'**
+  String get ustatPartSystem;
+
+  /// No description provided for @ustatPartTools.
+  ///
+  /// In en, this message translates to:
+  /// **'Tool definitions'**
+  String get ustatPartTools;
+
+  /// No description provided for @ustatPartUser.
+  ///
+  /// In en, this message translates to:
+  /// **'User messages'**
+  String get ustatPartUser;
+
+  /// No description provided for @ustatPartAssistant.
+  ///
+  /// In en, this message translates to:
+  /// **'Replies'**
+  String get ustatPartAssistant;
+
+  /// No description provided for @ustatPartThinking.
+  ///
+  /// In en, this message translates to:
+  /// **'Thinking'**
+  String get ustatPartThinking;
+
+  /// No description provided for @ustatPartToolUse.
+  ///
+  /// In en, this message translates to:
+  /// **'Tool calls'**
+  String get ustatPartToolUse;
+
+  /// No description provided for @ustatPartToolResult.
+  ///
+  /// In en, this message translates to:
+  /// **'Tool results'**
+  String get ustatPartToolResult;
+
+  /// No description provided for @ustatPartMedia.
+  ///
+  /// In en, this message translates to:
+  /// **'Images & files'**
+  String get ustatPartMedia;
+
+  /// No description provided for @ustatTokenInput.
+  ///
+  /// In en, this message translates to:
+  /// **'Input'**
+  String get ustatTokenInput;
+
+  /// No description provided for @ustatTokenOutput.
+  ///
+  /// In en, this message translates to:
+  /// **'Output'**
+  String get ustatTokenOutput;
+
+  /// No description provided for @ustatTokenCacheRead.
+  ///
+  /// In en, this message translates to:
+  /// **'Cache read'**
+  String get ustatTokenCacheRead;
+
+  /// No description provided for @ustatTokenCacheWrite.
+  ///
+  /// In en, this message translates to:
+  /// **'Cache write'**
+  String get ustatTokenCacheWrite;
+
+  /// No description provided for @ustatTokenReasoning.
+  ///
+  /// In en, this message translates to:
+  /// **'Reasoning'**
+  String get ustatTokenReasoning;
+
+  /// No description provided for @ustatTotalTokens.
+  ///
+  /// In en, this message translates to:
+  /// **'Tokens'**
+  String get ustatTotalTokens;
+
+  /// No description provided for @ustatTokensDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'{input} in · {output} out'**
+  String ustatTokensDetail(String input, String output);
+
+  /// No description provided for @ustatCalls.
+  ///
+  /// In en, this message translates to:
+  /// **'Calls'**
+  String get ustatCalls;
+
+  /// No description provided for @ustatCallsDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} tool calls asked'**
+  String ustatCallsDetail(String count);
+
+  /// No description provided for @ustatCallsOk.
+  ///
+  /// In en, this message translates to:
+  /// **'Succeeded'**
+  String get ustatCallsOk;
+
+  /// No description provided for @ustatCallsShort.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} calls'**
+  String ustatCallsShort(int count);
+
+  /// No description provided for @ustatCacheHit.
+  ///
+  /// In en, this message translates to:
+  /// **'Cache hit rate'**
+  String get ustatCacheHit;
+
+  /// No description provided for @ustatCacheDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'{read} read · {written} written'**
+  String ustatCacheDetail(String read, String written);
+
+  /// No description provided for @ustatFirstToken.
+  ///
+  /// In en, this message translates to:
+  /// **'Time to first token'**
+  String get ustatFirstToken;
+
+  /// No description provided for @ustatDurationDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'{duration} per call on average'**
+  String ustatDurationDetail(String duration);
+
+  /// No description provided for @ustatSpeed.
+  ///
+  /// In en, this message translates to:
+  /// **'Output speed'**
+  String get ustatSpeed;
+
+  /// No description provided for @ustatOutputDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'{tokens} output in all'**
+  String ustatOutputDetail(String tokens);
+
+  /// No description provided for @ustatReasoningDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'{tokens} of it reasoning'**
+  String ustatReasoningDetail(String tokens);
+
+  /// No description provided for @ustatErrors.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed'**
+  String get ustatErrors;
+
+  /// No description provided for @ustatErrorRate.
+  ///
+  /// In en, this message translates to:
+  /// **'{rate} of calls'**
+  String ustatErrorRate(String rate);
+
+  /// No description provided for @ustatOverTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Over time'**
+  String get ustatOverTime;
+
+  /// No description provided for @ustatMetricTokens.
+  ///
+  /// In en, this message translates to:
+  /// **'Tokens'**
+  String get ustatMetricTokens;
+
+  /// No description provided for @ustatMetricCalls.
+  ///
+  /// In en, this message translates to:
+  /// **'Calls'**
+  String get ustatMetricCalls;
+
+  /// No description provided for @ustatMetricLatency.
+  ///
+  /// In en, this message translates to:
+  /// **'Latency'**
+  String get ustatMetricLatency;
+
+  /// No description provided for @ustatMetricSpeed.
+  ///
+  /// In en, this message translates to:
+  /// **'Speed'**
+  String get ustatMetricSpeed;
+
+  /// No description provided for @ustatByUpstream.
+  ///
+  /// In en, this message translates to:
+  /// **'By upstream'**
+  String get ustatByUpstream;
+
+  /// No description provided for @ustatByModel.
+  ///
+  /// In en, this message translates to:
+  /// **'By model'**
+  String get ustatByModel;
+
+  /// No description provided for @ustatByConversation.
+  ///
+  /// In en, this message translates to:
+  /// **'By conversation'**
+  String get ustatByConversation;
+
+  /// No description provided for @ustatByTurn.
+  ///
+  /// In en, this message translates to:
+  /// **'By turn'**
+  String get ustatByTurn;
+
+  /// No description provided for @ustatByTurnDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Each of your messages and all the requests that answered it'**
+  String get ustatByTurnDetail;
+
+  /// No description provided for @ustatTurnDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'{duration} · context up to {peak}'**
+  String ustatTurnDetail(String duration, String peak);
+
+  /// No description provided for @ustatNoConversations.
+  ///
+  /// In en, this message translates to:
+  /// **'No conversation named its session'**
+  String get ustatNoConversations;
+
+  /// No description provided for @ustatTools.
+  ///
+  /// In en, this message translates to:
+  /// **'Tools'**
+  String get ustatTools;
+
+  /// No description provided for @ustatToolsDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'What their results brought into the context (estimated), how often they were called, how long they ran'**
+  String get ustatToolsDetail;
+
+  /// No description provided for @ustatToolSortTokens.
+  ///
+  /// In en, this message translates to:
+  /// **'Context'**
+  String get ustatToolSortTokens;
+
+  /// No description provided for @ustatToolSortCalls.
+  ///
+  /// In en, this message translates to:
+  /// **'Calls'**
+  String get ustatToolSortCalls;
+
+  /// No description provided for @ustatToolSortTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Time'**
+  String get ustatToolSortTime;
+
+  /// No description provided for @ustatNoTools.
+  ///
+  /// In en, this message translates to:
+  /// **'No tools were used'**
+  String get ustatNoTools;
+
+  /// No description provided for @ustatToolCalled.
+  ///
+  /// In en, this message translates to:
+  /// **'Called'**
+  String get ustatToolCalled;
+
+  /// No description provided for @ustatToolResult.
+  ///
+  /// In en, this message translates to:
+  /// **'result'**
+  String get ustatToolResult;
+
+  /// No description provided for @ustatShowAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Show all {count}'**
+  String ustatShowAll(int count);
+
+  /// No description provided for @ustatShowLess.
+  ///
+  /// In en, this message translates to:
+  /// **'Show less'**
+  String get ustatShowLess;
+
+  /// No description provided for @ustatContextGrowth.
+  ///
+  /// In en, this message translates to:
+  /// **'Context growth'**
+  String get ustatContextGrowth;
+
+  /// No description provided for @ustatContextNow.
+  ///
+  /// In en, this message translates to:
+  /// **'{tokens} now'**
+  String ustatContextNow(String tokens);
+
+  /// No description provided for @ustatContextPeak.
+  ///
+  /// In en, this message translates to:
+  /// **'peak {tokens}'**
+  String ustatContextPeak(String tokens);
+
+  /// No description provided for @ustatCompactions.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 compaction} other{{count} compactions}}'**
+  String ustatCompactions(int count);
+
+  /// No description provided for @ustatCompactedFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'Compacted at {tokens}'**
+  String ustatCompactedFrom(String tokens);
+
+  /// No description provided for @ustatContextMakeup.
+  ///
+  /// In en, this message translates to:
+  /// **'What fills the context'**
+  String get ustatContextMakeup;
+
+  /// No description provided for @ustatRecentCalls.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent calls'**
+  String get ustatRecentCalls;
+
+  /// No description provided for @ustatCallsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Calls'**
+  String get ustatCallsTitle;
+
+  /// No description provided for @ustatRecentCallsDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} in all, newest first'**
+  String ustatRecentCallsDetail(int count);
+
+  /// No description provided for @ustatShowMoreCalls.
+  ///
+  /// In en, this message translates to:
+  /// **'Show more ({count} left)'**
+  String ustatShowMoreCalls(int count);
+
+  /// No description provided for @ustatNoCalls.
+  ///
+  /// In en, this message translates to:
+  /// **'No calls'**
+  String get ustatNoCalls;
+
+  /// No description provided for @ustatCopyJson.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy the call as JSON'**
+  String get ustatCopyJson;
+
+  /// No description provided for @ustatFieldTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Time'**
+  String get ustatFieldTime;
+
+  /// No description provided for @ustatFieldStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get ustatFieldStatus;
+
+  /// No description provided for @ustatFieldUpstream.
+  ///
+  /// In en, this message translates to:
+  /// **'Upstream'**
+  String get ustatFieldUpstream;
+
+  /// No description provided for @ustatFieldModel.
+  ///
+  /// In en, this message translates to:
+  /// **'Model'**
+  String get ustatFieldModel;
+
+  /// No description provided for @ustatFieldEffort.
+  ///
+  /// In en, this message translates to:
+  /// **'Effort'**
+  String get ustatFieldEffort;
+
+  /// No description provided for @ustatFieldClass.
+  ///
+  /// In en, this message translates to:
+  /// **'Kind'**
+  String get ustatFieldClass;
+
+  /// No description provided for @ustatFieldSession.
+  ///
+  /// In en, this message translates to:
+  /// **'Session'**
+  String get ustatFieldSession;
+
+  /// No description provided for @ustatFieldAgent.
+  ///
+  /// In en, this message translates to:
+  /// **'Agent'**
+  String get ustatFieldAgent;
+
+  /// No description provided for @ustatFieldTask.
+  ///
+  /// In en, this message translates to:
+  /// **'Task'**
+  String get ustatFieldTask;
+
+  /// No description provided for @ustatFieldAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get ustatFieldAccount;
+
+  /// No description provided for @ustatFieldUpstreamLatency.
+  ///
+  /// In en, this message translates to:
+  /// **'Upstream answered'**
+  String get ustatFieldUpstreamLatency;
+
+  /// A call under way, nothing of its answer yet
+  ///
+  /// In en, this message translates to:
+  /// **'Requesting'**
+  String get ustatCallAsking;
+
+  /// A call under way, its answer coming
+  ///
+  /// In en, this message translates to:
+  /// **'Answering'**
+  String get ustatCallAnswering;
+
+  /// A call Claude Code gave up on before it was answered in full (it timed out, or was interrupted)
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled'**
+  String get ustatCallCancelled;
+
+  /// No description provided for @ustatFieldFirstToken.
+  ///
+  /// In en, this message translates to:
+  /// **'First token'**
+  String get ustatFieldFirstToken;
+
+  /// No description provided for @ustatFieldDuration.
+  ///
+  /// In en, this message translates to:
+  /// **'Duration'**
+  String get ustatFieldDuration;
+
+  /// No description provided for @ustatFieldSpeed.
+  ///
+  /// In en, this message translates to:
+  /// **'Speed'**
+  String get ustatFieldSpeed;
+
+  /// No description provided for @ustatFieldMessages.
+  ///
+  /// In en, this message translates to:
+  /// **'Messages'**
+  String get ustatFieldMessages;
+
+  /// No description provided for @ustatFieldTools.
+  ///
+  /// In en, this message translates to:
+  /// **'tools'**
+  String get ustatFieldTools;
+
+  /// No description provided for @ustatFieldBytes.
+  ///
+  /// In en, this message translates to:
+  /// **'Size'**
+  String get ustatFieldBytes;
+
+  /// No description provided for @ustatFieldCompacted.
+  ///
+  /// In en, this message translates to:
+  /// **'After compaction'**
+  String get ustatFieldCompacted;
+
+  /// No description provided for @ustatFieldError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error'**
+  String get ustatFieldError;
+
+  /// No description provided for @ustatEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No calls yet'**
+  String get ustatEmptyTitle;
+
+  /// No description provided for @ustatEmptyDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Calls show here once a conversation runs.'**
+  String get ustatEmptyDetail;
+
+  /// No description provided for @ustatEmptyFiltered.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing matches these filters'**
+  String get ustatEmptyFiltered;
+
+  /// No description provided for @ustatConversationNew.
+  ///
+  /// In en, this message translates to:
+  /// **'Usage shows once the conversation starts'**
+  String get ustatConversationNew;
+
+  /// No description provided for @ustatConversationEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No calls kept for this conversation'**
+  String get ustatConversationEmpty;
+
+  /// No description provided for @ustatConversationEmptyDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Only conversations on a custom upstream are counted: Claude\'s official service does not go through BaoCode\'s proxy.'**
+  String get ustatConversationEmptyDetail;
+
+  /// No description provided for @ustatRecordOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Usage is not being recorded'**
+  String get ustatRecordOff;
+
+  /// No description provided for @ustatTurnOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn on'**
+  String get ustatTurnOn;
+
+  /// No description provided for @ustatDataTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Data'**
+  String get ustatDataTitle;
+
+  /// No description provided for @ustatDataDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Detailed records take room: keep them as long as you like, and clear what you no longer need.'**
+  String get ustatDataDescription;
+
+  /// No description provided for @ustatRecord.
+  ///
+  /// In en, this message translates to:
+  /// **'Record usage'**
+  String get ustatRecord;
+
+  /// No description provided for @ustatRecordDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Claude Code\'s own calls are read from what it prints; sessions on a custom upstream go through BaoCode\'s local proxy, which keeps each call. Applies to agents started from now on.'**
+  String get ustatRecordDescription;
+
+  /// No description provided for @ustatRecordOffDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn it on to keep each call to a model: tokens, the cache, time, by conversation, subagent and tool.'**
+  String get ustatRecordOffDescription;
+
+  /// No description provided for @ustatDetailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Detailed records'**
+  String get ustatDetailed;
+
+  /// No description provided for @ustatDetailedDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Also keeps what filled each request\'s context and the tools\' share. Takes more room.'**
+  String get ustatDetailedDescription;
+
+  /// No description provided for @ustatRetention.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep records for'**
+  String get ustatRetention;
+
+  /// No description provided for @ustatRetentionDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Older days are deleted as they pass.'**
+  String get ustatRetentionDescription;
+
+  /// No description provided for @ustatKeepDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{days} days'**
+  String ustatKeepDays(int days);
+
+  /// No description provided for @ustatKeepForever.
+  ///
+  /// In en, this message translates to:
+  /// **'Forever'**
+  String get ustatKeepForever;
+
+  /// No description provided for @ustatSpace.
+  ///
+  /// In en, this message translates to:
+  /// **'Using {size}'**
+  String ustatSpace(String size);
+
+  /// No description provided for @ustatSpaceDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'{days} days kept, since {oldest}'**
+  String ustatSpaceDetail(int days, String oldest);
+
+  /// No description provided for @ustatSpaceEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing kept yet'**
+  String get ustatSpaceEmpty;
+
+  /// No description provided for @ustatLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Reading the calls…'**
+  String get ustatLoading;
+
+  /// No description provided for @ustatClearEllipsis.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear…'**
+  String get ustatClearEllipsis;
+
+  /// No description provided for @ustatClear.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get ustatClear;
+
+  /// No description provided for @ustatClearOlderThan.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear all but the last {days} days'**
+  String ustatClearOlderThan(int days);
+
+  /// No description provided for @ustatClearShown.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear the time shown'**
+  String get ustatClearShown;
+
+  /// No description provided for @ustatClearShownFiltered.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear what the filters show'**
+  String get ustatClearShownFiltered;
+
+  /// No description provided for @ustatClearAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear everything'**
+  String get ustatClearAll;
+
+  /// No description provided for @ustatClearConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'{what}?'**
+  String ustatClearConfirm(String what);
+
+  /// No description provided for @ustatClearDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'The calls are deleted from this computer. This cannot be undone.'**
+  String get ustatClearDetail;
+
+  /// No description provided for @autoResetCreditsToggle.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-Use Reset Credits'**
+  String get autoResetCreditsToggle;
+
+  /// No description provided for @modelsResetCredits.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 reset left} other{{count} resets left}}'**
+  String modelsResetCredits(int count);
+
+  /// No description provided for @modelsResetCreditsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 reset credit} other{{count} reset credits}}'**
+  String modelsResetCreditsTitle(int count);
+
+  /// No description provided for @modelsResetCreditsDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Using one starts this account\'s quota windows over at once.'**
+  String get modelsResetCreditsDetail;
+
+  /// No description provided for @modelsResetCreditExpires.
+  ///
+  /// In en, this message translates to:
+  /// **'Expires {time}'**
+  String modelsResetCreditExpires(String time);
+
+  /// No description provided for @modelsResetCreditUse.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset Now'**
+  String get modelsResetCreditUse;
+
+  /// No description provided for @modelsResetCreditConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Use a reset credit of {account}?'**
+  String modelsResetCreditConfirm(String account);
+
+  /// No description provided for @modelsResetCreditConfirmDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Its quota starts over at once. The credit can\'t be given back, and whatever quota is left now is lost.'**
+  String get modelsResetCreditConfirmDetail;
+
+  /// No description provided for @claudeResets.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 reset} other{{count} resets}}'**
+  String claudeResets(int count);
+
+  /// No description provided for @claudeResetsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Claude limit resets'**
+  String get claudeResetsTitle;
+
+  /// No description provided for @claudeResetsDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Granted by Anthropic. Using one sets the limits it lists back to nothing used. With more than one, they are used one at a time, in the order Anthropic sets.'**
+  String get claudeResetsDetail;
+
+  /// No description provided for @claudeResetClears.
+  ///
+  /// In en, this message translates to:
+  /// **'Clears {windows}'**
+  String claudeResetClears(String windows);
+
+  /// No description provided for @claudeResetWindowUsed.
+  ///
+  /// In en, this message translates to:
+  /// **'{window} ({percent}% used)'**
+  String claudeResetWindowUsed(String window, int percent);
+
+  /// No description provided for @claudeResetWeeklyOf.
+  ///
+  /// In en, this message translates to:
+  /// **'{model} weekly'**
+  String claudeResetWeeklyOf(String model);
+
+  /// No description provided for @claudeResetNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Usable now'**
+  String get claudeResetNext;
+
+  /// No description provided for @claudeResetQueued.
+  ///
+  /// In en, this message translates to:
+  /// **'Waits its turn: usable once the one above is used'**
+  String get claudeResetQueued;
+
+  /// No description provided for @claudeResetUse.
+  ///
+  /// In en, this message translates to:
+  /// **'Use This One…'**
+  String get claudeResetUse;
+
+  /// No description provided for @claudeResetConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Use a Claude limit reset?'**
+  String get claudeResetConfirm;
+
+  /// No description provided for @claudeResetConfirmDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'“{label}” sets {windows} back to nothing used, at once. The reset can\'t be given back, and what is left of these limits now is lost.'**
+  String claudeResetConfirmDetail(String label, String windows);
+
+  /// No description provided for @claudeResetPaused.
+  ///
+  /// In en, this message translates to:
+  /// **'Paused'**
+  String get claudeResetPaused;
+
+  /// No description provided for @claudeResetCooldown.
+  ///
+  /// In en, this message translates to:
+  /// **'Usable again {time}'**
+  String claudeResetCooldown(String time);
+
+  /// No description provided for @claudeResetUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Not usable now ({reason})'**
+  String claudeResetUnavailable(String reason);
+
+  /// No description provided for @claudeResetSignedOut.
+  ///
+  /// In en, this message translates to:
+  /// **'The Claude.ai sign-in has expired; Claude Code renews it as it next runs.'**
+  String get claudeResetSignedOut;
+
+  /// No description provided for @claudeResetDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset: {windows}'**
+  String claudeResetDone(String windows);
+
+  /// No description provided for @claudeResetNotDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Not reset: {reason}'**
+  String claudeResetNotDone(String reason);
+
+  /// No description provided for @claudeResetNotNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Another reset is the one usable now; nothing was used. Refresh and try again.'**
+  String get claudeResetNotNext;
+
+  /// No description provided for @claudeResetNotLimited.
+  ///
+  /// In en, this message translates to:
+  /// **'This reset can only be used once a limit is reached; nothing was used.'**
+  String get claudeResetNotLimited;
+
+  /// No description provided for @claudeResetAlreadyUsed.
+  ///
+  /// In en, this message translates to:
+  /// **'This reset was already used; nothing was used now.'**
+  String get claudeResetAlreadyUsed;
+
+  /// No description provided for @claudeResetCoolingDown.
+  ///
+  /// In en, this message translates to:
+  /// **'A reset was just used; wait a little before the next. Nothing was used.'**
+  String get claudeResetCoolingDown;
+
+  /// No description provided for @claudeResetsRefresh.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh'**
+  String get claudeResetsRefresh;
+
+  /// No description provided for @resetCreditsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{A reset credit expires} other{{count} reset credits expire}} within a week. To get their worth, use Codex models on this plan, resetting once the quota runs out:'**
+  String resetCreditsHint(int count);
+
+  /// No description provided for @resetCreditsHintDay.
+  ///
+  /// In en, this message translates to:
+  /// **'{day}: reset {count, plural, =1{once} other{{count} times}}'**
+  String resetCreditsHintDay(String day, int count);
+
+  /// No description provided for @resetCreditsHintBy.
+  ///
+  /// In en, this message translates to:
+  /// **'by {time}'**
+  String resetCreditsHintBy(String time);
+
+  /// No description provided for @resetCreditsHintToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get resetCreditsHintToday;
+
+  /// No description provided for @resetCreditsHintTomorrow.
+  ///
+  /// In en, this message translates to:
+  /// **'Tomorrow'**
+  String get resetCreditsHintTomorrow;
+
+  /// No description provided for @resetCreditsHintAuto.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset Automatically'**
+  String get resetCreditsHintAuto;
+
+  /// No description provided for @resetCreditsHintLater.
+  ///
+  /// In en, this message translates to:
+  /// **'Got It'**
+  String get resetCreditsHintLater;
+
+  /// No description provided for @ustatPartMemory.
+  ///
+  /// In en, this message translates to:
+  /// **'CLAUDE.md & rules'**
+  String get ustatPartMemory;
+
+  /// No description provided for @ustatPartSkills.
+  ///
+  /// In en, this message translates to:
+  /// **'Skills'**
+  String get ustatPartSkills;
+
+  /// No description provided for @ustatPartMcp.
+  ///
+  /// In en, this message translates to:
+  /// **'MCP'**
+  String get ustatPartMcp;
+
+  /// No description provided for @ustatPartMessages.
+  ///
+  /// In en, this message translates to:
+  /// **'Conversation'**
+  String get ustatPartMessages;
+
+  /// No description provided for @ustatCacheHitShort.
+  ///
+  /// In en, this message translates to:
+  /// **'{rate} cached'**
+  String ustatCacheHitShort(String rate);
+
+  /// No description provided for @ustatCompactedAfter.
+  ///
+  /// In en, this message translates to:
+  /// **'First after compacting'**
+  String get ustatCompactedAfter;
+
+  /// No description provided for @ustatContextPickHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Click to see what filled it'**
+  String get ustatContextPickHint;
+
+  /// No description provided for @ustatRequests.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 request} other{{count} requests}}'**
+  String ustatRequests(int count);
+
+  /// No description provided for @ustatRequestOf.
+  ///
+  /// In en, this message translates to:
+  /// **'#{index} of {count}'**
+  String ustatRequestOf(int index, int count);
+
+  /// No description provided for @ustatPreviousRequest.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous request'**
+  String get ustatPreviousRequest;
+
+  /// No description provided for @ustatNextRequest.
+  ///
+  /// In en, this message translates to:
+  /// **'Next request'**
+  String get ustatNextRequest;
+
+  /// No description provided for @ustatNoMakeup.
+  ///
+  /// In en, this message translates to:
+  /// **'What filled this request\'s context was not recorded (turn on Detailed recording).'**
+  String get ustatNoMakeup;
+
+  /// No description provided for @ustatMakeupNoDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Recorded before the breakdown by tool, MCP server and skill: requests from now on have it.'**
+  String get ustatMakeupNoDetail;
+
+  /// No description provided for @ustatMakeupShapeMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'The breakdown of this request\'s tools and skills was not found.'**
+  String get ustatMakeupShapeMissing;
+
+  /// No description provided for @ustatMcpTools.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{instructions only} =1{1 tool} other{{count} tools}}'**
+  String ustatMcpTools(int count);
+
+  /// No description provided for @ustatMcpInstructions.
+  ///
+  /// In en, this message translates to:
+  /// **'Instructions'**
+  String get ustatMcpInstructions;
+
+  /// No description provided for @ustatSkillPlugin.
+  ///
+  /// In en, this message translates to:
+  /// **'plugin'**
+  String get ustatSkillPlugin;
+
+  /// No description provided for @ustatToolInputs.
+  ///
+  /// In en, this message translates to:
+  /// **'inputs {tokens}'**
+  String ustatToolInputs(String tokens);
+
+  /// No description provided for @ustatSwitchedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved to Settings → Customize. The agent\'s next requests go without what was turned off.'**
+  String get ustatSwitchedHint;
+
+  /// No description provided for @ustatShowAuxiliary.
+  ///
+  /// In en, this message translates to:
+  /// **'Show auxiliary requests'**
+  String get ustatShowAuxiliary;
+
+  /// No description provided for @ustatShowAuxiliaryDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Count Claude Code\'s requests beside the conversation (suggesting the next prompt, naming the conversation, summing up a web page) in the charts and totals. They are kept either way.'**
+  String get ustatShowAuxiliaryDescription;
+
+  /// No description provided for @ustatTrace.
+  ///
+  /// In en, this message translates to:
+  /// **'Debug capture'**
+  String get ustatTrace;
+
+  /// No description provided for @ustatTraceDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Also keep every request to a custom upstream whole: as Claude Code sent it, as it went to the upstream, the upstream\'s raw answer and what went back; of Claude Code\'s own models, only their answers. Keys are masked. Takes a lot of space: turn it off when done.'**
+  String get ustatTraceDescription;
+
+  /// No description provided for @ustatTraceTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Raw exchange'**
+  String get ustatTraceTitle;
+
+  /// No description provided for @ustatTraceLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Reading…'**
+  String get ustatTraceLoading;
+
+  /// No description provided for @ustatTraceGone.
+  ///
+  /// In en, this message translates to:
+  /// **'The raw exchange was cleared.'**
+  String get ustatTraceGone;
+
+  /// No description provided for @ustatTraceNone.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing went this way (it was answered before).'**
+  String get ustatTraceNone;
+
+  /// No description provided for @ustatTraceRequestBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Request body'**
+  String get ustatTraceRequestBody;
+
+  /// No description provided for @ustatTraceRawResponse.
+  ///
+  /// In en, this message translates to:
+  /// **'Raw response'**
+  String get ustatTraceRawResponse;
+
+  /// No description provided for @ustatTraceToUpstream.
+  ///
+  /// In en, this message translates to:
+  /// **'Sent upstream'**
+  String get ustatTraceToUpstream;
+
+  /// No description provided for @ustatTraceResponseHeaders.
+  ///
+  /// In en, this message translates to:
+  /// **'Response headers · {count}'**
+  String ustatTraceResponseHeaders(int count);
+
+  /// No description provided for @ustatTraceAnswerOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'As Claude Code printed it; the request to Anthropic is not seen'**
+  String get ustatTraceAnswerOnly;
+
+  /// No description provided for @ustatTraceTry.
+  ///
+  /// In en, this message translates to:
+  /// **'Try {n}'**
+  String ustatTraceTry(int n);
+
+  /// No description provided for @ustatTraceCopyAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy all'**
+  String get ustatTraceCopyAll;
+
+  /// No description provided for @ustatTraceCopyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy'**
+  String get ustatTraceCopyBody;
+
+  /// No description provided for @ustatTraceHeaders.
+  ///
+  /// In en, this message translates to:
+  /// **'Request headers · {count}'**
+  String ustatTraceHeaders(int count);
+
+  /// No description provided for @ustatTraceRaw.
+  ///
+  /// In en, this message translates to:
+  /// **'As sent'**
+  String get ustatTraceRaw;
+
+  /// No description provided for @ustatTraceFormatted.
+  ///
+  /// In en, this message translates to:
+  /// **'Formatted'**
+  String get ustatTraceFormatted;
+
+  /// No description provided for @ustatTraceEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Empty'**
+  String get ustatTraceEmpty;
+
+  /// No description provided for @ustatTraceMore.
+  ///
+  /// In en, this message translates to:
+  /// **'Show more ({size} left)'**
+  String ustatTraceMore(String size);
+
+  /// No description provided for @ustatTraceTruncated.
+  ///
+  /// In en, this message translates to:
+  /// **'cut at 24M characters'**
+  String get ustatTraceTruncated;
+
+  /// No description provided for @ustatSpaceTraces.
+  ///
+  /// In en, this message translates to:
+  /// **'; raw exchanges {size} ({count})'**
+  String ustatSpaceTraces(String size, int count);
+
+  /// No description provided for @ustatClearTraces.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear the raw exchanges only'**
+  String get ustatClearTraces;
+
+  /// No description provided for @ustatClearTracesDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'The calls stay; their raw requests and answers are deleted from this computer.'**
+  String get ustatClearTracesDetail;
+
+  /// No description provided for @ustatColumnTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Total'**
+  String get ustatColumnTotal;
+
+  /// No description provided for @ustatColumnMix.
+  ///
+  /// In en, this message translates to:
+  /// **'Breakdown'**
+  String get ustatColumnMix;
+
+  /// No description provided for @ustatDeferred.
+  ///
+  /// In en, this message translates to:
+  /// **'deferred, {size}'**
+  String ustatDeferred(String size);
+
+  /// No description provided for @ustatSwitchedOff.
+  ///
+  /// In en, this message translates to:
+  /// **'turned off'**
+  String get ustatSwitchedOff;
+
+  /// No description provided for @usageUntilCompaction.
+  ///
+  /// In en, this message translates to:
+  /// **'{tokens} to auto-compact'**
+  String usageUntilCompaction(String tokens);
+
+  /// No description provided for @usageAgentDefinition.
+  ///
+  /// In en, this message translates to:
+  /// **'agent'**
+  String get usageAgentDefinition;
+
+  /// No description provided for @usageAttachments.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminders & attachments'**
+  String get usageAttachments;
+
+  /// No description provided for @ustatCost.
+  ///
+  /// In en, this message translates to:
+  /// **'Cost'**
+  String get ustatCost;
+
+  /// No description provided for @ustatCostEstimated.
+  ///
+  /// In en, this message translates to:
+  /// **'At the prices as they are now'**
+  String get ustatCostEstimated;
+
+  /// No description provided for @ustatCostUnpriced.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 call unpriced} other{{count} calls unpriced}}'**
+  String ustatCostUnpriced(int count);
+
+  /// No description provided for @ustatCostNoPrices.
+  ///
+  /// In en, this message translates to:
+  /// **'No prices set'**
+  String get ustatCostNoPrices;
+
+  /// No description provided for @ustatPrices.
+  ///
+  /// In en, this message translates to:
+  /// **'Model prices'**
+  String get ustatPrices;
+
+  /// No description provided for @ustatPricesDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'A million tokens each. Costs are worked out at the prices as they are now, the calls before a change included, unless a price is set from a date on.'**
+  String get ustatPricesDetail;
+
+  /// No description provided for @ustatPricesAgentHint.
+  ///
+  /// In en, this message translates to:
+  /// **'BaoCode can keep these for you: ask it in a chat to look up the current prices of these models and update them. It checks the upstream\'s own pricing page and writes them here.'**
+  String get ustatPricesAgentHint;
+
+  /// No description provided for @ustatPriceCurrency.
+  ///
+  /// In en, this message translates to:
+  /// **'Currency'**
+  String get ustatPriceCurrency;
+
+  /// No description provided for @ustatPriceAnyUpstream.
+  ///
+  /// In en, this message translates to:
+  /// **'any upstream'**
+  String get ustatPriceAnyUpstream;
+
+  /// No description provided for @ustatPriceSource.
+  ///
+  /// In en, this message translates to:
+  /// **'Where the price was read'**
+  String get ustatPriceSource;
+
+  /// No description provided for @ustatPriceUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'updated {when}'**
+  String ustatPriceUpdated(String when);
+
+  /// No description provided for @ustatPriceClear.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear the price'**
+  String get ustatPriceClear;
+
+  /// No description provided for @ustatPriceIncomplete.
+  ///
+  /// In en, this message translates to:
+  /// **'Fill in both the input and the output price'**
+  String get ustatPriceIncomplete;
+
+  /// No description provided for @ustatPriceSpent.
+  ///
+  /// In en, this message translates to:
+  /// **'In this time'**
+  String get ustatPriceSpent;
+
+  /// No description provided for @modelsAutoResetCreditsOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get modelsAutoResetCreditsOff;
+
+  /// No description provided for @modelsAutoResetCreditsLong.
+  ///
+  /// In en, this message translates to:
+  /// **'When the Week or Month Runs Out'**
+  String get modelsAutoResetCreditsLong;
+
+  /// No description provided for @modelsAutoResetCreditsAny.
+  ///
+  /// In en, this message translates to:
+  /// **'When Any Window Runs Out'**
+  String get modelsAutoResetCreditsAny;
+
+  /// No description provided for @modelsAutoResetCreditsOffDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'An account out of quota waits for it to start over.'**
+  String get modelsAutoResetCreditsOffDescription;
+
+  /// No description provided for @modelsAutoResetCreditsLongDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'An account out of its week (or month) uses a reset credit and goes on. Five hours running out is waited for: they start over soon.'**
+  String get modelsAutoResetCreditsLongDescription;
+
+  /// No description provided for @modelsAutoResetCreditsAnyDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'An account out of any window, five hours too, uses a reset credit at once and goes on. Credits go faster.'**
+  String get modelsAutoResetCreditsAnyDescription;
+
+  /// No description provided for @ustatQuota.
+  ///
+  /// In en, this message translates to:
+  /// **'Claude Plan'**
+  String get ustatQuota;
+
+  /// No description provided for @ustatQuotaDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'How much of the plan\'s limits Claude Code\'s own models took in this time, from the limits as they stood after each call.'**
+  String get ustatQuotaDetail;
+
+  /// No description provided for @ustatQuotaFiveHour.
+  ///
+  /// In en, this message translates to:
+  /// **'5-hour limit'**
+  String get ustatQuotaFiveHour;
+
+  /// No description provided for @ustatQuotaWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly limit'**
+  String get ustatQuotaWeek;
+
+  /// No description provided for @ustatQuotaWeekOf.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly {model} limit'**
+  String ustatQuotaWeekOf(String model);
+
+  /// No description provided for @ustatQuotaUsed.
+  ///
+  /// In en, this message translates to:
+  /// **'{percent} used in this time'**
+  String ustatQuotaUsed(String percent);
+
+  /// No description provided for @ustatQuotaPeak.
+  ///
+  /// In en, this message translates to:
+  /// **'Peak {percent} in this time · reset {count, plural, =1{once} other{{count} times}}'**
+  String ustatQuotaPeak(String percent, int count);
+
+  /// No description provided for @ustatQuotaPerPercent.
+  ///
+  /// In en, this message translates to:
+  /// **'1% of the weekly limit ≈ {tokens} tokens'**
+  String ustatQuotaPerPercent(String tokens);
+
+  /// No description provided for @ustatQuotaPerPercentCost.
+  ///
+  /// In en, this message translates to:
+  /// **'≈ {cost} at API prices'**
+  String ustatQuotaPerPercentCost(String cost);
+
+  /// No description provided for @ustatCacheSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'{amount} saved'**
+  String ustatCacheSaved(String amount);
+
+  /// No description provided for @ustatCostIn.
+  ///
+  /// In en, this message translates to:
+  /// **'In {currency} only; the other currencies are in the totals'**
+  String ustatCostIn(String currency);
+
+  /// No description provided for @ustatPriceClaudeDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Claude Code\'s own models without a price of yours are priced at Anthropic\'s API prices: the grey figures.'**
+  String get ustatPriceClaudeDefault;
+
+  /// No description provided for @ustatPriceRuleTiers.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} tiers by prompt length'**
+  String ustatPriceRuleTiers(int count);
+
+  /// No description provided for @ustatPriceRuleSchedule.
+  ///
+  /// In en, this message translates to:
+  /// **'peak and off-peak hours'**
+  String get ustatPriceRuleSchedule;
+
+  /// No description provided for @ustatPriceRuleFast.
+  ///
+  /// In en, this message translates to:
+  /// **'fast mode ×{factor}'**
+  String ustatPriceRuleFast(String factor);
+
+  /// No description provided for @ustatPriceRuleServiceTiers.
+  ///
+  /// In en, this message translates to:
+  /// **'by service tier'**
+  String get ustatPriceRuleServiceTiers;
+
+  /// No description provided for @ustatPriceRuleGeo.
+  ///
+  /// In en, this message translates to:
+  /// **'by region'**
+  String get ustatPriceRuleGeo;
+
+  /// No description provided for @ustatPriceRulePerCall.
+  ///
+  /// In en, this message translates to:
+  /// **'{amount} a call'**
+  String ustatPriceRulePerCall(String amount);
+
+  /// No description provided for @ustatPriceRuleTools.
+  ///
+  /// In en, this message translates to:
+  /// **'tools priced a use'**
+  String get ustatPriceRuleTools;
+
+  /// No description provided for @ustatPriceRuleVersions.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} prices by date'**
+  String ustatPriceRuleVersions(int count);
+
+  /// No description provided for @ustatPriceRuleRate.
+  ///
+  /// In en, this message translates to:
+  /// **'upstream rate ×{factor}'**
+  String ustatPriceRuleRate(String factor);
+
+  /// No description provided for @ustatPriceRuleTime.
+  ///
+  /// In en, this message translates to:
+  /// **'time of week ×{factor}'**
+  String ustatPriceRuleTime(String factor);
+
+  /// No description provided for @ustatPriceRuleFees.
+  ///
+  /// In en, this message translates to:
+  /// **'fees {amount}'**
+  String ustatPriceRuleFees(String amount);
+
+  /// No description provided for @ustatFees.
+  ///
+  /// In en, this message translates to:
+  /// **'Fees'**
+  String get ustatFees;
+
+  /// No description provided for @ustatPricedBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Priced by'**
+  String get ustatPricedBy;
+
+  /// No description provided for @ustatUpstreamRates.
+  ///
+  /// In en, this message translates to:
+  /// **'Upstream rates'**
+  String get ustatUpstreamRates;
+
+  /// No description provided for @ustatUpstreamRatesDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'The models of these upstreams without a price of their own: the same model\'s price elsewhere, times the rate.'**
+  String get ustatUpstreamRatesDetail;
+
+  /// No description provided for @ustatUpstreamRateClear.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear the rate'**
+  String get ustatUpstreamRateClear;
+
+  /// No description provided for @ustatContextUnpickHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Click again to unpick: back to the context as it is now'**
+  String get ustatContextUnpickHint;
+
+  /// No description provided for @localRunTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Run on this computer'**
+  String get localRunTitle;
+
+  /// No description provided for @localRunReason.
+  ///
+  /// In en, this message translates to:
+  /// **'The agent on {host} wants to run this command on your computer ({system}), not on {host}.'**
+  String localRunReason(String host, String system);
+
+  /// No description provided for @localRunAlways.
+  ///
+  /// In en, this message translates to:
+  /// **'Always allow for {host}'**
+  String localRunAlways(String host);
+
+  /// No description provided for @remoteLocalAccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow Remote Agents to Act on This Computer'**
+  String get remoteLocalAccess;
+
+  /// No description provided for @remoteLocalAccessDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Agents on these hosts may run commands on this computer (asking you each time), copy files both ways and forward ports.'**
+  String get remoteLocalAccessDetail;
+
+  /// No description provided for @remoteLocalAccessNoAsking.
+  ///
+  /// In en, this message translates to:
+  /// **'Runs commands without asking'**
+  String get remoteLocalAccessNoAsking;
+
+  /// No description provided for @remoteLocalAccessAskAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask Each Time'**
+  String get remoteLocalAccessAskAgain;
+
+  /// No description provided for @sidePanelPorts.
+  ///
+  /// In en, this message translates to:
+  /// **'Ports'**
+  String get sidePanelPorts;
+
+  /// No description provided for @portsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No ports are forwarded. A server on {host} that prints its http://localhost address is forwarded here on its own.'**
+  String portsEmpty(String host);
+
+  /// No description provided for @portsAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Forward a Port'**
+  String get portsAdd;
+
+  /// No description provided for @portsCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy Address'**
+  String get portsCopy;
+
+  /// No description provided for @portsOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open in Browser'**
+  String get portsOpen;
+
+  /// No description provided for @portsStop.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop Forwarding'**
+  String get portsStop;
+
+  /// No description provided for @portsHostToHere.
+  ///
+  /// In en, this message translates to:
+  /// **'{host} → this computer'**
+  String portsHostToHere(String host);
+
+  /// No description provided for @portsHereToHost.
+  ///
+  /// In en, this message translates to:
+  /// **'This computer → {host}'**
+  String portsHereToHost(String host);
+
+  /// No description provided for @portsAuto.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto'**
+  String get portsAuto;
+
+  /// No description provided for @portsPort.
+  ///
+  /// In en, this message translates to:
+  /// **'Port'**
+  String get portsPort;
+
+  /// No description provided for @portsListen.
+  ///
+  /// In en, this message translates to:
+  /// **'Listen on (optional)'**
+  String get portsListen;
+
+  /// No description provided for @portsForward.
+  ///
+  /// In en, this message translates to:
+  /// **'Forward'**
+  String get portsForward;
+
+  /// No description provided for @portsCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Copied {address}'**
+  String portsCopied(String address);
+
+  /// Hover of the project folder shown under the chat in place of a Git branch (no repository): its path, then that a click copies it.
+  ///
+  /// In en, this message translates to:
+  /// **'{path}\nClick to copy its path'**
+  String branchBarFolder(String path);
+
+  /// Hover of the project folder under the chat once clicked: its path was copied.
+  ///
+  /// In en, this message translates to:
+  /// **'Path copied'**
+  String get branchBarPathCopied;
+
+  /// No description provided for @rewindFilesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo the file changes made after this message?'**
+  String get rewindFilesTitle;
+
+  /// No description provided for @rewindFilesChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'The agent changed {count, plural, =1{1 file} other{{count} files}} after this message:'**
+  String rewindFilesChanged(int count);
+
+  /// No description provided for @rewindFilesMore.
+  ///
+  /// In en, this message translates to:
+  /// **'…and {count} more'**
+  String rewindFilesMore(int count);
+
+  /// No description provided for @rewindFilesMerged.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 of them was} other{{count} of them were}} also changed elsewhere since: those changes are kept.'**
+  String rewindFilesMerged(int count);
+
+  /// No description provided for @rewindFilesConflicts.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 file can\'t} other{{count} files can\'t}} be undone cleanly and will stay as {count, plural, =1{it is} other{they are}}:'**
+  String rewindFilesConflicts(int count);
+
+  /// No description provided for @rewindFilesCommands.
+  ///
+  /// In en, this message translates to:
+  /// **'What commands changed (Bash) isn\'t tracked and stays.'**
+  String get rewindFilesCommands;
+
+  /// No description provided for @rewindFilesRevert.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo and Send'**
+  String get rewindFilesRevert;
+
+  /// No description provided for @rewindFilesKeep.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep and Send'**
+  String get rewindFilesKeep;
+
+  /// No description provided for @rewindFilesRemember.
+  ///
+  /// In en, this message translates to:
+  /// **'Remember my choice'**
+  String get rewindFilesRemember;
+
+  /// No description provided for @generalSettingsRewindFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'Edited Messages'**
+  String get generalSettingsRewindFiles;
+
+  /// No description provided for @generalSettingsRewindFilesDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'When you edit an earlier message and send it again, what happens to the files the agent changed after it. Commands\' (Bash) changes are not tracked. Claude Code and BaoCode agent only.'**
+  String get generalSettingsRewindFilesDescription;
+
+  /// No description provided for @generalSettingsRewindAsk.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask Each Time'**
+  String get generalSettingsRewindAsk;
+
+  /// No description provided for @generalSettingsRewindRevert.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo the Changes'**
+  String get generalSettingsRewindRevert;
+
+  /// No description provided for @generalSettingsRewindKeep.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep the Changes'**
+  String get generalSettingsRewindKeep;
 }
 
 class _AppLocalizationsDelegate

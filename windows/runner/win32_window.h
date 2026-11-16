@@ -72,6 +72,25 @@ class Win32Window {
 
   static void SetDarkAppearance(bool dark);
 
+  // Settings → Appearance: the system's acrylic under every window
+  // (Windows 11), or none, Flutter then painting them opaque. Kept for the
+  // next start, whose windows open as it says; off the first time.
+  static void SetWindowBlur(bool blurred);
+
+  // Full screen: the window over the whole of its monitor, the taskbar too,
+  // with no border to resize it by; and, out of it, back as it was (where it
+  // was, maximized or not). The header stays, the app's own.
+  void SetFullScreen(bool full_screen);
+  bool IsFullScreen() const { return full_screen_; }
+
+  // Where the window goes back to out of full screen (only then).
+  const WINDOWPLACEMENT& FullScreenRestore() const { return restore_; }
+
+  // Retrieves a class instance pointer for |window|, of a window it made (a
+  // subclass handling a child window's messages this way finds the window
+  // those messages are about).
+  static Win32Window* GetThisFromHandle(HWND const window) noexcept;
+
  protected:
   // Processes and route salient window messages for mouse handling,
   // size change and DPI. Delegates handling of these to member overloads that
@@ -94,25 +113,22 @@ class Win32Window {
   //
   // The border is the system's at the left, right and bottom, outside the
   // client (see NonClientSize); at the top there is none, the header being
-  // the app's, so a strip of the client as tall as the border stands in.
+  // the app's, so a strip of the client as tall as the border stands in —
+  // and on every side where the border is kept inside (see frame_inside_).
   std::optional<LRESULT> ResizeHitTest(const POINT& point) const;
 
   // The client rectangle for a window that draws its own caption: the window
   // less the system's resize border at the left, right and bottom (invisible,
   // it is what those edges are grabbed by, outside the content), up to its
-  // top; the monitor's work area while maximized (Windows sizes a maximized
-  // window to cover the monitor, and that is what keeps the content off the
-  // taskbar); empty while minimized.
+  // top — or all of it, where DWM shows that border (see frame_inside_); the
+  // monitor's work area while maximized (Windows sizes a maximized window to
+  // cover the monitor, and that is what keeps the content off the taskbar);
+  // empty while minimized.
   //
   // Answered before the engine, which would otherwise have the window keep a
   // frame — and draw a caption over the top of the client, whatever the
   // client rectangle says.
   std::optional<LRESULT> NonClientSize(WPARAM wparam, LPARAM lparam) const;
-
-  // Retrieves a class instance pointer for |window|, of a window it made (a
-  // subclass handling a child window's messages this way finds the window
-  // those messages are about).
-  static Win32Window* GetThisFromHandle(HWND const window) noexcept;
 
  private:
   friend class WindowClassRegistrar;
@@ -139,6 +155,19 @@ class Win32Window {
   // left, right and bottom (see NonClientSize), and inside the client at the
   // top, where the app draws the header.
   SIZE ResizeBorder() const;
+
+  // Whether the resize border is inside the client on every side, as at the
+  // top. Outside it, the border is meant to be the invisible part of the
+  // frame; where DWM shows part of it instead (Windows 11 21H2, build 22000),
+  // that part is painted by no one — the window class has no brush, the
+  // view covers the client only — and shows white around the content. Found
+  // so once the window shows (CheckFrameShown), the border goes inside.
+  bool frame_inside_ = false;
+
+  // Whether DWM shows more of the border outside the client than its one
+  // pixel of outline, the window shown and neither maximized nor full screen:
+  // if so, the border is moved inside (see frame_inside_), and logged.
+  void CheckFrameShown();
 
   // The content sized to the client, as the window's size changes.
   //
@@ -187,6 +216,11 @@ class Win32Window {
   // Whether the user is moving or sizing the window: a resync waits for the
   // end.
   bool sizing_ = false;
+
+  // See SetFullScreen: whether it is, and how it was before.
+  bool full_screen_ = false;
+  WINDOWPLACEMENT restore_ = {};
+  LONG_PTR frame_styles_ = 0;
 };
 
 #endif  // RUNNER_WIN32_WINDOW_H_

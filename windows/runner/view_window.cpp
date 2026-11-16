@@ -219,6 +219,18 @@ LRESULT CALLBACK ViewWindow::ViewProc(HWND hwnd, UINT const message,
   auto* that =
       static_cast<ViewWindow*>(GetThisFromHandle(::GetParent(hwnd)));
 
+  // Other apps asking for the view's accessibility objects (screen readers,
+  // and input methods, translators and the like that read what is on screen)
+  // get the system's plain answer for a window, not the engine's. The engine
+  // turns Flutter's semantics on at the first such question and keeps them on,
+  // which costs every frame (PipelineOwner.flushSemantics), and its hit test
+  // over that tree crashes on a child it has no node for
+  // (FlutterPlatformNodeDelegateWindows::HitTestSync, flutter/flutter#195653).
+  // The app makes no claim to work with screen readers.
+  if (message == WM_GETOBJECT) {
+    return ::DefWindowProcW(hwnd, message, wparam, lparam);
+  }
+
   // The cursor's position, over the parts of the window that are the
   // window's own, is this window's to answer — its buttons, and the strip
   // Flutter draws the header in. The view is a child window over the whole
@@ -242,7 +254,8 @@ LRESULT CALLBACK ViewWindow::ViewProc(HWND hwnd, UINT const message,
   }
 
   // A press on the top edge, the one part of the window's frame inside the
-  // view (the app draws the window's whole top, see NonClientSize). The view
+  // view (the app draws the window's whole top, see NonClientSize) — every
+  // edge, where the border is inside (see frame_inside_). The view
   // keeps those pixels (see above), and the system sizes a window by a frame
   // of its own to press, so the loop that sizes it is the window's to start —
   // from the press, and at the pointer, which is where the loop takes the
@@ -344,6 +357,10 @@ ViewWindow::MessageHandler(HWND hwnd, UINT const message,
       pressed_button_ = part;
       return 0;
     }
+    if (part == HTCAPTION && IsFullScreen()) {
+      // Full screen, the window stays where it is.
+      return 0;
+    }
     if (part == HTCAPTION) {
       // A double click on the strip is the system's own shortcut for
       // maximizing, and its other way round again.
@@ -360,7 +377,10 @@ ViewWindow::MessageHandler(HWND hwnd, UINT const message,
     const std::optional<LRESULT> pressed = pressed_button_;
     pressed_button_ = std::nullopt;
     if (IsButton(part)) {
-      if (pressed == part) {
+      if (pressed == part && part == HTMAXBUTTON && IsFullScreen()) {
+        // Out of full screen, as the window was before.
+        SetFullScreen(false);
+      } else if (pressed == part) {
         if (const std::optional<WPARAM> command =
                 CommandForButton(hwnd, part)) {
           ::SendMessageW(hwnd, WM_SYSCOMMAND, *command, lparam);

@@ -16,7 +16,19 @@ may move it. Installed servers go to `<data>/servers/`.
 
 Entries that do not validate are skipped and reported
 (`BundledLspCatalog.problems`, `LanguagePackRegistry.problems`); the rest
-still applies. Settings and packs are read when the catalog loads.
+still applies. Packs are read when the catalog loads; `lsp.json` again each
+time it is saved, the open files matched to servers anew.
+
+Preferences: Open Language Server Settings (JSON) opens `lsp.json`, made
+with commented-out examples where there is none. A server of your own for a
+language, e.g. rust-glancer in place of rust-analyzer:
+
+```json
+{
+  "servers": { "rust-glancer": { "command": "rust-glancer", "args": ["lsp"] } },
+  "languages": { "rust": { "servers": ["rust-glancer"] } }
+}
+```
 
 ## `lsp.json`
 
@@ -199,6 +211,21 @@ auto-closing, indentation on Enter and folding markers use it.
 Each server takes the `lsp.json` server fields plus `id` and `languages`
 (default: all the pack's languages); the languages it lists use the pack's
 servers instead of the bundled ones. A single server object works too.
+
+## Vue
+
+`.vue` files use `vuels` (vue-language-server) and
+`typescript-language-server`, in that order, rooted like `.ts` files so one
+tsserver serves both. vue-language-server 3.x answers for templates and
+styles; TypeScript (the script, and the template's expressions, props and
+components: go to definition, references, rename, hover) is tsserver's with
+`@vue/typescript-plugin`. The manager adds that plugin to a TypeScript server
+it starts (typescript-language-server's `plugins`, vtsls's
+`vtsls.tsserver.globalPlugins`), from beside the vue-language-server it
+finds, else the project's `node_modules`; and carries vue-language-server's
+`tsserver/request`s to it as `typescript.tsserverRequest` commands
+(`lib/ide/lsp/vue_language_tools.dart`). Installing either restarts the
+other, so the plugin and the answers are there.
 
 ## Where this lives
 

@@ -33,7 +33,9 @@ import '../../theme/codicons.dart';
 import '../../theme/app_theme.dart';
 import '../../theme/material_file_icons.dart';
 import '../../theme/workbench_theme.dart';
-import '../file_service.dart' show IdeFileService;
+import '../file_service.dart'
+    show IdeBinaryFileException, IdeFileNotFoundException, IdeFileService;
+import '../host_paths.dart';
 import '../ide_commands.dart' show ideWithKeybinding;
 import '../ide_dialog.dart';
 import '../ide_hover.dart';
@@ -43,6 +45,7 @@ import '../ide_menu.dart';
 import '../ide_panes.dart';
 import '../ide_workspace.dart';
 import '../lsp/lsp_protocol.dart';
+import '../../workspace/islands.dart';
 import 'text_search.dart';
 
 /// The inputs of the Search view, for [IdeSearchSession.requestFocus].
@@ -62,9 +65,20 @@ class IdeSearchFileResult {
 /// The Search view's inputs and results, kept by the workbench while other
 /// views show; it runs the searches.
 class IdeSearchSession extends ChangeNotifier {
-  IdeSearchSession({this.engine = ideSearchText});
+  IdeSearchSession({this.engine = ideSearchText, this.read, this.watch});
 
   final IdeTextSearch engine;
+
+  /// A file's text as the results match it again after it changes: an
+  /// open document's own, unsaved edits and all, as upstream's
+  /// `FileMatch.updateMatchesForModel` follows the editor. None: the
+  /// results stay as searched.
+  Future<String> Function(String path)? read;
+
+  /// Changes to a folder's entries: the folders of the results' files are
+  /// watched, and the files matched again (see [refresh]) as they change,
+  /// an agent's edit or another program's.
+  Stream<void> Function(String directory)? watch;
 
   final query = TextEditingController();
   final replace = TextEditingController();
@@ -76,10 +90,10 @@ class IdeSearchSession extends ChangeNotifier {
   bool useRegExp = false;
   bool preserveCase = false;
   bool useExcludesAndIgnoreFiles = true;
-  // All of it shows at first: the replace input, and the files to include
-  // and exclude (a deviation: upstream's are folded away).
-  bool replaceShown = true;
-  bool detailsShown = true;
+  // Folded away at first, as upstream's: the replace input, and the files
+  // to include and exclude; as the user left them after that.
+  bool replaceShown = false;
+  bool detailsShown = false;
 
   final List<IdeSearchFileResult> results = [];
   final Set<String> collapsed = {};
@@ -110,8 +124,75 @@ class IdeSearchSession extends ChangeNotifier {
   Timer? _debounce;
   bool _disposed = false;
 
+  /// The files the last search found, still followed (see [refresh]) when
+  /// a change leaves them without matches: they show again once they
+  /// match again.
+  final Set<String> _followed = {};
+
+  /// Those to match again, once the changes settle.
+  final Set<String> _stale = {};
+  Timer? _refreshTimer;
+
+  /// Counts the searches and clears, for a refresh read during one to be
+  /// dropped after it.
+  int _generation = 0;
+
+  /// The folders of [_followed] watched, by folder.
+  final Map<String, StreamSubscription<void>> _watches = {};
+  bool _watchesScheduled = false;
+
+  static const _refreshDelay = Duration(milliseconds: 250);
+
+  /// The most folders watched for one search's results.
+  static const _maxWatched = 100;
+
   int get matchCount =>
       results.fold(0, (count, file) => count + file.matches.length);
+
+  /// What is kept of it for the next run, as VS Code keeps it with the
+  /// workspace: the files to include and exclude, the options (#268), and
+  /// whether the replace input and the files show.
+  Map<String, Object?> get kept => {
+    if (includes.text.isNotEmpty) 'includes': includes.text,
+    if (excludes.text.isNotEmpty) 'excludes': excludes.text,
+    if (matchCase) 'matchCase': true,
+    if (wholeWord) 'wholeWord': true,
+    if (useRegExp) 'useRegExp': true,
+    if (preserveCase) 'preserveCase': true,
+    if (!useExcludesAndIgnoreFiles) 'useExcludesAndIgnoreFiles': false,
+    if (replaceShown) 'replaceShown': true,
+    if (detailsShown) 'detailsShown': true,
+  };
+
+  /// As [kept] gave it, before it searches.
+  void restore(Object? kept) {
+    if (kept is! Map) return;
+    String text(String key) => switch (kept[key]) {
+      final String text => text,
+      _ => '',
+    };
+    includes.text = text('includes');
+    excludes.text = text('excludes');
+    matchCase = kept['matchCase'] == true;
+    wholeWord = kept['wholeWord'] == true;
+    useRegExp = kept['useRegExp'] == true;
+    preserveCase = kept['preserveCase'] == true;
+    useExcludesAndIgnoreFiles = kept['useExcludesAndIgnoreFiles'] != false;
+    replaceShown = kept['replaceShown'] == true;
+    // Files to include or exclude kept: shown, not to be missed.
+    detailsShown =
+        kept['detailsShown'] == true ||
+        includes.text.isNotEmpty ||
+        excludes.text.isNotEmpty;
+  }
+
+  /// Told when [kept] may have changed: as the inputs are typed in, and
+  /// as anything else of it does.
+  late final Listenable keptChanges = Listenable.merge([
+    includes,
+    excludes,
+    this,
+  ]);
 
   IdeTextQuery get currentQuery => IdeTextQuery(
     query.text,
@@ -224,6 +305,7 @@ class IdeSearchSession extends ChangeNotifier {
     _debounce?.cancel();
     unawaited(_search?.cancel());
     _search = null;
+    _forget();
     results.clear();
     collapsed.clear();
     limitHit = false;
@@ -252,15 +334,9 @@ class IdeSearchSession extends ChangeNotifier {
       (event) {
         switch (event) {
           case IdeFileMatches(:final path, :final matches):
-            final index = results.indexWhere(
-              (file) => _comparePaths(file.path, path) > 0,
-            );
-            final result = IdeSearchFileResult(path, [...matches]);
-            if (index < 0) {
-              results.add(result);
-            } else {
-              results.insert(index, result);
-            }
+            _followed.add(path);
+            _insert(IdeSearchFileResult(path, [...matches]));
+            _watchSoon();
           case IdeTextSearchComplete(:final limitHit):
             this.limitHit = limitHit;
             searching = false;
@@ -278,6 +354,174 @@ class IdeSearchSession extends ChangeNotifier {
       },
     );
   }
+
+  /// Adds [result] among [results] in their order.
+  void _insert(IdeSearchFileResult result) {
+    final index = results.indexWhere(
+      (file) => _comparePaths(file.path, result.path) > 0,
+    );
+    if (index < 0) {
+      results.add(result);
+    } else {
+      results.insert(index, result);
+    }
+  }
+
+  /// Stops following the last search's files.
+  void _forget() {
+    _generation++;
+    _followed.clear();
+    _stale.clear();
+    _refreshTimer?.cancel();
+    for (final watch in _watches.values) {
+      unawaited(watch.cancel());
+    }
+    _watches.clear();
+  }
+
+  /// Matches the files at [paths] again soon, those of the last search's
+  /// results among them: what they match now replaces their matches, a
+  /// file left without any drops out of the results (and comes back when
+  /// it matches again), one gone or binary now too.
+  void refresh(Iterable<String> paths) {
+    if (read == null || searched == null || _disposed) return;
+    final before = _stale.length;
+    _stale.addAll(paths.where(_followed.contains));
+    if (_stale.length == before) return;
+    _refreshTimer?.cancel();
+    _refreshTimer = Timer(_refreshDelay, () => unawaited(_refreshStale()));
+  }
+
+  Future<void> _refreshStale() async {
+    final read = this.read;
+    final query = searched;
+    if (read == null || query == null) return;
+    final generation = _generation;
+    final paths = [..._stale];
+    _stale.clear();
+    final RegExp regExp;
+    try {
+      regExp = query.toRegExp();
+    } on FormatException {
+      return;
+    }
+    var changed = false;
+    for (final path in paths) {
+      List<IdeTextMatch> matches;
+      try {
+        final text = await read(path);
+        matches = ideMatchLines(
+          text,
+          regExp,
+          limit: query.maxResults,
+          multiline: query.isMultiline,
+        );
+      } on IdeFileNotFoundException {
+        matches = const [];
+      } on IdeBinaryFileException {
+        matches = const [];
+      } catch (_) {
+        // Not read this time (too large, a host away): left as it was.
+        continue;
+      }
+      if (_disposed || generation != _generation) return;
+      if (!_followed.contains(path)) continue;
+      changed = _rematched(path, matches) || changed;
+    }
+    if (changed) _changed();
+  }
+
+  /// [path]'s results now [matches]; whether anything changed.
+  bool _rematched(String path, List<IdeTextMatch> matches) {
+    final file = results.where((file) => file.path == path).firstOrNull;
+    if (file != null && _sameMatches(file.matches, matches)) return false;
+    if (file == null && matches.isEmpty) return false;
+    final selected = this.selected;
+    if (matches.isEmpty) {
+      results.remove(file);
+      collapsed.remove(path);
+    } else if (file == null) {
+      _insert(IdeSearchFileResult(path, [...matches]));
+    } else {
+      file.matches
+        ..clear()
+        ..addAll(matches);
+    }
+    // The selected match, where its line still has it; else its file's
+    // row, while it shows.
+    if (selected case (final selectedPath, final match)
+        when selectedPath == path) {
+      final same = match == null
+          ? null
+          : matches
+                .where((m) => m.line == match.line && m.start == match.start)
+                .firstOrNull;
+      this.selected = same != null
+          ? (path, same)
+          : matches.isEmpty
+          ? null
+          : (path, null);
+    }
+    return true;
+  }
+
+  static bool _sameMatches(List<IdeTextMatch> a, List<IdeTextMatch> b) {
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      final (x, y) = (a[i], b[i]);
+      if (x.line != y.line ||
+          x.endLine != y.endLine ||
+          x.start != y.start ||
+          x.end != y.end ||
+          x.text != y.text) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /// Watches the folders of [_followed], once the results coming in
+  /// settle.
+  void _watchSoon() {
+    if (watch == null || _watchesScheduled) return;
+    _watchesScheduled = true;
+    final generation = _generation;
+    Timer.run(() {
+      _watchesScheduled = false;
+      if (!_disposed && generation == _generation) _watchFollowed();
+    });
+  }
+
+  void _watchFollowed() {
+    final watch = this.watch;
+    if (watch == null) return;
+    final folders = <String, List<String>>{};
+    for (final path in _followed) {
+      final folder = _dirname(path);
+      final files = folders[folder];
+      if (files != null) {
+        files.add(path);
+      } else if (folders.length < _maxWatched) {
+        folders[folder] = [path];
+      }
+    }
+    for (final folder in _watches.keys.toList()) {
+      if (!folders.containsKey(folder)) {
+        unawaited(_watches.remove(folder)!.cancel());
+      }
+    }
+    for (final folder in folders.keys) {
+      _watches[folder] ??= watch(folder).listen(
+        (_) => refresh(_followed.where((path) => _dirname(path) == folder)),
+        onError: (Object _) {},
+      );
+    }
+  }
+
+  /// A remote host's paths may be Windows' or POSIX, whatever this one's.
+  static String _dirname(String path) =>
+      (path.contains(r'\') && !path.startsWith('/') ? p.windows : p.posix)
+          .dirname(path);
 
   /// Folders before the files beside them, then by name.
   static int _comparePaths(String a, String b) {
@@ -298,6 +542,7 @@ class IdeSearchSession extends ChangeNotifier {
     _debounce?.cancel();
     unawaited(_search?.cancel());
     _search = null;
+    _forget();
     query.clear();
     replace.clear();
     results.clear();
@@ -312,7 +557,11 @@ class IdeSearchSession extends ChangeNotifier {
   }
 
   void dismiss(IdeSearchFileResult file, [IdeTextMatch? match]) {
-    if (match == null || file.matches.length == 1) {
+    if (match == null) {
+      // Dismissed: not to come back as the file changes.
+      _followed.remove(file.path);
+      results.remove(file);
+    } else if (file.matches.length == 1) {
       results.remove(file);
     } else {
       file.matches.remove(match);
@@ -360,6 +609,7 @@ class IdeSearchSession extends ChangeNotifier {
     _disposed = true;
     _debounce?.cancel();
     unawaited(_search?.cancel());
+    _forget();
     query.dispose();
     replace.dispose();
     includes.dispose();
@@ -948,7 +1198,9 @@ class IdeSearchViewState extends State<IdeSearchView>
     // their tooltips (searchActionsTopBar.ts, in `MenuId.ViewTitle`).
     final keys = KeybindingService.instance;
     return ColoredBox(
-      color: widget.background ?? AppColors.sidebarSurface,
+      color:
+          widget.background ??
+          Islands.underOr(context, AppColors.sidebarSurface),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -1053,20 +1305,29 @@ class IdeSearchViewState extends State<IdeSearchView>
                     placeholder: context.l10n.searchTitle,
                     semanticsLabel: context.l10n.searchTitle,
                     padding: _widgetPadding,
+                    // Lines pasted kept, as upstream's: it grows with
+                    // them, and searches across lines.
+                    maxLines: _queryMaxLines,
                     validation: regExpError == null
                         ? null
                         : IdeInputValidation(regExpError),
                     onChanged: (_) => session.searchSoon(_root),
-                    onSubmitted: (_) => session.search(_root),
-                    // Escape leaves to the host where it asked for it
-                    // (the side panel's search closes with it); the IDE
-                    // passes none, and its own command handles the key.
-                    shortcuts: widget.onEscape == null
-                        ? const {}
-                        : {
-                            const SingleActivator(LogicalKeyboardKey.escape):
-                                widget.onEscape!,
-                          },
+                    shortcuts: {
+                      // Enter searches; Ctrl+Enter (on a Mac too) is a new
+                      // line, as upstream's `ctrlKeyMod | Enter`.
+                      const SingleActivator(LogicalKeyboardKey.enter): () =>
+                          session.search(_root),
+                      const SingleActivator(
+                        LogicalKeyboardKey.enter,
+                        control: true,
+                      ): () =>
+                          _insertNewline(session.query),
+                      // Escape leaves to the host where it asked for it
+                      // (the side panel's search closes with it); the IDE
+                      // passes none, and its own command handles the key.
+                      const SingleActivator(LogicalKeyboardKey.escape):
+                          ?widget.onEscape,
+                    },
                     toggles: [
                       IdeInputToggle(
                         icon: Codicons.caseSensitive,
@@ -1150,6 +1411,19 @@ class IdeSearchViewState extends State<IdeSearchView>
         ),
       ),
     );
+  }
+
+  /// How tall the search input grows, in lines.
+  static const _queryMaxLines = 8;
+
+  /// A line break where the caret is, in place of what is selected.
+  void _insertNewline(TextEditingController controller) {
+    final value = controller.value;
+    final selection = value.selection.isValid
+        ? value.selection
+        : TextSelection.collapsed(offset: value.text.length);
+    controller.value = value.replaced(selection, '\n');
+    _session.searchSoon(_root);
   }
 
   /// `.query-details`: Toggle Search Details, and the files to include and
@@ -1368,7 +1642,7 @@ class IdeSearchViewState extends State<IdeSearchView>
     file.path,
     LspRange(
       LspPosition(match.line, match.start),
-      LspPosition(match.line, match.end),
+      LspPosition(match.endLine, match.endColumn),
     ),
     focusEditor: focusEditor,
   );
@@ -1378,7 +1652,7 @@ class IdeSearchViewState extends State<IdeSearchView>
         '  ${match.line + 1},${match.start + 1}: ${match.text.trim()}';
     if (match != null) return line(match);
     return [
-      p.relative(file.path, from: _root),
+      hostRelative(file.path, from: _root),
       for (final match in file.matches) line(match),
     ].join('\n');
   }
@@ -1559,7 +1833,7 @@ class _FileRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final folder = p.relative(p.dirname(file.path), from: root);
+    final folder = hostRelative(hostDirname(file.path), from: root);
     return IdeListRow(
       selected: selected,
       focused: focused,
@@ -1580,7 +1854,7 @@ class _FileRow extends StatelessWidget {
             const SizedBox(width: 5),
             Expanded(
               child: IdeResourceLabel(
-                name: p.basename(file.path),
+                name: hostBasename(file.path),
                 description: folder == '.' ? null : folder,
                 nameColor: selected
                     ? _selectedForeground(focused: focused)

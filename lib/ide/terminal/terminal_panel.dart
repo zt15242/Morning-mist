@@ -30,6 +30,7 @@ import '../file_service.dart';
 import '../ide_hover.dart';
 import '../ide_menu.dart';
 import 'links/terminal_links.dart';
+import 'terminal_hosts.dart';
 import 'terminal_instance.dart';
 import 'terminal_profile_service.dart';
 import 'terminal_profiles.dart';
@@ -188,9 +189,19 @@ class TerminalPanel extends StatelessWidget {
     this.files,
     this.shownTask,
     this.onShowTask,
+    this.hosts,
+    this.place,
+    this.shown = true,
   });
 
   final TerminalService terminals;
+
+  /// Where else the terminals show (the chat's, sharing them): the panel
+  /// is [place] among [hosts]'s places, its view a mirror while another
+  /// has the terminal, and always while not [shown] (the IDE hidden).
+  final TerminalHosts? hosts;
+  final Object? place;
+  final bool shown;
 
   /// The background commands of the agent beside, listed with the
   /// terminals; [files] reads what their output links to.
@@ -219,6 +230,22 @@ class TerminalPanel extends StatelessWidget {
   /// Opens a link ⌘-clicked in a terminal.
   final ValueChanged<TerminalLink>? onOpenLink;
 
+  Widget _view(
+    TerminalInstance active, {
+    bool mirror = false,
+    VoidCallback? onActivate,
+  }) => TerminalView(
+    active,
+    key: ObjectKey(active),
+    mirror: mirror,
+    onActivate: onActivate,
+    skipShell: skipShell,
+    shouldSkipShell: shouldSkipShell,
+    resolveKey: resolveKey,
+    onKill: () => terminals.kill(active),
+    onOpenLink: onOpenLink,
+  );
+
   @override
   Widget build(BuildContext context) => ListenableBuilder(
     listenable: Listenable.merge([terminals, ?tasks]),
@@ -246,15 +273,18 @@ class TerminalPanel extends StatelessWidget {
                   )
                 : active == null
                 ? const SizedBox.shrink()
-                : TerminalView(
-                    active,
-                    key: ObjectKey(active),
-                    skipShell: skipShell,
-                    shouldSkipShell: shouldSkipShell,
-                    resolveKey: resolveKey,
-                    onKill: () => terminals.kill(active),
-                    onOpenLink: onOpenLink,
-                  ),
+                : switch ((hosts, place)) {
+                    (final hosts?, final place?) => HostedTerminalView(
+                      key: ObjectKey(active),
+                      hosts: hosts,
+                      place: place,
+                      instance: active,
+                      takes: shown,
+                      builder: (mirror, onActivate) =>
+                          _view(active, mirror: mirror, onActivate: onActivate),
+                    ),
+                    _ => _view(active),
+                  },
           ),
           if (terminals.instances.length > 1 || list.isNotEmpty)
             SizedBox(
@@ -268,6 +298,7 @@ class TerminalPanel extends StatelessWidget {
                 shownTask: task?.id,
                 onShowTask: onShowTask,
                 onStopTask: tasks?.stop,
+                onClearTasks: tasks?.clear,
               ),
             ),
         ],
@@ -289,20 +320,29 @@ class TerminalTitleActions extends StatelessWidget {
     required this.onNew,
     this.onNewWithProfile,
     this.onSelectDefaultProfile,
+    this.folders = const [],
   });
 
   final TerminalService terminals;
-  final VoidCallback onNew;
+
+  /// New Terminal, in [cwd] (else where the workspace's start).
+  final void Function({String? cwd}) onNew;
 
   /// A new terminal on a profile picked in the dropdown; none: no dropdown.
-  final ValueChanged<TerminalProfile>? onNewWithProfile;
+  final void Function(TerminalProfile profile, {String? cwd})? onNewWithProfile;
 
   /// Select Default Profile, from the dropdown.
   final VoidCallback? onSelectDefaultProfile;
 
+  /// A multi-folder workspace's folders: with more than one, New Terminal
+  /// (and each profile of the dropdown) asks which it starts in.
+  final List<String> folders;
+
+  bool get _askFolder => folders.length > 1;
+
   Future<List<IdeMenuEntry>> _profileEntries(
     AppLocalizations l10n,
-    ValueChanged<TerminalProfile> onNewWithProfile,
+    void Function(TerminalProfile profile, {String? cwd}) onNewWithProfile,
   ) async {
     final profiles = terminals.profiles;
     await profiles.refresh();
@@ -317,7 +357,13 @@ class TerminalTitleActions extends StatelessWidget {
             profile.name == defaultName
                 ? l10n.termProfileDefault(profile.name)
                 : profile.name,
-            onSelected: () => onNewWithProfile(profile),
+            onSelected: _askFolder ? null : () => onNewWithProfile(profile),
+            submenu: _askFolder
+                ? terminalFolderMenu(
+                    folders,
+                    (folder) => onNewWithProfile(profile, cwd: folder),
+                  )
+                : null,
           ),
       ],
       [
@@ -336,6 +382,12 @@ class TerminalTitleActions extends StatelessWidget {
     builder: (context, _) {
       final instances = terminals.instances;
       final single = instances.length == 1 ? instances.single : null;
+      final newTooltip = switch (KeybindingService.instance.labelFor(
+        'workbench.action.terminal.new',
+      )) {
+        final keys? => context.l10n.termNewTerminalKeys(keys),
+        null => context.l10n.termNewTerminal,
+      };
       return Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -354,16 +406,19 @@ class TerminalTitleActions extends StatelessWidget {
                   )
                 : _SingleTab(terminals: terminals, instance: single),
           const SizedBox(width: 2),
-          IdeActionButton(
-            icon: Codicons.add,
-            tooltip: switch (KeybindingService.instance.labelFor(
-              'workbench.action.terminal.new',
-            )) {
-              final keys? => context.l10n.termNewTerminalKeys(keys),
-              null => context.l10n.termNewTerminal,
-            },
-            onPressed: onNew,
-          ),
+          if (_askFolder)
+            IdeMenuButton(
+              icon: Codicons.add,
+              tooltip: newTooltip,
+              entries: () =>
+                  terminalFolderMenu(folders, (folder) => onNew(cwd: folder)),
+            )
+          else
+            IdeActionButton(
+              icon: Codicons.add,
+              tooltip: newTooltip,
+              onPressed: onNew,
+            ),
           if (onNewWithProfile case final onNewWithProfile?)
             IdeMenuButton(
               icon: Codicons.chevronDown,

@@ -509,17 +509,21 @@ class RemoteClient {
     {'root': root, 'query': textQueryToJson(query)},
   ).map((item) => searchItemFromJson(_map(item)));
 
-  /// `git` there; [limit] as `runGit`'s (a server before it reads all).
+  /// `git` there; [limit], [stdin] and [environment] as `runGit`'s.
   Future<IdeGitOutput> git(
     List<String> arguments, {
     required String cwd,
     int? limit,
+    String? stdin,
+    Map<String, String>? environment,
   }) async {
     final result = _map(
       await peer.request(RemoteProtocol.gitRun, {
         'arguments': arguments,
         'cwd': cwd,
         'limit': ?limit,
+        'stdin': ?stdin,
+        'environment': ?environment,
       }),
     );
     if (result['truncated'] == true) {
@@ -535,8 +539,12 @@ class RemoteClient {
     );
   }
 
-  Stream<void> watchRepository(String root) =>
-      openStream(RemoteProtocol.gitWatch, {'root': root}).map((_) {});
+  /// The paths changed in the repository at [root]; '' for a change from a
+  /// server that does not say where (one from before it did).
+  Stream<String> watchRepository(String root) => openStream(
+    RemoteProtocol.gitWatch,
+    {'root': root},
+  ).map((path) => path is String ? path : '');
 
   // --- Processes -------------------------------------------------------------
 
@@ -751,18 +759,11 @@ class RemoteClient {
 
   // --- Review ----------------------------------------------------------------
 
-  /// The review store of the project at [root] there; null where there is
-  /// none (no such folder).
-  Future<ReviewStore?> openReview(String root) async {
-    final opened = await peer.request(RemoteProtocol.reviewOpen, {
-      'root': root,
-    });
+  /// The review store of the files there.
+  Future<ReviewStore?> openReview() async {
+    final opened = await peer.request(RemoteProtocol.reviewOpen, const {});
     if (opened is! Map) return null;
-    return RemoteReviewStore(
-      peer,
-      opened['id'] as int,
-      opened['root'] as String,
-    );
+    return RemoteReviewStore(peer, opened['id'] as int);
   }
 
   // --- Terminals -------------------------------------------------------------
@@ -778,10 +779,13 @@ class RemoteClient {
     String? locale,
     String? version,
     String? nonce,
+    Map<String, String>? environment,
   }) async {
     final started = _map(
       await peer.request(RemoteProtocol.ptyStart, {
         'cwd': cwd,
+        if (environment != null && environment.isNotEmpty)
+          'environment': environment,
         'columns': columns,
         'rows': rows,
         'shellIntegration': shellIntegration,
@@ -862,12 +866,16 @@ class RemoteClient {
   // --- Port forwarding -------------------------------------------------------
 
   /// A port there whose connections go to [localPort] here (on
-  /// [localHost]).
+  /// [localHost]): [remotePort], when given (failing where it is taken),
+  /// else any.
   Future<RemoteForward> forward(
     int localPort, {
     String localHost = '127.0.0.1',
+    int? remotePort,
   }) async {
-    final result = _map(await peer.request(RemoteProtocol.tcpListen));
+    final result = _map(
+      await peer.request(RemoteProtocol.tcpListen, {'port': ?remotePort}),
+    );
     final id = result['id'] as int;
     final forward = RemoteForward._(this, id, result['port'] as int, localPort);
     _forwards[id] = forward;
@@ -876,6 +884,10 @@ class RemoteClient {
   }
 
   final Map<int, String> _localHosts = {};
+
+  /// The ports there forwarded here ([forward]).
+  Iterable<int> get forwardedPorts =>
+      _forwards.values.map((forward) => forward.remotePort);
 
   /// A connection to [port] of the remote host (on its [host]).
   Future<RemoteTunnel> connectTcp(int port, {String host = '127.0.0.1'}) async {
@@ -915,6 +927,8 @@ class RemoteClient {
       return;
     }
     _sockets[conn] = socket;
+    // Reset by the other end: told by listen's onError.
+    unawaited(socket.done.then<void>((_) {}, onError: (Object _) {}));
     for (final data in _pendingData.remove(conn) ?? const <Uint8List>[]) {
       socket.add(data);
     }

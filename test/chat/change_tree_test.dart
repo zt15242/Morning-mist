@@ -2,6 +2,7 @@ import 'package:baocode/chat/chat_models.dart';
 import 'package:baocode/chat/panels/activity_strip.dart';
 import 'package:baocode/chat/panels/change_tree.dart';
 import 'package:baocode/ide/ide_list.dart';
+import 'package:baocode/ide/ide_menu.dart';
 import 'package:baocode/theme/codicons.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -14,6 +15,7 @@ void main() {
     ValueChanged<List<FileChange>>? onKeep,
     ValueChanged<List<FileChange>>? onUndo,
     ValueChanged<FileChange>? onOpen,
+    List<List<IdeMenuEntry>> Function(FileChange file)? fileActions,
   }) => tester.pumpWidget(
     MaterialApp(
       home: Scaffold(
@@ -30,6 +32,7 @@ void main() {
               onKeepFiles: onKeep ?? (_) {},
               onUndoFiles: onUndo,
               onOpenFile: onOpen,
+              fileActions: fileActions,
             ),
           ),
         ),
@@ -129,6 +132,37 @@ void main() {
     expect(undone.single, ['/p/lib/src/a.dart', '/p/lib/src/b.dart']);
   });
 
+  testWidgets('a file\'s menu has the ways to open it given, after its '
+      'changes; a folder\'s not (#207)', (tester) async {
+    final opened = <String>[];
+    await pump(
+      tester,
+      changes,
+      onOpen: (_) {},
+      fileActions: (file) => [
+        [IdeMenuAction('Open File', onSelected: () => opened.add(file.path))],
+      ],
+    );
+    await expand(tester);
+    await tester.tap(find.text('README.md'), buttons: kSecondaryButton);
+    await tester.pumpAndSettle();
+    expect(
+      tester.getTopLeft(find.text('Open Changes')).dy,
+      lessThan(tester.getTopLeft(find.text('Open File')).dy),
+    );
+    expect(
+      tester.getTopLeft(find.text('Open File')).dy,
+      lessThan(tester.getTopLeft(find.text('Keep')).dy),
+    );
+    await tester.tap(find.text('Open File'));
+    await tester.pumpAndSettle();
+    expect(opened, ['/p/README.md']);
+
+    await tester.tap(find.text('lib/src'), buttons: kSecondaryButton);
+    await tester.pumpAndSettle();
+    expect(find.text('Open File'), findsNothing);
+  });
+
   testWidgets('no Undo where files cannot be undone', (tester) async {
     await pump(tester, [
       ...changes,
@@ -171,5 +205,71 @@ void main() {
     await tester.drag(find.text('f0.txt'), const Offset(0, -20000));
     await tester.pump();
     expect(find.text('f499.txt'), findsOneWidget);
+  });
+
+  group('the sash', () {
+    final sash = find.byKey(const ValueKey('activity-strip-sash'));
+    double treeRows(WidgetTester tester) =>
+        tester.getSize(find.byType(ChangeTree)).height /
+        IdeListColors.rowHeight;
+
+    testWidgets('none while every row shows', (tester) async {
+      // lib/src, its two files and README.md: four rows.
+      await pump(tester, changes);
+      await expand(tester);
+      expect(treeRows(tester), 4);
+      expect(sash, findsNothing);
+    });
+
+    testWidgets('dragged, as high as its rows; double-clicked, seven again', (
+      tester,
+    ) async {
+      await pump(tester, [
+        for (var i = 0; i < 10; i++)
+          FileChange(path: '/p/f$i.txt', added: 1, removed: 0),
+      ]);
+      expect(sash, findsNothing);
+      await expand(tester);
+      expect(treeRows(tester), 7);
+      await tester.drag(sash, const Offset(0, -500));
+      await tester.pumpAndSettle();
+      expect(treeRows(tester), 10);
+
+      await tester.drag(sash, Offset(0, IdeListColors.rowHeight * 3));
+      await tester.pumpAndSettle();
+      expect(treeRows(tester), 7);
+
+      await tester.drag(sash, Offset(0, IdeListColors.rowHeight * 2));
+      await tester.pumpAndSettle();
+      expect(treeRows(tester), 5);
+
+      await tester.tap(sash);
+      await tester.pump(const Duration(milliseconds: 50));
+      await tester.tap(sash);
+      await tester.pumpAndSettle();
+      expect(treeRows(tester), 7);
+    });
+
+    testWidgets('a folder closed, from the rows still shown', (tester) async {
+      // lib, its ten files and two at the top: thirteen rows.
+      await pump(tester, [
+        for (var i = 0; i < 10; i++)
+          FileChange(path: '/p/lib/f$i.txt', added: 1, removed: 0),
+        const FileChange(path: '/p/a.txt', added: 1, removed: 0),
+        const FileChange(path: '/p/b.txt', added: 1, removed: 0),
+      ]);
+      await expand(tester);
+      await tester.drag(sash, const Offset(0, -1000));
+      await tester.pumpAndSettle();
+      expect(treeRows(tester), 13);
+
+      await tester.tap(find.text('lib'));
+      await tester.pump();
+      expect(treeRows(tester), 3);
+      // Shorter at once, not after the ten rows it no longer has.
+      await tester.drag(sash, Offset(0, IdeListColors.rowHeight));
+      await tester.pumpAndSettle();
+      expect(treeRows(tester), 2);
+    });
   });
 }

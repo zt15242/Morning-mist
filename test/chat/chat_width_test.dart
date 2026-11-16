@@ -6,13 +6,13 @@ import 'package:baocode/chat/chat_width.dart';
 import 'package:baocode/chat/widgets/chat_minimap.dart';
 import 'package:baocode/chat/composer/composer.dart';
 import 'package:baocode/ide/ide_color_theme_picker.dart';
+import 'package:baocode/ide/ide_step_slider.dart';
 import 'package:baocode/settings/pages/appearance_page.dart';
 import 'package:baocode/settings/pages/settings_widgets.dart';
 import 'package:baocode/settings/user_settings.dart';
 import 'package:baocode/theme/app_theme.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 
@@ -45,7 +45,6 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: buildAppTheme(),
-        localizationsDelegates: const [FlutterQuillLocalizations.delegate],
         home: ChatScreen(session: session),
       ),
     );
@@ -145,7 +144,7 @@ void main() {
     // size's come after it.
     final slider = find.descendant(
       of: find.byType(SettingsSlider).first,
-      matching: find.byType(Slider),
+      matching: find.byType(IdeStepSlider),
     );
     await tester.tapAt(tester.getTopRight(slider) + const Offset(-4, 10));
     await tester.pump();
@@ -204,4 +203,7 @@ class _Themes extends ChangeNotifier implements IdeColorThemeController {
 
   @override
   Future<void> setColorTheme(String id, {bool preview = false}) async {}
+
+  @override
+  Future<void> restoreColorThemePreview() async {}
 }

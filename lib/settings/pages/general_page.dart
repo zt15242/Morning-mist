@@ -4,7 +4,6 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 
 import '../../ide/explorer_excludes.dart';
-import '../../ide/ide_agent_changes.dart';
 import '../../ide/ide_button.dart';
 import '../../ide/ide_menu.dart';
 import '../../ide/ide_notifications.dart' show IdeSeverity;
@@ -13,6 +12,7 @@ import '../../kernel/claude_code/claude_path_setting.dart';
 import '../../kernel/commit_attribution.dart';
 import '../../kernel/prompt_suggestions.dart';
 import '../../chat/composer/composer_polish.dart' show ComposerPolishSetting;
+import '../../chat/rewind_files_setting.dart';
 import '../../chat/widgets/turn_footer.dart' show LiveTurnStatsSetting;
 import '../../kernel/queued_messages.dart';
 import '../../l10n/l10n.dart';
@@ -353,6 +353,19 @@ class GeneralSettingsPage extends StatelessWidget {
                         l10n.generalSettingsQueuedDuringTurn,
                   },
                 ),
+                _choiceRow(
+                  context,
+                  key: RewindFilesSetting.settingKey,
+                  label: l10n.generalSettingsRewindFiles,
+                  description: l10n.generalSettingsRewindFilesDescription,
+                  values: {
+                    RewindFilesSetting.ask.name: l10n.generalSettingsRewindAsk,
+                    RewindFilesSetting.revert.name:
+                        l10n.generalSettingsRewindRevert,
+                    RewindFilesSetting.keep.name:
+                        l10n.generalSettingsRewindKeep,
+                  },
+                ),
                 SettingsSwitchRow(
                   label: l10n.generalSettingsPromptSuggestions,
                   description: l10n.generalSettingsPromptSuggestionsDescription,
@@ -430,18 +443,6 @@ class GeneralSettingsPage extends StatelessWidget {
               children: [
                 SettingsCard(
                   children: [
-                    SettingsSwitchRow(
-                      label: l10n.generalSettingsAutoOpenChanges,
-                      description:
-                          l10n.generalSettingsAutoOpenChangesDescription,
-                      value: IdeAgentChanges.enabledBy(
-                        settings?[IdeAgentChanges.enabledSetting],
-                      ),
-                      onChanged: (on) => _write(
-                        IdeAgentChanges.enabledSetting,
-                        on ? true : null,
-                      ),
-                    ),
                     SettingsRow(
                       label: l10n.explorerExcludeSetting,
                       description: l10n.explorerExcludeSettingDescription,

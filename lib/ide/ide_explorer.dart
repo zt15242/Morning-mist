@@ -19,10 +19,13 @@ import '../chat/composer/file_drop.dart';
 import '../keybindings/keybinding_service.dart';
 import '../l10n/l10n.dart';
 import '../platform/app_paths.dart';
+import '../theme/app_theme.dart' show AppColors;
 import '../theme/codicons.dart';
+import 'host_paths.dart';
 import 'ide_hover.dart';
 import '../theme/material_file_icons.dart';
 import '../theme/workbench_theme.dart' show themeColors;
+import '../workspace/islands.dart';
 import '../workspace/window_controls.dart';
 
 import 'package:bao_editor/monaco/vs/base/common/labels.dart';
@@ -522,6 +525,9 @@ class IdeExplorer extends StatefulWidget {
     this.onError,
     this.onOpenInDefaultApp,
     this.onFindInFolder,
+    this.onShowHistory,
+    this.onShowLocalHistory,
+    this.onCompareFiles,
     this.onOpenInTerminal,
     this.isBound,
     this.local = true,
@@ -575,6 +581,17 @@ class IdeExplorer extends StatefulWidget {
 
   /// Find in Folder...: searches in a folder.
   final ValueChanged<String>? onFindInFolder;
+
+  /// Shows the Git log of a file or folder: Show History.
+  final ValueChanged<String>? onShowHistory;
+
+  /// Show Local History: a file's versions as saved, apart from Git.
+  final ValueChanged<String>? onShowLocalHistory;
+
+  /// Compares two files, the first's text against the second's (JetBrains'
+  /// Compare Files, VS Code's Compare with Selected), or two folders.
+  final void Function(String original, String modified, {bool folders})?
+  onCompareFiles;
 
   /// Open in Terminal: opens a terminal in the folder, or in the one
   /// holding the file; null where there are no terminals.
@@ -651,6 +668,10 @@ class IdeExplorerState extends State<IdeExplorer>
       }
     }
   }
+
+  /// The file or folder Select for Compare chose, to compare another of
+  /// its kind with.
+  ({String path, bool folder})? _selectedForCompare;
 
   @override
   void dispose() {
@@ -1710,7 +1731,7 @@ class IdeExplorerState extends State<IdeExplorer>
       for (final file in toPaste.files) {
         final source = file.path;
         final sourceName = toPaste.external
-            ? p.basename(source)
+            ? hostBasename(source)
             : _controller.paths.basename(source);
         final target = _controller.paths.join(folder, sourceName);
         if (toPaste.cut && target == source) continue;
@@ -1870,6 +1891,43 @@ class IdeExplorerState extends State<IdeExplorer>
               onSelected: () => widget.onFindInFolder!(path),
             ),
         ],
+        [
+          if (widget.onShowHistory case final show?
+              when !multiple &&
+                  (widget.git != null || widget.repositories.isNotEmpty))
+            IdeMenuAction(l10n.gitShowHistory, onSelected: () => show(path)),
+          if (widget.onShowLocalHistory case final show?
+              when !multiple && !isFolder)
+            IdeMenuAction(l10n.localHistoryShow, onSelected: () => show(path)),
+        ],
+        if (widget.onCompareFiles case final compare?)
+          [
+            if (targets.length == 2 &&
+                targets.first.isDirectory == targets.last.isDirectory)
+              IdeMenuAction(
+                l10n.explorerCompareSelected,
+                onSelected: () => compare(
+                  targets.first.path,
+                  targets.last.path,
+                  folders: targets.first.isDirectory,
+                ),
+              )
+            else if (!multiple) ...[
+              if (_selectedForCompare case (path: final selected, :final folder)
+                  when selected != path && folder == isFolder)
+                IdeMenuAction(
+                  l10n.explorerCompareWithSelected(
+                    _controller.paths.basename(selected),
+                  ),
+                  onSelected: () => compare(selected, path, folders: folder),
+                ),
+              IdeMenuAction(
+                l10n.explorerSelectForCompare,
+                onSelected: () =>
+                    _selectedForCompare = (path: path, folder: isFolder),
+              ),
+            ],
+          ],
         [
           if (!isRoot) ...[
             IdeMenuAction(
@@ -2033,7 +2091,10 @@ class IdeExplorerState extends State<IdeExplorer>
 
     final tree = ColoredBox(
       // Modern UI: the panes are the side bar's.
-      color: widget.background ?? themeColors['sideBar.background'],
+      color:
+          widget.background ??
+          IslandSurface.colorOf(context) ??
+          AppColors.background,
       child: Focus(
         focusNode: _focusNode,
         onKeyEvent: _onKey,
@@ -2135,7 +2196,6 @@ class IdeExplorerState extends State<IdeExplorer>
                     },
                     builder: (context, _, _) => inDrop
                         ? DecoratedBox(
-                            position: DecorationPosition.foreground,
                             decoration: BoxDecoration(
                               color: themeColors['list.dropBackground'],
                             ),
@@ -2176,7 +2236,6 @@ class IdeExplorerState extends State<IdeExplorer>
       },
       builder: (context, _, _) => _dropFolder == root
           ? DecoratedBox(
-              position: DecorationPosition.foreground,
               decoration: BoxDecoration(
                 color: themeColors['list.dropBackground'],
               ),

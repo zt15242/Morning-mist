@@ -3,6 +3,39 @@ import FlutterMacOS
 
 @main
 class AppDelegate: FlutterAppDelegate {
+  /// Made with the main menu, before the window starts Flutter (see
+  /// MainFlutterWindow.awakeFromNib).
+  override init() {
+    AppDelegate.raiseOpenFileLimit()
+    super.init()
+    #if DEBUG
+    // The Dock finds an app's icon by its bundle identifier: a debug build
+    // run beside the installed BaoCode, the same identifier, would show the
+    // installed one's. Set on the app itself, the DEV BUILD one shows.
+    NotificationCenter.default.addObserver(
+      forName: NSApplication.didFinishLaunchingNotification, object: nil, queue: .main
+    ) { _ in
+      if let icon = NSImage(named: "AppIcon-Dev") { NSApp.applicationIconImage = icon }
+    }
+    #endif
+  }
+
+  /// An app launched from the Dock or Finder may hold 256 descriptors at
+  /// once, as launchd has it: the agents, terminals, language servers and
+  /// Git the app runs come near that, and a process started past it fails
+  /// ("Too many open files"). Worse, Dart leaves the child it had forked
+  /// then waiting forever, never exec'd, with a copy of every descriptor
+  /// the app had open: the pipes of the processes running then never come
+  /// to an end, so are never closed, and the next start fails sooner. As
+  /// many as macOS lets a process have without asking for more (OPEN_MAX).
+  static func raiseOpenFileLimit() {
+    var limit = rlimit()
+    guard getrlimit(RLIMIT_NOFILE, &limit) == 0 else { return }
+    let wanted = min(rlim_t(OPEN_MAX), limit.rlim_max)
+    guard limit.rlim_cur < wanted else { return }
+    limit.rlim_cur = wanted
+    setrlimit(RLIMIT_NOFILE, &limit)
+  }
   /// Closing the window quits, unless the menu bar icon is up: the close
   /// button only hides the window then, and AppKit counts a window ordered
   /// out as closed (see Attention.swift). With the IDE's windows, the app
@@ -177,12 +210,24 @@ final class OpenRequests {
     }
   }
 
-  /// The marker of a site's import of an upstream (code_args.dart's
-  /// importRequestMarker).
+  /// The marker of a `baocode://` link Flutter reads itself (code_args.dart's
+  /// importRequestMarker): a site's import of an upstream, the channel
+  /// build's setup, a file to open in the IDE.
   static let importMarker = "\u{0}import"
 
+  /// Whether [request] is a site's link, which asks in the main window (a
+  /// file link opens in the IDE instead).
   static func isImport(_ request: [String]) -> Bool {
-    request.first == importMarker
+    request.first == importMarker && !isFileLink(request)
+  }
+
+  /// Whether [request] is a `baocode://file/…` link (see FileLink in
+  /// code_args.dart, which reads it).
+  static func isFileLink(_ request: [String]) -> Bool {
+    guard request.first == importMarker, request.count > 1,
+      let url = URL(string: request[1])
+    else { return false }
+    return url.host?.lowercased() == "file"
   }
 
   /// What a `baocode://` URL asks. The Finder extension's (see
@@ -194,12 +239,17 @@ final class OpenRequests {
   /// then them). A site's (baocode.dev/import): `provider/import`, an
   /// upstream to add, the link as it came after its marker, which Flutter
   /// reads (upstream_import.dart); so too baocode.dev/activate's,
-  /// `activate`, the channel build's setup (channel_setup.dart). Nil for
-  /// any other URL, or one without absolute paths.
+  /// `activate`, the channel build's setup (channel_setup.dart). A page's
+  /// or a tool's, as VS Code's `vscode://file/…`: `file`, a file to open in
+  /// the IDE at a line, the link after the same marker (FileLink in
+  /// code_args.dart). Nil for any other URL, or one without absolute paths.
   static func request(from url: URL) -> [String]? {
     guard url.scheme == "baocode",
       let components = URLComponents(url: url, resolvingAgainstBaseURL: false)
     else { return nil }
+    if components.host?.lowercased() == "file" {
+      return [importMarker, url.absoluteString]
+    }
     if components.host == "provider" {
       return components.path == "/import" ? [importMarker, url.absoluteString] : nil
     }

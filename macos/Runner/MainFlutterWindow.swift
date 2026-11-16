@@ -35,14 +35,18 @@ class BaoWindow: NSWindow {
     titleVisibility = .hidden
     titlebarAppearsTransparent = true
     styleMask.insert(.fullSizeContentView)
-    isMovableByWindowBackground = true
+    // Not moved by its title bar on its own: the Window Server starts that
+    // drag before the app sees the press, so a split pane's title, under
+    // the title bar, could not be dragged. Flutter, which knows what is
+    // under the press, moves the window instead (dragWindow).
+    isMovable = false
     // One window a folder: no system tabs (the IDE has its own).
     tabbingMode = .disallowed
-    // See-through, for the sidebar's material (see VibrantContent); light
-    // or dark as the app's color theme is, whatever the system's appearance.
-    // The last theme's until Flutter says (setAppearance).
-    isOpaque = false
-    backgroundColor = .clear
+    // See-through, for the sidebar's material (see VibrantContent), where it
+    // blurs (see keepOpaque); light or dark as the app's color theme is,
+    // whatever the system's appearance. The last theme's until Flutter says
+    // (setAppearance).
+    keepOpaque(!Self.keptWindowBlur)
     appearance = NSAppearance(named: Self.keptDarkAppearance ? .darkAqua : .aqua)
     flutterViewController.backgroundColor = .clear
 
@@ -63,8 +67,10 @@ class BaoWindow: NSWindow {
       )
     }
 
-    self.contentViewController = VibrantContent(
-      flutter: flutterViewController, size: windowFrame.size)
+    let content = VibrantContent(flutter: flutterViewController, size: windowFrame.size)
+    // Blurred or not as the app last said (setWindowBlur).
+    content.blurred = Self.keptWindowBlur
+    self.contentViewController = content
     self.setFrame(windowFrame, display: true)
     self.contentMinSize = Self.minimumSize
 
@@ -128,14 +134,18 @@ class BaoWindow: NSWindow {
           let container = titleBar.superview
     else { return }
     let buttonHeight = close.frame.height
-    let fromTop = { (y: CGFloat, height: CGFloat) in
-      titleBar.isFlipped ? y + buttonHeight / 2 : height - y - buttonHeight / 2
+    // How far below the container's top a point of the title bar's is,
+    // and back: through AppKit's conversion, whichever of them is flipped
+    // and wherever in the container the title bar is: as the container
+    // grows, a window may keep it at its top rather than its foot, the
+    // buttons then placed as from the foot going up past the window's edge.
+    let fromTop = { (y: CGFloat) -> CGFloat in
+      let point = container.convert(NSPoint(x: 0, y: y), from: titleBar)
+      return container.isFlipped ? point.y : container.bounds.height - point.y
     }
     if trafficLightsHome == nil {
       if trafficLightsDrop == 0 { return }
-      trafficLightsHome = (
-        container.frame.height, fromTop(close.frame.origin.y, container.frame.height)
-      )
+      trafficLightsHome = (container.frame.height, fromTop(close.frame.midY))
     }
     guard let home = trafficLightsHome else { return }
     let center = home.center + trafficLightsDrop
@@ -143,14 +153,60 @@ class BaoWindow: NSWindow {
     bar.size.height = max(home.barHeight, center * 2)
     bar.origin.y = frame.height - bar.size.height
     container.frame = bar
-    let y = titleBar.isFlipped
-      ? center - buttonHeight / 2 : bar.height - center - buttonHeight / 2
+    // The title bar as tall as the container, the buttons inside it.
+    titleBar.frame = container.bounds
+    let inContainer = NSPoint(
+      x: 0, y: container.isFlipped ? center : container.bounds.height - center)
+    let y = titleBar.convert(inContainer, from: container).y - buttonHeight / 2
     for kind in [NSWindow.ButtonType.closeButton, .miniaturizeButton, .zoomButton] {
       guard let button = standardWindowButton(kind) else { continue }
       button.setFrameOrigin(NSPoint(x: button.frame.origin.x, y: y))
-    }  }
+    }
+  }
 
   private var drops: FileDropView?
+
+  /// The press under way, for Flutter's dragWindow: by the time Flutter has
+  /// seen it move, the current event is a later one.
+  private var press: NSEvent?
+
+  /// The mouse-up of a press the Window Server took to move the window,
+  /// until it comes: it may not (see dragWindow).
+  private var upOwed = false
+
+  override func sendEvent(_ event: NSEvent) {
+    switch event.type {
+    case .leftMouseUp:
+      press = nil
+      upOwed = false
+    case .leftMouseDown, .rightMouseDown, .otherMouseDown, .mouseMoved:
+      // Past the drag with no mouse-up: Flutter is given one where it
+      // ended, or it would take the button for still down.
+      if upOwed, let up = NSEvent.mouseEvent(
+        with: .leftMouseUp, location: event.locationInWindow,
+        modifierFlags: [], timestamp: event.timestamp,
+        windowNumber: windowNumber, context: nil,
+        eventNumber: 0, clickCount: 1, pressure: 0
+      ) {
+        upOwed = false
+        super.sendEvent(up)
+      }
+      if event.type == .leftMouseDown { press = event }
+    default:
+      break
+    }
+    super.sendEvent(event)
+  }
+
+  /// Moves the window with [press], as its title bar would have: the Window
+  /// Server takes the drag from here (performDrag works with the window not
+  /// movable on its own), and may not send the press's mouse-up.
+  private func dragWindow() {
+    guard let press, NSEvent.pressedMouseButtons & 1 != 0 else { return }
+    self.press = nil
+    performDrag(with: press)
+    upOwed = true
+  }
 
   /// Keeps the Flutter view's scale the window's. Flutter takes the pixel
   /// ratio from the view's layer (`contentsScale`) but the size in pixels
@@ -190,6 +246,12 @@ class BaoWindow: NSWindow {
       // Floating: above other apps' windows, as a pinned window should be.
       level = (call.arguments as? Bool ?? false) ? .floating : .normal
       result(nil)
+    case "toggleFullScreen":
+      // As the View menu's Enter Full Screen (⌃⌘F): answered with whether
+      // it is going to be, the system animating the change after.
+      let entering = !styleMask.contains(.fullScreen)
+      toggleFullScreen(nil)
+      result(entering)
     case "windowRoom":
       // How much wider and taller the window can get on its screen (see
       // growWindow): none in full screen.
@@ -216,6 +278,10 @@ class BaoWindow: NSWindow {
       // grown by twice that as the interface is zoomed (see ui_zoom.dart).
       trafficLightsDrop = CGFloat(call.arguments as? Double ?? 0)
       placeTrafficLights()
+      result(nil)
+    case "dragWindow":
+      // A press dragged on the empty part of the title bar Flutter draws.
+      dragWindow()
       result(nil)
     case "handleTitleDoubleClick":
       // A double click on the empty part of the title bar Flutter draws
@@ -318,6 +384,16 @@ class BaoWindow: NSWindow {
       let pasteboard = NSPasteboard.general
       result(pasteboard.canReadObject(
         forClasses: [NSString.self, NSURL.self, NSImage.self], options: nil))
+    case "hasPasteboardText":
+      // The text fields' Paste (the engine's Clipboard.hasStrings, see
+      // lib/platform/app_binding.dart): the types alone. Reading the text
+      // waits on the app that copied it, and one that hangs held the
+      // window with it.
+      result(NSPasteboard.general.availableType(from: [.string]) != nil)
+    case "writePasteboardMarkdown":
+      result(Self.writePasteboardMarkdown(call.arguments as? [String: Any] ?? [:]))
+    case "readPasteboardMarkdown":
+      result(Self.readPasteboardMarkdown())
     case "trashItem":
       // The IDE's Move to Trash (Finder's Put Back works on it).
       guard let path = call.arguments as? String else {
@@ -357,6 +433,27 @@ class BaoWindow: NSWindow {
   }
 
   static let darkAppearanceKey = "BaoCodeDarkAppearance"
+  static let windowBlurKey = "BaoCodeWindowBlur"
+
+  /// Whether the windows were last blurred underneath; not the first time.
+  static var keptWindowBlur: Bool {
+    UserDefaults.standard.bool(forKey: windowBlurKey)
+  }
+
+  /// The material under the Flutter view blurring what is behind the
+  /// window, or not (Flutter then paints the window opaque).
+  func setBlurred(_ blurred: Bool) {
+    (contentViewController as? VibrantContent)?.blurred = blurred
+    keepOpaque(!blurred)
+  }
+
+  /// Opaque where nothing behind the window shows through it: the Window
+  /// Server, drawing each of the app's frames, then neither blends the
+  /// window over what is behind it nor draws that first.
+  private func keepOpaque(_ opaque: Bool) {
+    isOpaque = opaque
+    backgroundColor = opaque ? .windowBackgroundColor : .clear
+  }
 
   /// Whether the last color theme was dark; dark the first time.
   static var keptDarkAppearance: Bool {
@@ -483,6 +580,30 @@ class BaoWindow: NSWindow {
     return pasteboard.writeObjects([item])
   }
 
+  /// What an editor copied, beside its text: its markdown, the composer's
+  /// tags and all (see lib/platform/native_md_clipboard.dart).
+  static let markdownType = NSPasteboard.PasteboardType("dev.baocode.markdown")
+
+  /// Puts `text` on the clipboard for other apps, and beside it `copy`
+  /// (an editor's, as JSON, kept as it is) for the app's editors.
+  static func writePasteboardMarkdown(_ arguments: [String: Any]) -> Bool {
+    guard let text = arguments["text"] as? String,
+          let copy = arguments["copy"] as? String
+    else { return false }
+    let item = NSPasteboardItem()
+    item.setString(text, forType: .string)
+    item.setString(copy, forType: markdownType)
+    let pasteboard = NSPasteboard.general
+    pasteboard.clearContents()
+    return pasteboard.writeObjects([item])
+  }
+
+  /// The editors' copy on the clipboard; nil when something was copied
+  /// since (that cleared it).
+  static func readPasteboardMarkdown() -> String? {
+    NSPasteboard.general.string(forType: markdownType)
+  }
+
   /// Images on the clipboard: copied image files, or, when there is no
   /// text to paste, copied image data (a screenshot, an image from a
   /// browser). Text wins over image data: apps put a picture of copied
@@ -528,6 +649,9 @@ class MainFlutterWindow: BaoWindow {
     RegisterGeneratedPlugins(registry: flutterViewController)
 
     let messenger = flutterViewController.engine.binaryMessenger
+
+    // The main thread watched, its hangs written down (see HangWatchdog.swift).
+    HangWatchdog.shared.start(messenger: messenger)
 
     // Notifications, the Dock's badge and the menu bar icon (see
     // lib/notifications/).
@@ -581,6 +705,15 @@ class MainFlutterWindow: BaoWindow {
       UserDefaults.standard.set(dark, forKey: Self.darkAppearanceKey)
       for window in NSApp.windows where window is FlutterHostWindow {
         window.appearance = NSAppearance(named: dark ? .darkAqua : .aqua)
+      }
+      result(nil)
+    case "setWindowBlur":
+      // Settings → Appearance: the system's blur under every window, or
+      // none. Kept for the next start.
+      let blurred = call.arguments as? Bool ?? false
+      UserDefaults.standard.set(blurred, forKey: Self.windowBlurKey)
+      for case let window as BaoWindow in NSApp.windows {
+        window.setBlurred(blurred)
       }
       result(nil)
     case "setFileMenuTitles":
@@ -652,9 +785,23 @@ class MainFlutterWindow: BaoWindow {
 /// The window's content: the system's sidebar material, blurring what is
 /// behind the window, under the Flutter view. Flutter paints over it all
 /// but the sidebar, which only tints it (see AppColors.sidebarSurface).
+/// Not [blurred], it blurs nothing (as an inactive window's sidebar), and
+/// Flutter paints the window opaque.
 private class VibrantContent: NSViewController {
   private let flutter: FlutterViewController
   private let size: NSSize
+  private var material: NSVisualEffectView?
+
+  var blurred = true {
+    didSet { apply() }
+  }
+
+  private func apply() {
+    guard let material else { return }
+    material.blendingMode = blurred ? .behindWindow : .withinWindow
+    // Dimmed while another window is in front, as the system's sidebars.
+    material.state = blurred ? .followsWindowActiveState : .inactive
+  }
 
   init(flutter: FlutterViewController, size: NSSize) {
     self.flutter = flutter
@@ -669,9 +816,8 @@ private class VibrantContent: NSViewController {
   override func loadView() {
     let material = NSVisualEffectView(frame: NSRect(origin: .zero, size: size))
     material.material = .sidebar
-    material.blendingMode = .behindWindow
-    // Dimmed while another window is in front, as the system's sidebars.
-    material.state = .followsWindowActiveState
+    self.material = material
+    apply()
     addChild(flutter)
     flutter.view.frame = material.bounds
     flutter.view.autoresizingMask = [.width, .height]

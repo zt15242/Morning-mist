@@ -5,6 +5,7 @@ import 'package:path/path.dart' as p;
 
 import '../../ide/ide_hover.dart';
 import '../../theme/app_theme.dart';
+import '../../theme/codicons.dart';
 import '../../theme/material_file_icons.dart';
 import '../../theme/workbench_theme.dart' show WorkbenchThemeScope, themeColors;
 import '../../workspace/editor_launcher.dart';
@@ -21,6 +22,7 @@ import 'markdown_cjk.dart';
 import 'markdown_math.dart';
 import 'markdown_tags.dart';
 import 'mermaid_code_block.dart';
+import 'table_selection.dart';
 import 'will_change_paint.dart';
 
 /// GitHub-flavored markdown as plain widgets (so a surrounding
@@ -56,13 +58,31 @@ class MarkdownView extends StatefulWidget {
   /// read (see the IDE's markdown preview). The chat's has [tags] too: a
   /// block between tags as a section that folds ([TagBlockSyntax]).
   static md.Document document({bool tags = false}) => md.Document(
-    extensionSet: md.ExtensionSet.gitHubFlavored,
+    extensionSet: _extensions,
     blockSyntaxes: [...blockSyntaxes, if (tags) const TagBlockSyntax()],
     inlineSyntaxes: inlineSyntaxes,
     encodeHtml: false,
   );
 
   static final _document = document(tags: true);
+
+  /// GitHub's, but struck through only between `~~`: a single `~` is how
+  /// a range is written (`10-12~10-16`), and two of them on a line would
+  /// strike out what is between.
+  static final _extensions = md.ExtensionSet(
+    md.ExtensionSet.gitHubFlavored.blockSyntaxes,
+    [
+      for (final syntax in md.ExtensionSet.gitHubFlavored.inlineSyntaxes)
+        if (syntax is! md.StrikethroughSyntax) syntax,
+      md.DelimiterSyntax(
+        '~+',
+        requiresDelimiterRun: true,
+        allowIntraWord: true,
+        startCharacter: 0x7E, // ~
+        tags: [md.DelimiterTag('del', 2)],
+      ),
+    ],
+  );
 
   @override
   State<MarkdownView> createState() => _MarkdownViewState();
@@ -117,7 +137,7 @@ class _MarkdownViewState extends State<MarkdownView> {
       for (final (i, text) in texts.indexed)
         i < old.length && old[i].text == text
             ? old[i]
-            : _Segment(text, MarkdownView._document.parse(text)),
+            : _Segment(text, _parse(text, keep: old.isEmpty)),
     ];
     _gallery.clear();
     final options = MarkdownOptions();
@@ -157,6 +177,25 @@ class _MarkdownViewState extends State<MarkdownView> {
     );
   }
 
+  /// Segments parsed lately, by their text, the latest last: a message
+  /// scrolled out of the history and back (the minimap scrubbed through
+  /// it, back and forth) is not parsed again. Its nodes are only read.
+  static final Map<String, List<md.Node>> _parsed = {};
+  static const _parsedKept = 160;
+
+  /// [text] parsed, as lately if it was; kept for later if [keep] (not as a
+  /// reply streams in: each would be kept a moment, the others pushed out).
+  static List<md.Node> _parse(String text, {required bool keep}) {
+    if (_parsed.remove(text) case final nodes?) return _parsed[text] = nodes;
+    final nodes = MarkdownView._document.parse(text);
+    if (endsInOpenFence(text)) _markWriting(nodes);
+    if (keep) {
+      _parsed[text] = nodes;
+      if (_parsed.length > _parsedKept) _parsed.remove(_parsed.keys.first);
+    }
+    return nodes;
+  }
+
   Widget _buildBlocks(BuildContext context, _Segment segment) {
     final _Segment(text: data, :nodes) = segment;
     final style = widget.style;
@@ -168,6 +207,12 @@ class _MarkdownViewState extends State<MarkdownView> {
       return MarkdownBlocks(nodes: nodes, style: style ?? baseStyle);
     }
     Widget? icon(FileLink? link) {
+      // Another machine's (see FileLink.machine): not looked for here.
+      if (link != null && link.machine != null) {
+        return _isFolder(link.path, null)
+            ? FolderIcon(link.path, size: _fileIconSize)
+            : FileIcon(link.path, size: _fileIconSize);
+      }
       final path = link == null ? null : files.resolve(link.path);
       if (path == null) return null;
       return _isFolder(link!.path, files.existence.known(path))
@@ -185,9 +230,9 @@ class _MarkdownViewState extends State<MarkdownView> {
       // An image as an attached one's tag.
       fileTag: (href, label) {
         final link = FileLink.parseHref(href);
-        final path = link == null || link.range != null
+        final path = link == null || link.range != null || link.machine != null
             ? null
-            : files.resolve(link.path);
+            : files.resolveShown(link.path);
         if (path == null || !files.showsImage(path)) return null;
         return FileImageChip.span(
           path: path,
@@ -296,7 +341,9 @@ List<String> _cut(String data, int from) {
       if (line.trimRight().endsWith(mathClose)) mathClose = null;
     } else if (comment) {
       if (line.contains('-->')) comment = false;
-    } else if (_fenceLine.firstMatch(line) case final opening?) {
+    } else if (_fenceLine.firstMatch(line) case final opening?
+        // A backtick fence's info has no backtick: else inline code.
+        when opening[1]![0] == '~' || !(opening[2] ?? '').contains('`')) {
       fence = opening[1];
     } else if (_mathOpening.firstMatch(line) case final opening?) {
       final close = opening[1] == r'$$' ? r'$$' : r'\]';
@@ -321,6 +368,44 @@ List<String> _cut(String data, int from) {
 }
 
 const _segmentLength = 2000;
+
+/// Whether [text] ends in a fence not closed: a code block still being
+/// written, as a reply streams in.
+@visibleForTesting
+bool endsInOpenFence(String text) {
+  String? fence;
+  for (final line in text.split('\n')) {
+    final match = _fenceLine.firstMatch(line);
+    if (match == null) continue;
+    if (fence == null) {
+      // A backtick fence's info has no backtick: else inline code.
+      if (match[1]![0] == '~' || !(match[2] ?? '').contains('`')) {
+        fence = match[1];
+      }
+    } else if (match[2] == null &&
+        match[1]![0] == fence[0] &&
+        match[1]!.length >= fence.length) {
+      fence = null;
+    }
+  }
+  return fence != null;
+}
+
+/// Marks the last code block of [nodes], the fence [endsInOpenFence] found
+/// open, as still being written.
+void _markWriting(List<md.Node> nodes) {
+  md.Element? last;
+  void visit(md.Node node) {
+    if (node is! md.Element) return;
+    if (node.tag == 'pre') last = node;
+    node.children?.forEach(visit);
+  }
+
+  nodes.forEach(visit);
+  last?.attributes[_writingAttribute] = '';
+}
+
+const _writingAttribute = 'data-writing';
 
 final _linkDefinition = RegExp(r'^ {0,3}\[[^\]]+\]:', multiLine: true);
 
@@ -570,7 +655,10 @@ Widget? _block(md.Node node, TextStyle style, MarkdownOptions options) {
       // `python title="a.py"`: the language is the first word.
       final name = language?.trim().split(RegExp(r'\s')).first;
       if (name?.toLowerCase() == 'mermaid') {
-        return MermaidCodeBlock(code: body);
+        return MermaidCodeBlock(
+          code: body,
+          writing: node.attributes.containsKey(_writingAttribute),
+        );
       }
       return MarkdownCodeBlock(
         code: body,
@@ -633,7 +721,7 @@ class _List extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 SizedBox(
-                  width: ordered ? 24 : 18,
+                  width: _isTask(item) ? 22 : (ordered ? 24 : 18),
                   child: _marker(item, ordered ? '${start + i}.' : '•'),
                 ),
                 Expanded(child: _itemBody(item)),
@@ -644,17 +732,43 @@ class _List extends StatelessWidget {
     );
   }
 
+  static bool _isTask(md.Element item) => switch (item.children?.firstOrNull) {
+    md.Element(tag: 'input') => true,
+    _ => false,
+  };
+
   Widget _marker(md.Element item, String text) {
     final checkbox = item.children?.firstOrNull;
     if (checkbox is md.Element && checkbox.tag == 'input') {
       final checked = checkbox.attributes['checked'] != null;
-      final box = Padding(
-        padding: const EdgeInsets.only(top: 4),
-        child: Icon(
-          checked ? Icons.check_box_rounded : Icons.check_box_outline_blank,
-          size: 14,
-          color: checked ? AppColors.added : AppColors.textMuted,
+      // In the links' color, as tall as a capital and centred on the line.
+      final accent = AppColors.accent;
+      // Its own size, at the start of the marker's column (which is wider).
+      final square = Container(
+        width: 15,
+        height: 15,
+        margin: const EdgeInsets.only(top: 3.5),
+        decoration: BoxDecoration(
+          color: checked ? accent : null,
+          border: Border.all(
+            color: checked ? accent : accent.withValues(alpha: 0.7),
+            width: 1.3,
+          ),
+          borderRadius: BorderRadius.circular(3.5),
         ),
+        child: checked
+            ? Icon(
+                Codicons.check,
+                size: 13,
+                color: AppColors.conversationSurface,
+              )
+            : null,
+      );
+      final box = Align(
+        alignment: AlignmentDirectional.topStart,
+        widthFactor: 1,
+        heightFactor: 1,
+        child: square,
       );
       final toggle = options.onToggleTask;
       final task = int.tryParse(checkbox.attributes[_taskAttribute] ?? '');
@@ -792,16 +906,18 @@ class _TableState extends State<_Table> {
                     vertical: 5,
                   ),
                   child: i < cells.length
-                      ? InlineCodeText(
-                          _inlines(
-                            cells[i].children ?? const [],
-                            header
-                                ? style.copyWith(
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.textPrimary,
-                                  )
-                                : style,
-                            widget.options,
+                      ? TableCellSelection(
+                          child: InlineCodeText(
+                            _inlines(
+                              cells[i].children ?? const [],
+                              header
+                                  ? style.copyWith(
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.textPrimary,
+                                    )
+                                  : style,
+                              widget.options,
+                            ),
                           ),
                         )
                       : const SizedBox.shrink(),
@@ -822,10 +938,16 @@ class _TableState extends State<_Table> {
         clipBehavior: Clip.antiAlias,
         child: HoverScrollbar(
           controller: _scroll,
-          child: SingleChildScrollView(
-            controller: _scroll,
-            scrollDirection: Axis.horizontal,
-            child: WillChangePaint(child: table),
+          // The table's selection is its own, not the scroll view's.
+          child: SelectionContainer.disabled(
+            child: SingleChildScrollView(
+              controller: _scroll,
+              scrollDirection: Axis.horizontal,
+              child: TableSelection(
+                registrar: SelectionContainer.maybeOf(context),
+                child: WillChangePaint(child: table),
+              ),
+            ),
           ),
         ),
       ),

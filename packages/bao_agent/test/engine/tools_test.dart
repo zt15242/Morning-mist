@@ -74,46 +74,6 @@ void main() {
       expect(h.file('a.txt'), 'changed\n');
     });
 
-    test('Glob and Grep', () async {
-      h = await Harness.start(
-        files: {
-          'lib/a.dart': 'void main() {}\n',
-          'lib/b.dart': 'class Foo {}\n',
-          'README.md': 'Foo is here\n',
-        },
-      );
-      h.model.script.addAll([
-        Reply.tools([
-          ('Glob', {'pattern': '**/*.dart'}),
-          ('Grep', {'pattern': 'Foo'}),
-          (
-            'Grep',
-            {
-              'pattern': 'Foo',
-              'output_mode': 'content',
-              '-n': true,
-              'glob': '*.md',
-            },
-          ),
-          ('Grep', {'pattern': 'Foo', 'output_mode': 'count'}),
-        ]),
-        Reply.text('ok'),
-      ]);
-      await h.turn('search');
-      final [glob, files, content, count] = h.toolResults;
-      expect(
-        '${glob['content']}',
-        allOf(contains('a.dart'), contains('b.dart')),
-      );
-      expect((glob['tool_use_result'] as Map)['numFiles'], 2);
-      expect(
-        '${files['content']}',
-        allOf(contains('README.md'), contains('b.dart')),
-      );
-      expect('${content['content']}', contains('README.md:1:Foo is here'));
-      expect('${count['content']}', contains('2'));
-    });
-
     test('NotebookEdit: a cell replaced and one inserted', () async {
       final notebook = {
         'cells': [
@@ -159,21 +119,24 @@ void main() {
       expect((cells[1] as Map)['cell_type'], 'markdown');
     });
 
-    test('TodoWrite keeps the list', () async {
-      h = await Harness.start();
-      final todos = [
-        {'content': 'One', 'status': 'completed', 'activeForm': 'Doing one'},
-        {'content': 'Two', 'status': 'in_progress', 'activeForm': 'Doing two'},
-      ];
-      h.model.script.addAll([
-        Reply.tool('TodoWrite', {'todos': todos}),
-        Reply.text('ok'),
-      ]);
-      await h.turn('plan');
-      final result = h.toolResults.single['tool_use_result'] as Map;
-      expect(result['oldTodos'], isEmpty);
-      expect(result['newTodos'], todos);
-    });
+    test(
+      'no to-do list tools: TodoWrite and TaskOutput are not offered',
+      () async {
+        h = await Harness.start();
+        h.model.script.add(Reply.text('ok'));
+        await h.turn('plan');
+        final names = [
+          for (final tool in h.model.turns.single.body['tools']! as List)
+            (tool as Map)['name'],
+        ];
+        expect(names, isNot(contains('TodoWrite')));
+        expect(names, isNot(contains('TaskOutput')));
+        expect(
+          names,
+          containsAll(['CronCreate', 'ScheduleWakeup', 'SendMessage']),
+        );
+      },
+    );
   });
 
   group('web', () {
@@ -493,7 +456,25 @@ void main() {
       expect(h.model.turns, hasLength(2));
     });
 
-    test('TaskOutput waits for it, TaskStop stops another', () async {
+    test('stopped, though what it left running holds its output open '
+        '(a dev server\'s watcher)', () async {
+      h = await Harness.start();
+      h.model.script.addAll([
+        Reply.tool('Bash', {
+          'command': '(sleep 30 &); sleep 30',
+          'description': 'Dev server',
+          'run_in_background': true,
+        }),
+        Reply.text('ok'),
+      ]);
+      await h.turn('go');
+      final id =
+          (h.toolResults.single['tool_use_result'] as Map)['backgroundTaskId'];
+      await h.request('stop_task', {'task_id': id});
+      expect(h.of('system', 'task_notification').single['status'], 'killed');
+    }, skip: Platform.isWindows);
+
+    test('one ends and the model is told; TaskStop stops another', () async {
       h = await Harness.start();
       h.model.script.addAll([
         Reply.tool('Bash', {
@@ -514,13 +495,6 @@ void main() {
             .allMatches(text)
             .map((m) => m[1])
             .toList();
-        if (ids.length == 2 && !text.contains('"name":"TaskOutput"')) {
-          return Reply.tool('TaskOutput', {
-            'task_id': ids[0],
-            'block': true,
-            'timeout': 5000,
-          });
-        }
         if (ids.length == 2 && !text.contains('"name":"TaskStop"')) {
           return Reply.tool('TaskStop', {'task_id': ids[1]});
         }
@@ -528,9 +502,8 @@ void main() {
       };
       h.model.script.add(Reply.text('done'));
       await h.turn('go');
-      final [_, _, output, stop] = h.toolResults;
-      expect('${output['content']}', contains('hi'));
-      expect('${output['content']}', contains('completed'));
+      await Future<void>.delayed(const Duration(milliseconds: 300));
+      final stop = h.toolResults[2];
       expect(stop['is_error'], isNot(isTrue));
       expect(
         h.of('system', 'task_notification').map((m) => m['status']),
@@ -542,6 +515,56 @@ void main() {
   group('subagents', () {
     bool isSub(ModelRequest request) =>
         jsonEncode((request.body['messages'] as List).first).contains('SUB:');
+
+    test('a general-purpose agent starts one of its own, in the foreground, '
+        'its report back to it', () async {
+      h = await Harness.start();
+      final requests = <String, List<ModelRequest>>{};
+      final replies = {
+        'SUB1': [
+          Reply.tool('Agent', {
+            'description': 'Go deeper',
+            'prompt': 'SUB2: go deeper',
+            'run_in_background': true,
+          }),
+          Reply.text('deeper said: done deep'),
+        ],
+        'SUB2': [Reply.text('done deep')],
+      };
+      h.model.route = (request) {
+        final first = jsonEncode((request.body['messages']! as List).first);
+        for (final key in ['SUB2', 'SUB1']) {
+          if (first.contains('$key:')) {
+            (requests[key] ??= []).add(request);
+            return replies[key]!.removeAt(0);
+          }
+        }
+        return null;
+      };
+      h.model.script.addAll([
+        Reply.tool('Agent', {
+          'description': 'Look',
+          'prompt': 'SUB1: look',
+          'subagent_type': 'general-purpose',
+          'run_in_background': false,
+        }),
+        Reply.text('ok'),
+      ]);
+      await h.turn('go');
+      final tools = [
+        for (final t in requests['SUB1']!.first.body['tools']! as List)
+          (t as Map)['name'],
+      ];
+      expect(tools, contains('Agent'));
+      expect(
+        jsonEncode(requests['SUB1']!.last.body['messages']),
+        contains('done deep'),
+      );
+      expect(
+        jsonEncode(h.model.turns.last.body['messages']),
+        contains('deeper said: done deep'),
+      );
+    });
 
     test('in the foreground: its messages, file and result', () async {
       h = await Harness.start(files: {'a.txt': 'secret 42\n'});
@@ -560,6 +583,7 @@ void main() {
           'description': 'Find the number',
           'prompt': 'SUB: find the number in a.txt',
           'subagent_type': 'Explore',
+          'run_in_background': false,
         }, id: 'toolu_agent'),
         Reply.text('It is 42'),
       ]);
@@ -568,7 +592,7 @@ void main() {
       final tools = [
         for (final t in first!.body['tools'] as List) (t as Map)['name'],
       ];
-      expect(tools, containsAll(['Read', 'Grep']));
+      expect(tools, containsAll(['Read', 'Bash']));
       expect(tools, isNot(contains('Agent')));
       expect(tools, isNot(contains('Write')));
       // Shown under its call.
@@ -591,7 +615,9 @@ void main() {
       expect(fields['totalToolUseCount'], 1);
       expect(fields['prompt'], 'SUB: find the number in a.txt');
       expect(jsonEncode(fields['content']), contains('The number is 42.'));
-      expect('${result['content']}', contains('agentId: ${fields['agentId']}'));
+      // The report framed as the model's, not the user's.
+      expect('${result['content']}', contains('[Agent report]'));
+      expect('${result['content']}', contains('  The number is 42.'));
       // Its transcript, by the session's.
       final dir = p.join(p.withoutExtension(h.sessionFile), 'subagents');
       final file = File(p.join(dir, 'agent-${fields['agentId']}.jsonl'));
@@ -650,10 +676,13 @@ void main() {
       expect(h.of('system', 'task_notification').single['status'], 'completed');
     });
 
-    test('resumed: it goes on from where it was', () async {
+    test('sent a message once done: it goes on from where it was', () async {
       h = await Harness.start();
       final seen = <String>[];
       h.model.route = (request) {
+        if (sentIn(request).contains('<task-notification>')) {
+          return Reply.text('noted');
+        }
         if (!isSub(request)) return null;
         seen.add(sentIn(request));
         return Reply.text('answer ${seen.length}');
@@ -662,6 +691,7 @@ void main() {
         Reply.tool('Agent', {
           'description': 'First',
           'prompt': 'SUB: first question',
+          'run_in_background': false,
         }),
         Reply.text('ok'),
       ]);
@@ -669,14 +699,17 @@ void main() {
       final agentId =
           (h.toolResults.single['tool_use_result'] as Map)['agentId'];
       h.model.script.addAll([
-        Reply.tool('Agent', {
-          'description': 'Again',
-          'prompt': 'second question',
-          'resume': agentId,
+        Reply.tool('SendMessage', {
+          'to': agentId,
+          'summary': 'a second question',
+          'message': 'second question',
         }),
         Reply.text('ok'),
       ]);
       await h.turn('ask again');
+      for (var i = 0; i < 100 && seen.length < 2; i++) {
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+      }
       expect(
         seen.last,
         allOf(
@@ -696,7 +729,7 @@ void main() {
       () async {
         h = await Harness.start(
           files: {
-            '.claude/agents/reviewer.md': '---\nname: reviewer\ndescription: Reviews code\ntools: Read, Grep\nmodel: haiku\n---\nYou review code. SUB:\n',
+            '.claude/agents/reviewer.md': '---\nname: reviewer\ndescription: Reviews code\ntools: Read, Bash\nmodel: haiku\n---\nYou review code. SUB:\n',
           },
         );
         ModelRequest? sub;
@@ -712,13 +745,14 @@ void main() {
             'description': 'Review',
             'prompt': 'Review it',
             'subagent_type': 'reviewer',
+            'run_in_background': false,
           }),
           Reply.text('ok'),
         ]);
         await h.turn('review');
         expect([
           for (final t in sub!.body['tools'] as List) (t as Map)['name'],
-        ], unorderedEquals(['Read', 'Grep']));
+        ], unorderedEquals(['Read', 'Bash']));
         expect(sub!.model, contains('haiku'));
         final agents = h.of('system', 'init').last['agents'] as List;
         expect(agents, contains('reviewer'));
@@ -749,6 +783,7 @@ void main() {
         'description': 'Write',
         'prompt': 'Write it',
         'subagent_type': 'writer',
+        'run_in_background': false,
       });
       h.model.script.addAll([delegate(), Reply.text('ok')]);
       await h.turn('write');
@@ -774,11 +809,8 @@ void main() {
       Reply.text('Hello, Ada'),
     ]);
     await h.turn('greet Ada');
-    final tools = h.model.turns.first.body['tools'] as List;
-    expect(
-      jsonEncode(tools.firstWhere((t) => (t as Map)['name'] == 'Skill')),
-      contains('greet: Greets someone'),
-    );
+    // The skills are listed in the context, not in the tool.
+    expect(sentIn(h.model.turns.first), contains('- greet: Greets someone'));
     final result = h.toolResults.first;
     expect((result['tool_use_result'] as Map)['commandName'], 'greet');
     final next = sentIn(h.model.turns[1]);
@@ -792,4 +824,39 @@ void main() {
     expect(h.permissionRequests, isEmpty);
     expect(h.of('system', 'init').last['skills'], contains('greet'));
   });
+
+  test(
+    "Skill: a command only where its file lets the model take it up",
+    () async {
+      h = await Harness.start(
+        files: {
+          '.claude/commands/deploy.md':
+              '---\ndescription: What /deploy does.\n---\nPush and publish.\n',
+          '.claude/commands/review.md': '---\ndescription: Reviews the diff\ndisable-model-invocation: false\n---\nReview \$ARGUMENTS.\n',
+        },
+      );
+      h.model.script.addAll([
+        Reply.tool('Skill', {'skill': 'deploy'}),
+        Reply.tool('Skill', {'skill': 'review', 'args': 'main'}),
+        Reply.text('reviewed'),
+      ]);
+      await h.turn('look into the failing build');
+      final listed = sentIn(h.model.turns.first);
+      expect(listed, contains('- review: Reviews the diff'));
+      expect(listed, isNot(contains('- deploy:')));
+      expect(h.toolResults[0]['is_error'], isTrue);
+      expect(
+        (h.toolResults[1]['tool_use_result'] as Map)['commandName'],
+        'review',
+      );
+      final last = sentIn(h.model.turns.last);
+      expect(last, contains('Review main.'));
+      expect(last, isNot(contains('Push and publish.')));
+      // Still the user's to run.
+      expect(
+        h.of('system', 'init').last['slash_commands'],
+        containsAll(['deploy', 'review']),
+      );
+    },
+  );
 }

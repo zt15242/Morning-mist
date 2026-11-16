@@ -1,10 +1,12 @@
 import 'dart:async';
 
+import 'package:bao_markdown/bao_markdown.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:baocode/ide/git/ide_git_commit_panel.dart';
+import 'package:baocode/chat/composer/composer.dart';
 import 'package:baocode/chat/chat_history_view.dart';
 import 'package:baocode/chat/chat_screen.dart';
 import 'package:baocode/chat/chat_session.dart';
@@ -111,7 +113,14 @@ void main() {
     'the commit message': (
       (tester) async {
         await run(tester, 'workbench.view.scm');
-        await tester.tap(find.byType(TextField).first);
+        await tester.tap(
+          find
+              .descendant(
+                of: find.byType(IdeGitCommitPanel),
+                matching: find.byType(TextField),
+              )
+              .first,
+        );
         await tester.pumpAndSettle();
       },
       'scmRepository',
@@ -133,7 +142,12 @@ void main() {
     ),
     "the chat's input": (
       (tester) async {
-        await tester.tap(find.byType(QuillEditor));
+        await tester.tap(
+          find.descendant(
+            of: find.byType(ChatComposer),
+            matching: find.byType(MarkdownEditor),
+          ),
+        );
         await tester.pumpAndSettle();
       },
       'auxiliaryBarFocus',
@@ -273,7 +287,12 @@ void main() {
     tester,
   ) async {
     await pump(tester);
-    await tester.tap(find.byType(QuillEditor));
+    await tester.tap(
+      find.descendant(
+        of: find.byType(ChatComposer),
+        matching: find.byType(MarkdownEditor),
+      ),
+    );
     await tester.pumpAndSettle();
     final state = workbench(tester);
     expect(state.keyContext('inputFocus'), isTrue);
@@ -282,9 +301,10 @@ void main() {
   });
 
   testWidgets('an input method composing text keeps its keys', (tester) async {
+    // Shift+Enter: Enter is the search box's own (it searches, #377).
     KeybindingService.instance.userEntries = const [
       KeybindingEntry(
-        key: 'enter',
+        key: 'shift+enter',
         command: 'workbench.action.showCommands',
         when: 'searchInputBoxFocus',
       ),
@@ -299,7 +319,9 @@ void main() {
       ),
     );
     await tester.pump();
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shift);
     await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shift);
     await tester.pump();
     expect(quickText(tester), isNull);
 
@@ -310,7 +332,9 @@ void main() {
       ),
     );
     await tester.pump();
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shift);
     await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shift);
     await tester.pump();
     expect(quickText(tester), '>');
   });

@@ -13,8 +13,13 @@ import 'remote_server.dart';
 class ServerTcp {
   ServerTcp(this._peer) {
     final handlers = _peer.handlers;
-    handlers[RemoteProtocol.tcpListen] = (_, _) async {
-      final server = await ServerSocket.bind(InternetAddress.loopbackIPv4, 0);
+    handlers[RemoteProtocol.tcpListen] = (params, _) async {
+      // A port asked for (the user's own forward), else any.
+      final port = params is Map ? params['port'] as int? ?? 0 : 0;
+      final server = await ServerSocket.bind(
+        InternetAddress.loopbackIPv4,
+        port,
+      );
       final id = ++_nextId;
       _listeners[id] = server;
       server.listen((socket) => _accepted(id, socket), onError: (Object _) {});
@@ -65,6 +70,9 @@ class ServerTcp {
 
   /// [socket]'s bytes to the app as [conn]'s, until it closes.
   void _relay(int conn, Socket socket) {
+    // Reset by the other end: told by listen's onError, not to go unhandled
+    // (which would end the server, and with it a session's all).
+    unawaited(socket.done.then<void>((_) {}, onError: (Object _) {}));
     socket.listen(
       (data) => _peer.notify(RemoteProtocol.tcpData, {
         'conn': conn,

@@ -504,6 +504,12 @@ void WindowChannel::HandleMethodCall(
     return;
   }
 
+  if (method == "setWindowBlur") {
+    Win32Window::SetWindowBlur(Boolean(call.arguments(), false));
+    result->Success();
+    return;
+  }
+
   if (method == "setAppearance") {
     Win32Window::SetDarkAppearance(Boolean(call.arguments(), false));
     result->Success();
@@ -636,6 +642,22 @@ void WindowChannel::HandleMethodCall(
     return;
   }
 
+  if (method == "writePasteboardMarkdown") {
+    result->Success(flutter::EncodableValue(WriteClipboardMarkdown(
+        window_, Utf16FromUtf8(String(arguments, "text")),
+        String(arguments, "copy"))));
+    return;
+  }
+
+  if (method == "readPasteboardMarkdown") {
+    if (std::optional<std::string> copy = ClipboardMarkdown()) {
+      result->Success(flutter::EncodableValue(std::move(*copy)));
+    } else {
+      result->Success();
+    }
+    return;
+  }
+
   if (method == "writePasteboardImage") {
     const auto found = arguments.find(flutter::EncodableValue("bytes"));
     const auto* bytes =
@@ -723,11 +745,13 @@ void WindowChannel::HandleMethodCall(
 
   if (method == "windowRoom") {
     // How much wider and taller the window can get on its monitor's work
-    // area (see growWindow), in Flutter's pixels: none while maximized.
+    // area (see growWindow), in Flutter's pixels: none while maximized or
+    // full screen.
     double width = 0.0;
     double height = 0.0;
     RECT frame;
-    if (!::IsZoomed(window_) && ::GetWindowRect(window_, &frame)) {
+    if (!::IsZoomed(window_) && !FullScreen() &&
+        ::GetWindowRect(window_, &frame)) {
       const RECT work = WorkArea(window_);
       const double scale = Scale();
       width = (std::max)(0L, (work.right - work.left) -
@@ -770,6 +794,18 @@ void WindowChannel::HandleMethodCall(
     return;
   }
 
+  if (method == "toggleFullScreen") {
+    // Answered with whether it is now.
+    Win32Window* window = Win32Window::GetThisFromHandle(window_);
+    if (window == nullptr) {
+      result->Success(flutter::EncodableValue(false));
+      return;
+    }
+    window->SetFullScreen(!window->IsFullScreen());
+    result->Success(flutter::EncodableValue(window->IsFullScreen()));
+    return;
+  }
+
   if (method == "windowCommand") {
     const auto* name = call.arguments() == nullptr
                            ? nullptr
@@ -791,9 +827,14 @@ void WindowChannel::HandleMethodCall(
   result->NotImplemented();
 }
 
+bool WindowChannel::FullScreen() const {
+  const Win32Window* window = Win32Window::GetThisFromHandle(window_);
+  return window != nullptr && window->IsFullScreen();
+}
+
 void WindowChannel::Grow(double width, double height) {
   RECT frame;
-  if (::IsZoomed(window_) || ::IsIconic(window_) ||
+  if (::IsZoomed(window_) || ::IsIconic(window_) || FullScreen() ||
       !::GetWindowRect(window_, &frame)) {
     return;
   }

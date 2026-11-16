@@ -2,8 +2,9 @@
 
 用 SSH 打开另一台机器上的项目，体验和 VS Code 的 Remote-SSH 一样：界面留在本机；文件、Git、搜索、终端、语言服务器和 Claude Code 都在远端主机上运行。本文说明它怎么工作、怎么构建和发布、出了问题怎么查，以及以后改代码时要注意什么。
 
-- 远端要求：Linux x64 / arm64（glibc），或 macOS（Apple silicon / Intel，要在“系统设置 → 通用 → 共享”里打开“远程登录”）；能用密钥、ssh-agent 或密码登录
+- 远端要求：Linux x64 / arm64 / riscv64（glibc），或 macOS（Apple silicon / Intel，要在“系统设置 → 通用 → 共享”里打开“远程登录”）；能用密钥、ssh-agent 或密码登录
 - 本机要求：系统自带的 OpenSSH 客户端（`ssh`）
+- Windows 上也能打开 WSL 发行版里的项目（`wsl.exe`，不用 ssh），见 4 节“WSL 发行版”
 - 代码：应用侧 `lib/remote/`，服务端和协议 `packages/bao_remote/`，构建工具 `tool/build_remote_server.dart`
 - 测试：`test/remote/`
 
@@ -95,12 +96,16 @@
 
 ### 2.3 断线与重连
 
-- 断线后马上重连一次；之后等待时间按 1、2、4、8… 秒递增，最长 1 分钟。
-- **不会自动重试的失败**：认证失败、主机密钥未知或改变、远端系统不支持、本机没有 ssh。这些自动重试也没用，只能修好后点状态栏、侧栏的红色主机名或输入框上方的“重试”重连（或在打开流程里点“重试”）。
-- **重连后自动恢复的**：文件和 Git 的监听（恢复后会先通知一次“可能变了”，界面会刷新）；语言服务器重启，并把打开的文件（包括未保存的修改）重新同步过去。
-- **重连后不会恢复的**：断线那一刻在远端运行的进程都会结束，因为 sshd 断开会话时服务端会结束它启动的所有进程。
-  - Claude Code 的对话会显示“The connection to the remote host was lost.”，下次发消息时会接着原会话继续（resume）。
-  - 终端会退出。
+远端的服务端是**常驻会话**（第 4 节第 5 步）：ssh 断了，服务端和它启动的终端、Claude Code、语言服务器都继续跑，重连后接回同一个会话。
+
+- **发现断线**：连接被重置时立刻发现；网络无声无息地断掉（Wi-Fi 掉线、休眠、路由丢包，不回 RST）时靠心跳：两边每 5 秒互发一次，应用 30 秒收不到任何字节就当作断线（不用等 ssh 自己的 15 秒 × 3）。
+- **接回会话**：断线后马上重连一次；失败后按 1、2、4、8 秒递增，最长 10 秒，一直重试。重连期间状态栏显示“正在重连”，提示里说明远端仍在运行；这期间发出的请求、终端里敲的字都先留着，连上后补发。
+- **不丢、不重**：两边各自给消息计数，断线期间没确认的消息都留着，重连握手时互报“收到了几条”，各自补发对方没收到的。所以终端输出、Claude 的流式输出、文件读写的请求和回复，跨断线都不会丢也不会重复；断线时截断的半行直接丢弃，不会被当成消息。
+- **会话没了才算真断**：远端会话最多等 3 小时（`ServerSession.defaultGrace`）；超时、主机重启或服务端被杀，重连时桥会回 `BAOCODE-GONE`，应用这才按“会话已失效”处理：重新建一个会话（等待 1、2、4… 秒，最长 1 分钟），并发出 `SshHost.reconnected`：
+  - 文件和 Git 的监听重开（恢复后会先通知一次“可能变了”，界面会刷新）；语言服务器重启，并把打开的文件（包括未保存的修改）重新同步过去；
+  - 旧会话里的进程都已结束：Claude Code 的对话会显示“The connection to the remote host was lost.”，下次发消息时会接着原会话继续（resume）；终端会退出。
+- **不会自动重试的失败**：认证失败（含取消密码弹窗）、主机密钥未知或改变、远端系统不支持、本机没有 ssh。这些自动重试也没用，只能修好后点状态栏、侧栏的红色主机名或输入框上方的“重试”重连（或在打开流程里点“重试”）。重连已有会话时遇到这类失败，会话仍保留在远端，点“重试”后接回的还是它。
+- **第一次连接**：因网络原因（`unreachable`）失败时，先间隔 1、2 秒自动再试两次，再报失败。
 
 ### 2.4 退出确认
 
@@ -174,7 +179,7 @@
    - `~/.baocode-server/<VERSION>/baocode-server` 是否已经存在；
    - 远端有没有 `gzip`。
 4. **上传**（只在远端还没有这个版本时）：经 ssh 的 stdin 发送二进制，有 gzip 时先压缩，先写到临时文件 `.upload-<随机串>`，`chmod 755` 后再改名就位。所以连接中途断开也不会留下半个文件。
-5. **启动**：执行 `ssh <参数> <主机> ~/.baocode-server/<VERSION>/baocode-server`，之后这个进程的 stdin/stdout 就是 JSON-RPC 通道，stderr 只留最后 50 行，用来报错。
+5. **启动**：执行 `ssh <参数> <主机> ~/.baocode-server/<VERSION>/baocode-server --session <会话 id>`（`ServerSession`，`server_session.dart`）。这个进程只是一座**桥**：它先以脱离 ssh 会话的方式（`ProcessStartMode.detached`，sshd 的 SIGHUP 收不到）拉起这个会话的**守护进程** `baocode-server --daemon <id>`，守护进程监听 `~/.baocode-server/run/<id>`（Unix socket，目录 700；路径太长就放到 `/tmp/baocode-server-<uid>/`），桥再把自己的 stdin/stdout 接到这个 socket 上。断线后重连执行的是 `... --session <id> --resume`：找不到这个会话就输出 `BAOCODE-GONE` 退出。stdin/stdout 上跑的是可续传通道（`ResumableChannel`，见第 8 节），里面是 JSON-RPC；stderr 只留最后 50 行，用来报错。守护进程的日志在 `~/.baocode-server/run/<id>.log`，会话正常结束时删掉。
 6. **握手**：发送 `initialize`，服务端回复 `RemoteHello`：协议版本、构建版本、平台（os/arch/libc）、pid、家目录、数据目录。协议版本不一致就断开。
 
 ssh 参数固定为：
@@ -195,7 +200,7 @@ ssh 参数固定为：
 - `-e none`：二进制数据里不处理转义字符。
 - 其他配置（用户名、端口、跳板机 `ProxyJump`、身份文件……）都来自用户自己的 `~/.ssh/config`。
 
-失败分类见 `SshFailure`：`noSsh`、`authentication`、`hostKey`、`hostKeyChanged`、`unreachable`、`unsupported`、`server`。应用里显示的是 `sshErrorText` 按分类给的本地化说明，ssh 的原话放在详情里。
+失败分类见 `SshFailure`：`noSsh`、`authentication`、`hostKey`、`hostKeyChanged`、`unreachable`、`unsupported`、`server`、`wsl`。应用里显示的是 `sshErrorText` 按分类给的本地化说明，ssh 的原话放在详情里。
 
 ### 在应用里保存的服务器
 
@@ -204,6 +209,17 @@ ssh 参数固定为：
 - 保存的设置（`SshServer`）按主机名存在 `Workspace.sshServers`（状态文件 `sidebar.sshServers`）。新增时主机名就是 `user@host[:port]`；编辑后主机名不变（远程项目的位置 `ssh://<主机名>/…` 不受影响），连接用表单里的新地址。
 - 连接已保存的服务器时，`SshHosts` 把所有已保存的服务器写成一份 ssh 配置（数据目录 `state/ssh_config`，`sshServersConfig`），每台一个 `Host baocode-…`，末尾 `Include` 用户的 `~/.ssh/config` 和系统的配置，然后用 `-F` 连这个别名。跳板机写成 `ProxyCommand`，用同一个 ssh 和同一份配置连跳板机的别名（`ProxyJump` 会去 PATH 里找 ssh，而且 `-F` 的路径不加引号，带空格就坏）；跳板机绕回自己的不写。
 - 表单里的密码存在钥匙串 `ssh-server:<主机名>:password`。ssh 问密码时，按提示里的 `user@host` 认出是目标还是跳板机，取对应的密码（`SshHosts._savedPasswordId`）；被拒就删掉，弹窗重问。
+
+### WSL 发行版
+
+Windows 上，WSL 发行版也当成一台主机，主机名 `wsl+<发行版>`（和 VS Code 的写法一样，如 `wsl+Ubuntu-24.04`），项目位置是 `ssh://wsl+Ubuntu-24.04/home/me/app`。远程那一整套（服务端、文件、Git、终端、LSP、Claude Code、断线重连）原样复用，只是把 ssh 换成 wsl.exe：
+
+- 主机选择框最后一组“WSL”列出 `wsl --list --quiet` 的发行版（`wslHosts`，5 秒没回就当没有；输出是 UTF-16 还是 UTF-8 都认；Docker Desktop 自己的不列）。显示发行版名、Linux 图标；连上后和别的主机一样记进侧栏。状态栏、窗口标题、提示里写 `WSL: <发行版>`。设置里的 SSH 服务器列表不列它们，也没有编辑按钮。
+- 每条命令是 `wsl.exe --distribution <发行版> --exec sh -c 'cd && <命令>'`（`SshLauncher.wslArguments`）：`cd` 回家目录，因为 wsl.exe 默认停在应用当前所在的 Windows 目录；环境变量 `WSL_UTF8=1` 让 wsl.exe 自己的报错是 UTF-8。没有密码、主机密钥、`ssh -G`、ssh 配置这些步骤（`SshHosts` 给 WSL 单独一个不找 ssh 的 launcher）。
+- wsl.exe 自己失败（没装 WSL、没有这个发行版、起不来）退出码是 -1，归为 `SshFailure.wsl`，提示“WSL 无法启动这个发行版…”；起不来 wsl.exe 本身也是这个分类。
+- 杀掉 wsl.exe（相当于断线）后，服务端的会话还在，按普通主机的方式重连回同一个会话。
+- 真机验证：`packages/bao_remote/tool/wsl_e2e.dart <发行版> <baocode-server-linux-x64>`，在装了 WSL 的 Windows 上跑：列出发行版、不存在的发行版报 `wsl`、装服务端、文件、Git、终端、杀掉 wsl.exe 后重连、关闭。
+- 应用这一层：`test/remote/wsl_windows_e2e_test.dart`（标签 `wsl-e2e`，默认跳过；设好 `BAOCODE_REMOTE_SERVER_DIR`、`BAOCODE_WSL_DISTRO` 后 `flutter test --run-skipped -t wsl-e2e`），走应用自己的“打开远程项目”：真的 wsl.exe 列出主机、选中、连接、浏览到文件夹并打开，再看文件、Git 和状态栏，主机选择框画到 `build/wsl_e2e/hosts.png`。没有 Visual Studio、没人登录桌面也能跑（flutter_tester）。
 
 ---
 
@@ -336,11 +352,11 @@ Haiku 起标题和提交信息**不会**触发自动安装：内核是“自动�
 
 ## 8. 协议
 
-- **传输**：服务端进程的 stdin/stdout，一行一条 JSON-RPC 2.0 消息（`RpcPeer`）。stderr 只用于日志。
+- **传输**：ssh 的 stdin/stdout（桥接到会话守护进程），外面一层可续传通道（`ResumableChannel`，`resumable_channel.dart`），里面一行一条 JSON-RPC 2.0 消息（`RpcPeer`）。通道的每一行：`H<n>` 握手（我已收到你 n 条），`:<消息>` 一条消息，`A<n>` 确认兼心跳。一条连接开始时两边先互发 `H`，再补发对方没收到的；`A` 每 5 秒（`--heartbeat`）和每收到 64 条发一次，确认过的消息才从缓存里删掉。没连着时缓存超过 128MB，会话结束（`overflow`）。stderr 只用于日志。不带 `--session` 直接运行时，服务端还是旧的方式：stdin/stdout 直接是 JSON-RPC，连接断了就结束。
 - **版本**：`RemoteProtocol.version`（目前是 1），握手时检查。因为每个应用构建在远端都有自己的服务端目录，正常情况下版本不会对不上。
 - **异常跨端传递**：服务端抛出的异常转成带 `data.type` 的错误（`RpcError.from`），应用侧再还原成同一种异常（`toException`）。例如 `IdeFileNotFoundException`、`IdeGitException`、`ClaudeUnavailable`、`ClaudeNotInstalled`、`ClaudeDownloadFailed`、`LspInstallException`。其他异常变成 `RemoteException`，只保留消息文本。
 - **流**（监听、搜索、安装进度）：请求返回流 id，数据用 `stream/data` 通知发送，结束是 `stream/done` 或 `stream/error`，应用可以用 `stream/cancel` 提前结束。
-- **进程**（Claude、语言服务器、命令）：`process/start` 返回 id 和 pid，输出用 `process/output`，退出用 `process/exit`。连接断开时，应用这边所有进程按退出码 `-1`（`RemoteProcess.lostExitCode`）处理。
+- **进程**（Claude、语言服务器、命令）：`process/start` 返回 id 和 pid，输出用 `process/output`，退出用 `process/exit`。会话失效时（不是一次断线），应用这边所有进程按退出码 `-1`（`RemoteProcess.lostExitCode`）处理。
 - **字节**：用 base64 放在 JSON 里（`encodeBytes` / `decodeBytes`）。
 
 方法分组（完整列表见 `protocol.dart`）：
@@ -430,7 +446,7 @@ dart run tool/build_remote_server.dart --all        # 四份没编全就失败�
 | 文件 | 覆盖内容 |
 | --- | --- |
 | `test/remote/rpc_peer_test.dart` | JSON-RPC 收发、异常按类型还原、断线时未完成的请求失败、协议版本不一致 |
-| `test/remote/ssh_launcher_test.dart` | ssh 参数、探测、只上传一次、失败分类、Mac 主机拿到 macOS 版、不支持的系统、主机地址解析、`~/.ssh/config` 读取（用假的 ssh 进程） |
+| `test/remote/ssh_launcher_test.dart` | ssh 参数、探测、只上传一次、失败分类、Mac 主机拿到 macOS 版、不支持的系统、主机地址解析、`~/.ssh/config` 读取（用假的 ssh 进程）；WSL：用假的 wsl.exe 走完整连接、没有 WSL 时的失败、`wsl --list` 输出解析 |
 | `test/remote/remote_server_test.dart` | 服务端各方法（内存中直连） |
 | `test/remote/remote_lsp_test.dart` | 远端 LSP 进程、mason 安装 |
 | `test/remote/remote_project_test.dart` | 应用侧端到端：location、连接状态和重连、文件监听跨重连、Git、终端、LSP 跨重连、Claude 密钥处理、端口转发、会话、打开流程 |
@@ -463,21 +479,22 @@ flutter analyze
 | 认证失败（authentication） | 密码不对、取消了登录，或密钥没加载 | 失败页点“编辑”改密码或换私钥；或把密钥加到 ssh-agent，或在 `~/.ssh/config` 里写 `IdentityFile` |
 | 主机密钥未知（hostKey） | 用户的 ssh 配置写了 `StrictHostKeyChecking yes` | 先在终端里 `ssh <主机>` 一次，接受密钥 |
 | 主机密钥变了（hostKeyChanged） | 服务器重装过，或有人在中间 | 确认是重装过的话，失败页点“移除旧指纹并重新连接” |
-| 不支持的系统（unsupported） | 远端不是 Linux 或 macOS 的 x64/arm64 | 不支持 |
+| 不支持的系统（unsupported） | 远端不是 Linux 或 macOS 的 x64/arm64，也不是 Linux riscv64 | 不支持 |
+| WSL 无法启动这个发行版（wsl） | 没装 WSL、发行版被删或改名、WSL 自己起不来 | 在终端里 `wsl --list` 看发行版名，`wsl -d <发行版>` 看它自己的报错 |
 | This build of the app has no server for macOS x64 | 应用是在 Linux / Windows 上、或没给 `--macos-x64-dart` 时打包的，没有这个平台的服务端 | 用 CI 发布的版本，或按 9.1 在 Mac 上补编 |
 | Mac 主机：Connection refused / 连不上 | 没打开“远程登录” | 系统设置 → 通用 → 共享 → 远程登录 |
 | This build of the app has no remote server | 应用里没带服务端，也不是从源码目录运行 | 执行 `dart run tool/build_remote_server.dart`，或设置 `BAOCODE_REMOTE_SERVER_DIR` |
 | The BaoCode server could not be built | 开发时编译服务端失败 | 看详情里 `dart compile` 的输出 |
 | The server could not be installed | 上传失败（家目录不可写、磁盘满） | 看详情里远端 stderr 的最后几行 |
 | 连上后立刻断开 | 远端是 musl 系统（Alpine），服务端跑不起来 | 目前不支持，见第 15 节 |
-| 一直“正在重连” | 网络断了，或主机关机了 | 恢复后会自动连上；也可以点状态栏立即重连 |
+| 一直“正在重连” | 网络断了，或主机关机了 | 恢复后会自动连上，远端的终端和对话还在（3 小时内）；也可以点状态栏立即重连 |
 | 无法在 xxx 上安装 Claude Code | 远端和本机都下载不到，或校验不通过 | 检查 `downloads.claude.ai` 能不能访问（有地区限制）；或按详情里的命令在远端手动安装 |
 | Claude Code is not at BAOCODE_CLAUDE_PATH | 远端设置了这个变量，但文件不存在 | 改对路径，或去掉这个变量 |
-| The connection to the remote host was lost | 对话进行中断线了 | 重连后再发一条消息，会接着原会话继续 |
+| The connection to the remote host was lost | 对话进行中远端会话没了（断线超过 3 小时、主机重启、服务端被杀） | 重连后再发一条消息，会接着原会话继续 |
 | 远端会话列表是空的 | 远端 `~/.claude/projects` 下没有这个路径的会话 | 确认远端的 claude 用的是同一个用户 |
 | 语言服务器起不来 | 远端缺语言服务器的运行时（如 node），或 mason 安装失败 | 看语言状态里的提示；在远端装好对应的运行时 |
 
-调试时可以在远端手动执行服务端：`~/.baocode-server/<VERSION>/baocode-server`。它从 stdin 读 JSON-RPC，可以手动发 `{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocol":1}}` 看回复。
+调试时可以在远端手动执行服务端：`~/.baocode-server/<VERSION>/baocode-server`（不带 `--session`）。它从 stdin 读 JSON-RPC，可以手动发 `{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocol":1}}` 看回复。远端在跑的会话：`pgrep -fa 'baocode-server --daemon'`；它的日志在 `~/.baocode-server/run/<id>.log`。
 
 ---
 
@@ -485,12 +502,12 @@ flutter analyze
 
 自动化测试都是在内存里跑的，下面这些需要人工在真实环境里验证：
 
-连接这一块（密码、密钥、跳板机、主机密钥变更、手输的主机）有真连的测试：`sh tool/ssh_e2e.sh` 用 Docker 起 sshd 容器、编服务端、跑 `test/remote/ssh_e2e_test.dart`（`ssh-e2e` 标签，平时跳过）。从别的机器（比如 Windows）连：这边 `BAOCODE_SSH_E2E_BIND=<本机局域网 IP> sh tool/ssh_e2e.sh --up`，那边设 `BAOCODE_SSH_E2E`（放测试私钥和 `remote/` 的目录）、`BAOCODE_REMOTE_SERVER_DIR`、`BAOCODE_SSH_E2E_HOST` 后 `flutter test test/remote/ssh_e2e_test.dart --run-skipped -t ssh-e2e`。用完 `--down`。
+连接这一块（密码、密钥、跳板机、主机密钥变更、手输的主机）有真连的测试：`sh tool/ssh_e2e.sh` 用 Docker 起 sshd 容器、编服务端、跑 `test/remote/ssh_e2e_test.dart` 和 `test/remote/ssh_resilience_e2e_test.dart`（`ssh-e2e` 标签，平时跳过）。后者测坏网络：本机的 `FaultProxy`（`test/remote/fault_proxy.dart`）夹在 ssh 和容器之间，反复切断、静默黑洞、拒绝连接、加延迟抖动和限速；容器里再用 netem 丢包加延迟；验证同一个会话一直在、进程输出不丢不重、断线期间发的请求连上后有回复、会话被杀或超过等待时间后重新建会话、关闭后远端不留进程。从别的机器（比如 Windows）连：这边 `BAOCODE_SSH_E2E_BIND=<本机局域网 IP> sh tool/ssh_e2e.sh --up`，那边设 `BAOCODE_SSH_E2E`（放测试私钥和 `remote/` 的目录）、`BAOCODE_REMOTE_SERVER_DIR`、`BAOCODE_SSH_E2E_HOST` 后 `flutter test test/remote/ssh_e2e_test.dart --run-skipped -t ssh-e2e`。用完 `--down`。
 
 1. **准备**：一台 Linux x64 或 arm64 主机（或打开了“远程登录”的 Mac），`~/.ssh/config` 里配好别名，终端里 `ssh <别名>` 能免密登录。开发时直接 `flutter run`（会自动编译服务端），或先执行 `dart run tool/build_remote_server.dart`。
 2. **连接和引导安装**：通过“打开远程项目”连接，确认远端出现了 `~/.baocode-server/<VERSION>/baocode-server`，状态栏显示 `SSH: <别名>`；第二次连接不会再上传。
 3. **文件、Git、搜索、终端**：打开、编辑、保存文件；新建和删除文件；在远端另开 shell 改文件，界面会刷新；Git 面板的状态、暂存、提交；全文搜索；终端能输入，窗口大小和 shell 集成正常。
-4. **断线和重连**：断开网络或杀掉本机的 ssh 进程：状态栏变成“正在重连”，恢复后自动连上；文件监听恢复，语言服务器重启，未保存的修改还在。
+4. **断线和重连**：终端里跑一个持续输出的命令、Claude 正在回复时，断开网络（关 Wi-Fi 或拔网线，30 秒以上）或杀掉本机的 ssh 进程：状态栏变成“正在重连”，恢复后自动连上；终端里的命令没断、断网期间的输出都补上了，Claude 的回复接着出来。远端 `pkill -f 'baocode-server --daemon'` 模拟会话没了：文件监听恢复，语言服务器重启，未保存的修改还在。
 5. **密码登录**：只开密码登录的主机会弹窗；输错会提示“不正确”再问；勾选记住后，退出应用再连不再弹窗，钥匙串里有 `BaoCode` 服务下 `ssh:<主机>:…` 的条目；在主机上改掉密码后再连，会重新弹窗，旧条目被删掉。可以用 Docker 起一个只允许密码登录的 sshd 来测。
 6. **失败场景**：取消密码弹窗：应直接报错，不会一直重试，点状态栏可以重连。`known_hosts` 里没有的主机直接连上并记下指纹；改掉 `known_hosts` 里它的记录再连，报指纹变了，点“移除旧指纹并重新连接”后能连上。
 6.1 **新增服务器**：选择框里“新增 SSH 服务器…”，用密码、私钥各加一台，再加一台经跳板机的；保存并连接都能连上，重启应用后仍在，编辑按钮能改。内核选“自动”：远端没装 claude、用上游模型时，对话由内置内核跑起来，不会去装 CLI；装了就用它。
@@ -543,4 +560,6 @@ flutter analyze
 6. **Windows 客户端的密码登录还没在 Windows 上实测**：`askpass.cmd` 经 PowerShell 回传密码，依赖 Win32-OpenSSH 8.4 及以上按 `SSH_ASKPASS_REQUIRE=force` 调用它；系统的低于 8.4 时用安装包自带的 OpenSSH。要确认的有：能否运行 `.cmd`、用户名带空格的临时目录、运行时是否闪出控制台窗口、自带 ssh 的跳板机 `ProxyCommand`（带引号的路径）能否运行。
 7. **启动时会连接所有远程项目的主机**（因为要读会话列表）。主机很多或很慢时，可以改成在展开项目时再连接。
 8. **macOS 打包这一步还没实际跑过**，签名和公证也还没做（见 `tool/build_macos.dart` 里的 TODO）。
-9. **断线时远端进程都会结束**：sshd 断开会话时会发 SIGHUP。以后如果想让对话在断线期间继续跑，需要把服务端改成常驻进程（类似 VS Code 的 server 那样），每次连接再重新接上。
+9. **会话守护进程会被 `KillUserProcesses=yes` 杀掉**：少数发行版的 systemd-logind 在用户最后一个登录会话结束时杀掉他的所有进程，断线就等于会话失效（退回到旧的“重建会话”行为）。需要的话在主机上 `loginctl enable-linger <用户>`。
+10. **应用崩溃或被强退时**，远端会话等满 3 小时才结束，期间终端和 Claude 继续跑。应用重启后用的是新会话，不会接回旧的。
+11. **单条很大的消息**（几十 MB 的文件）在频繁断线的网络上可能总传不完：断线后整条重发。

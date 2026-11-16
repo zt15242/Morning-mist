@@ -4,23 +4,30 @@
 // goes on once it is).
 
 import 'dart:async';
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:bao_remote/client.dart';
 import 'package:bao_remote/terminal.dart' show generateShellIntegrationNonce;
+import 'package:path/path.dart' as p;
 
 import '../ide/file_service.dart';
 import '../ide/git/git_service.dart';
+import '../ide/host_paths.dart';
 import '../ide/lsp/lsp_process.dart';
 import '../ide/search/text_search.dart';
 import '../ide/terminal/pty.dart';
 import '../ide/terminal/terminal_instance.dart';
 import '../ide/terminal/terminal_profiles.dart';
+import 'remote_location.dart';
 import 'ssh_host.dart';
+import 'port_forwards.dart';
 
 /// [open]'s items on [host]'s connection, opened again (after what
 /// [resumed] gives, if anything) each time the connection is made again;
-/// ends when [open]'s stream does.
+/// ends when [open]'s stream does. [resumed] is given too when the first
+/// had to wait for a connection (one that failed, made by a retry): what
+/// was read before it may have failed.
 Stream<T> resilientStream<T>(
   SshHost host,
   Stream<T> Function(RemoteClient client) open, {
@@ -30,9 +37,13 @@ Stream<T> resilientStream<T>(
   StreamSubscription<T>? subscription;
   RemoteClient? previous;
   void Function()? stopWaiting;
+  var waited = false;
 
   void listen(RemoteClient client) {
-    if (previous != null && resumed != null) controller.add(resumed());
+    if ((previous != null || waited) && resumed != null) {
+      controller.add(resumed());
+    }
+    waited = false;
     previous = client;
     var lost = false;
     late void Function() wait;
@@ -55,9 +66,12 @@ Stream<T> resilientStream<T>(
   }
 
   controller = StreamController<T>(
-    onListen: () => _awaitClient(host, null, listen, (stop) {
-      stopWaiting = stop;
-    }),
+    onListen: () {
+      waited = host.client == null;
+      _awaitClient(host, null, listen, (stop) {
+        stopWaiting = stop;
+      });
+    },
     onCancel: () {
       stopWaiting?.call();
       stopWaiting = null;
@@ -168,13 +182,26 @@ class RemoteIdeFileService implements IdeHostFiles, IdeRangeFiles {
 /// The Git of the project at [root] on [host]: its commands run there.
 IdeGitService remoteGitService(SshHost host, String root) => IdeGitService(
   root,
-  pathContext: host.paths,
-  runner: (arguments, {required workingDirectory, limit}) async =>
-      (await host.ready).git(arguments, cwd: workingDirectory, limit: limit),
+  pathContext: RemoteLocation.pathsFor(root),
+  runner:
+      (
+        arguments, {
+        required workingDirectory,
+        limit,
+        stdin,
+        environment,
+      }) async => (await host.ready).git(
+        arguments,
+        cwd: workingDirectory,
+        limit: limit,
+        stdin: stdin,
+        environment: environment,
+      ),
   watcher: (repository) => resilientStream(
     host,
     (client) => client.watchRepository(repository),
-    resumed: () {},
+    // Where is not known: changes may have been missed meanwhile.
+    resumed: () => '',
   ),
 );
 
@@ -203,8 +230,14 @@ TerminalBackend remoteTerminalBackend(SshHost host) => TerminalBackend(
           ? null
           : [launch.executable, ...launch.arguments],
       nonce: launch.environment?['VSCODE_NONCE'],
+      // Where adb's server here is, while the host may act on this machine.
+      environment: await PortForwards.instance.remoteEnvironment(host.host),
     );
-    return RemotePtyAdapter(pty);
+    // A server started in it forwarded here as it says where it listens.
+    return RemotePtyAdapter(
+      pty,
+      onText: (text) => PortForwards.instance.notice(host.host, text),
+    );
   },
   detectProfiles: ({configured}) async {
     final client = await host.ready;
@@ -214,7 +247,10 @@ TerminalBackend remoteTerminalBackend(SshHost host) => TerminalBackend(
       profiles: [
         for (final path in found.shells)
           TerminalProfile(
-            name: path.split('/').last,
+            // A Windows host's without .exe: `pwsh`, `cmd`.
+            name: isWindowsPath(path)
+                ? p.windows.basenameWithoutExtension(path)
+                : p.posix.basename(path),
             path: path,
             isAutoDetected: true,
           ),
@@ -237,12 +273,17 @@ TerminalBackend remoteTerminalBackend(SshHost host) => TerminalBackend(
 
 /// A terminal of the remote host as the terminal view drives one.
 class RemotePtyAdapter extends Pty {
-  RemotePtyAdapter(this._pty) {
+  RemotePtyAdapter(this._pty, {this._onText}) {
     _open++;
     unawaited(_pty.exitCode.whenComplete(() => _open--));
   }
 
   final RemotePty _pty;
+
+  /// What it prints, as text (a line split across reads whole, by the end
+  /// of the read before kept with it).
+  final void Function(String text)? _onText;
+  String _tail = '';
 
   /// The terminals open on remote hosts, for the quit confirmation.
   static int get open => _open;
@@ -252,7 +293,15 @@ class RemotePtyAdapter extends Pty {
   int get pid => _pty.pid;
 
   @override
-  Stream<Uint8List> get output => _pty.output;
+  Stream<Uint8List> get output => switch (_onText) {
+    null => _pty.output,
+    final onText => _pty.output.map((data) {
+      final text = _tail + latin1.decode(data, allowInvalid: true);
+      _tail = text.length > 256 ? text.substring(text.length - 256) : text;
+      onText(text);
+      return data;
+    }),
+  };
 
   @override
   Future<int> get exitCode => _pty.exitCode;
@@ -316,7 +365,7 @@ LspProcessStarter remoteLspStarter(SshHost host) => (launch) async {
     );
   } on RemoteException catch (error) {
     throw LspStartException(
-      'Could not start ${launch.serverId} on ${host.host}',
+      'Could not start ${launch.serverId} on ${RemoteLocation.hostName(host.host)}',
       detail: error.message,
     );
   }

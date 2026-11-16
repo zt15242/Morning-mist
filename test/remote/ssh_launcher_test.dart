@@ -146,7 +146,7 @@ printf '%s\n' "$*" >> "$FAKE_LOG.keygen"
 
   /// A "server build" that runs the real server from source.
   List<int> serverScript() => utf8.encode('''#!/bin/sh
-exec '$dartExecutable' '${p.absolute('packages', 'bao_remote', 'bin', 'baocode_server.dart')}' --data "\$HOME/server-data"
+exec '$dartExecutable' '${p.absolute('packages', 'bao_remote', 'bin', 'baocode_server.dart')}' --data "\$HOME/server-data" "\$@"
 ''');
 
   List<String> commands() => log.existsSync()
@@ -178,7 +178,9 @@ exec '$dartExecutable' '${p.absolute('packages', 'bao_remote', 'bin', 'baocode_s
     expect(commands(), [
       'sh -s',
       startsWith("sh -c 'mkdir -p .baocode-server/1-abc && gzip -dc >"),
-      '.baocode-server/1-abc/baocode-server',
+      matches(
+        r'^\.baocode-server/1-abc/baocode-server --session [0-9a-f]{32}$',
+      ),
     ]);
 
     // It answers: a file there.
@@ -194,7 +196,10 @@ exec '$dartExecutable' '${p.absolute('packages', 'bao_remote', 'bin', 'baocode_s
     log.deleteSync();
     final again = await launcher.connect(SshTarget.parse('dev'));
     expect(binaries.reads, ['linux-x64']);
-    expect(commands(), ['sh -s', '.baocode-server/1-abc/baocode-server']);
+    expect(commands(), [
+      'sh -s',
+      startsWith('.baocode-server/1-abc/baocode-server --session '),
+    ]);
     await again.close();
   }, timeout: const Timeout(Duration(minutes: 2)));
 
@@ -372,6 +377,49 @@ exec '$dartExecutable' '${p.absolute('packages', 'bao_remote', 'bin', 'baocode_s
     );
   });
 
+  test('a lost connection is made again to the same session, what runs '
+      'there carrying on; a session gone ends it', () async {
+    final launcher = SshLauncher(
+      ssh: fakeSsh,
+      binaries: FakeBinaries('1-abc', {'linux-x64': serverScript()}),
+      start: starter(),
+      maxBackoff: const Duration(seconds: 1),
+    );
+    final connection = await launcher.connect(SshTarget.parse('dev'));
+    final id = RegExp(r'--session ([0-9a-f]+)')
+        .firstMatch(commands().last)!
+        .group(1)!;
+    final process = await connection.client.start('sh', [
+      '-c',
+      r'i=0; while [ $i -lt 40 ]; do echo $i; i=$((i+1)); sleep 0.05; done',
+    ], login: false);
+    final lines = <String>[];
+    process.stdout
+        .transform(const Utf8Decoder())
+        .transform(const LineSplitter())
+        .listen(lines.add);
+    final changes = <bool>[];
+    connection.changes.listen((_) => changes.add(connection.linked));
+
+    // The bridge gone (ssh's end of it), as a network cut ends it.
+    await Future<void>.delayed(const Duration(milliseconds: 300));
+    await Process.run('pkill', ['-f', 'session $id']);
+    expect(await process.exitCode.timeout(const Duration(seconds: 30)), 0);
+    expect(lines, [for (var i = 0; i < 40; i++) '$i']);
+    expect(changes, containsAllInOrder([false, true]));
+    expect(connection.linked, isTrue);
+    expect(
+      commands().last,
+      '.baocode-server/1-abc/baocode-server '
+      '--session $id --resume',
+    );
+
+    // The daemon gone: nothing to resume.
+    await Process.run('pkill', ['-f', 'daemon $id']);
+    await connection.done.timeout(const Duration(seconds: 30));
+    await connection.close();
+  }, timeout: const Timeout(Duration(minutes: 2)));
+
   test('a Mac is given the macOS build', () async {
     final binaries = FakeBinaries('1-abc', {'darwin-arm64': serverScript()});
     final launcher = SshLauncher(
@@ -407,14 +455,136 @@ exec '$dartExecutable' '${p.absolute('packages', 'bao_remote', 'bin', 'baocode_s
   test('platforms as the builds are named', () {
     expect(SshLauncher.platform('Linux', 'x86_64'), 'linux-x64');
     expect(SshLauncher.platform('Linux', 'aarch64'), 'linux-arm64');
+    expect(SshLauncher.platform('Linux', 'riscv64'), 'linux-riscv64');
     expect(SshLauncher.platform('Darwin', 'arm64'), 'darwin-arm64');
     expect(SshLauncher.platform('Darwin', 'x86_64'), 'darwin-x64');
+    expect(SshLauncher.platform('Darwin', 'riscv64'), isNull);
     expect(SshLauncher.platform('FreeBSD', 'amd64'), isNull);
+    // Windows' probe says PROCESSOR_ARCHITECTURE; a Unix shell there
+    // (Git's, MSYS2's) its own name for Windows.
+    expect(SshLauncher.platform('Windows', 'AMD64'), 'windows-x64');
+    expect(SshLauncher.platform('Windows', 'ARM64'), 'windows-arm64');
+    expect(SshLauncher.platform('Windows', 'riscv64'), isNull);
+    expect(
+      SshLauncher.platform('MINGW64_NT-10.0-26100', 'x86_64'),
+      'windows-x64',
+    );
+    expect(SshLauncher.platform('Windows', 'x86'), isNull);
     expect(SshLauncher.describe('darwin-arm64'), 'macOS arm64');
     expect(SshLauncher.describe('linux-x64'), 'Linux x64');
+    expect(SshLauncher.describe('linux-riscv64'), 'Linux riscv64');
+    expect(SshLauncher.describe('windows-arm64'), 'Windows arm64');
   });
 
-  test('a host other than Linux or macOS on x64 or arm64 is refused', () async {
+  test('Linux on riscv64 installs the riscv64 server', () async {
+    final binaries = FakeBinaries('1-abc', {'linux-riscv64': serverScript()});
+    final launcher = SshLauncher(
+      ssh: fakeSsh,
+      binaries: binaries,
+      start: starter(extra: {'FAKE_MACHINE': 'riscv64'}),
+    );
+    final connection = await launcher.connect(SshTarget.parse('dev'));
+    // The server that answers is this machine's, so its hello says this
+    // machine's architecture; what was put there is the riscv64 build.
+    expect(binaries.reads, ['linux-riscv64']);
+    final installed = File(
+      p.join(home.path, '.baocode-server', '1-abc', 'baocode-server'),
+    );
+    expect(installed.existsSync(), isTrue);
+    await connection.close();
+  }, timeout: const Timeout(Duration(minutes: 2)));
+
+  test("a Windows host's commands: PowerShell's, encoded, whatever its "
+      'shell; the server put there by sftp', () {
+    final command = SshLauncher.powershellCommand("Write-Output 'é'");
+    final parts = command.split(' ');
+    expect(parts.take(6), [
+      'powershell',
+      '-NoProfile',
+      '-NonInteractive',
+      '-ExecutionPolicy',
+      'Bypass',
+      '-EncodedCommand',
+    ]);
+    final bytes = base64.decode(parts.last);
+    final script = String.fromCharCodes([
+      for (var i = 0; i < bytes.length; i += 2) bytes[i] | bytes[i + 1] << 8,
+    ]);
+    expect(script, endsWith("\nWrite-Output 'é'"));
+    expect(script, startsWith('[Console]::OutputEncoding'));
+
+    final launcher = SshLauncher(
+      ssh: '/usr/bin/ssh',
+      binaries: FakeBinaries('9.9-abc', const {}),
+    );
+    expect(
+      launcher.windowsServerPath,
+      r'.baocode-server\9.9-abc\baocode-server.exe',
+    );
+    expect(launcher.windowsProbeScript, contains('PROCESSOR_ARCHITECTURE'));
+    // ssh's options sftp takes: -o's alone (not -T, -e).
+    const sftpOptions = [
+      '-o',
+      'BatchMode=yes',
+      '-o',
+      'ServerAliveInterval=15',
+      '-o',
+      'ServerAliveCountMax=3',
+      '-o',
+      'ConnectTimeout=20',
+    ];
+    final session = launcher.windowsSessionScript('0123456789abcdef');
+    expect(session, contains('Win32_Process'));
+    expect(session, contains('--daemon 0123456789abcdef'));
+    expect(session, contains("'0123456789abcdef.port'"));
+    expect(
+      launcher.sftpArguments(
+        SshTarget.configured(
+          'box',
+          destination: 'box',
+          configFile: '/c/servers',
+        ),
+        '/tmp/batch',
+        extra: ['-o', 'ControlPath=none', '-T'],
+      ),
+      [
+        ...sftpOptions,
+        '-o',
+        'ControlPath=none',
+        '-F',
+        '/c/servers',
+        '-b',
+        '/tmp/batch',
+        'box',
+      ],
+    );
+    expect(launcher.sftpArguments(SshTarget.parse('me@box:2222'), 'b'), [
+      ...sftpOptions,
+      '-P',
+      '2222',
+      '-b',
+      'b',
+      'me@box',
+    ]);
+  });
+
+  test("ssh -W's end: the daemon gone where nothing came and ssh ended "
+      'well', () {
+    expect(
+      SshLauncher.isForwardRefused(
+        'channel 0: open failed: connect failed: Connection refused',
+      ),
+      isTrue,
+    );
+    expect(SshLauncher.isForwardRefused('stdio forwarding failed'), isTrue);
+    expect(
+      SshLauncher.isForwardRefused('Connection to box closed by remote host.'),
+      isFalse,
+    );
+  });
+
+  test('a host other than Linux, macOS or Windows on x64 or arm64 is '
+      'refused', () async {
     for (final (system, machine) in [
       ('FreeBSD', 'amd64'),
       ('Linux', 'i686'),
@@ -467,6 +637,82 @@ exec '$dartExecutable' '${p.absolute('packages', 'bao_remote', 'bin', 'baocode_s
     expect(SshTarget.isValid('dev box'), isFalse);
     expect(SshTarget.isValid('-oProxyCommand=x'), isFalse);
     expect(SshTarget.isValid('me@dev'), isTrue);
+  });
+
+  test('a WSL distribution: wsl.exe runs each command from its home, '
+      'no ssh', () async {
+    final fakeWsl = p.join(sandbox.path, 'wsl.exe');
+    // As wsl.exe does: in the folder it was started from, unless told.
+    File(fakeWsl).writeAsStringSync(r'''#!/bin/sh
+printf '%s\n' "$*" >> "$FAKE_LOG.wsl"
+[ "$WSL_UTF8" = 1 ] || exit 3
+[ "$1 $2 $3 $4 $5" = "--distribution Ubuntu --exec sh -c" ] || exit 4
+cd /
+exec /bin/sh -c "$6"
+''');
+    Process.runSync('chmod', ['+x', fakeWsl]);
+    final binaries = FakeBinaries('1-abc', {'linux-x64': serverScript()});
+    final launcher = SshLauncher(
+      ssh: p.join(sandbox.path, 'no-ssh'),
+      wsl: fakeWsl,
+      binaries: binaries,
+      start: starter(),
+    );
+    final target = SshTarget.parse(SshTarget.wslHost('Ubuntu'));
+    expect(target.wslDistro, 'Ubuntu');
+    expect(SshTarget.parse('dev').wslDistro, isNull);
+    expect(await launcher.hostKeyOptions(target), isEmpty);
+    final connection = await launcher.connect(target);
+    expect(connection.hello.home, home.path);
+    File(p.join(home.path, 'note.txt')).writeAsStringSync('hi');
+    expect(
+      await connection.client.read(home.path, p.join(home.path, 'note.txt')),
+      'hi',
+    );
+    await connection.close();
+    expect(log.existsSync(), isFalse, reason: 'ssh never ran');
+    expect(File('${log.path}.wsl').readAsLinesSync(), [
+      '--distribution Ubuntu --exec sh -c cd && sh -s',
+      startsWith('--distribution Ubuntu --exec sh -c cd && sh -c '),
+      startsWith('--distribution Ubuntu --exec sh -c cd && .baocode-server/'),
+    ]);
+
+    // No WSL here.
+    final missing = SshLauncher(
+      ssh: 'ssh',
+      wsl: p.join(sandbox.path, 'missing.exe'),
+      binaries: binaries,
+      start: starter(),
+    );
+    await expectLater(
+      missing.connect(target),
+      throwsA(
+        isA<SshConnectException>().having(
+          (error) => error.failure,
+          'failure',
+          SshFailure.wsl,
+        ),
+      ),
+    );
+  }, timeout: const Timeout(Duration(minutes: 2)));
+
+  test("WSL's distributions as wsl.exe --list --quiet prints them", () {
+    List<int> utf16(String text) => [
+      0xFF, 0xFE, // A byte order mark, as some versions print.
+      for (final unit in text.codeUnits) ...[unit & 0xFF, unit >> 8],
+    ];
+    const listed = 'Ubuntu-24.04\r\ndocker-desktop\r\nDebian\r\n';
+    expect(wslDistributions(utf16(listed)), ['Ubuntu-24.04', 'Debian']);
+    expect(wslDistributions(utf8.encode(listed)), ['Ubuntu-24.04', 'Debian']);
+    expect(wslDistributions(const []), isEmpty);
+    expect(SshLauncher.wslArguments('Debian', 'sh -s'), [
+      '--distribution',
+      'Debian',
+      '--exec',
+      'sh',
+      '-c',
+      'cd && sh -s',
+    ]);
   });
 
   test('on Windows, passwords are asked of OpenSSH 8.4 and later', () {

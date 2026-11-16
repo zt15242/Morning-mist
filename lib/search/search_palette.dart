@@ -15,8 +15,10 @@ import '../sidebar/sidebar.dart' show StatusIndicator, relativeTime;
 import '../theme/app_theme.dart';
 import '../theme/material_file_icons.dart';
 import '../theme/workbench_theme.dart' show themeColors;
+import '../workspace/window_controls.dart';
 import '../workspace/workspace.dart';
 import 'conversation_search.dart';
+import '../theme/svg_icons.dart';
 
 /// What the palette lists: everything, or one kind.
 enum SearchFilter {
@@ -532,7 +534,7 @@ class _SearchPaletteState extends State<SearchPalette> {
       _Entry(
         title: action.label,
         titleMatches: matches,
-        leading: Icon(action.icon, size: 15),
+        leading: AppIcon(action.icon, size: 15),
         keybinding: action.keybinding,
         run: () => widget.onRunAction(action),
       );
@@ -628,13 +630,18 @@ class _SearchPaletteState extends State<SearchPalette> {
         return Align(
           alignment: Alignment.topCenter,
           child: Padding(
+            // Below the header Windows draws, zoomed in on a short window
+            // too (see WindowControls.headerInset).
             padding: EdgeInsets.only(
-              top: math.min(72, constraints.maxHeight * 0.08),
+              top: math.max(
+                WindowControls.headerInset + 8,
+                math.min(72, constraints.maxHeight * 0.08),
+              ),
             ),
             child: Focus(
               onKeyEvent: _onKey,
               child: Material(
-                color: colors['quickInput.background'],
+                color: IdeQuickInput.backgroundOf(context),
                 elevation: 6,
                 shadowColor: colors['widget.shadow'],
                 shape: RoundedRectangleBorder(

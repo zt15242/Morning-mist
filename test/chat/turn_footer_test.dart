@@ -1,3 +1,4 @@
+import 'package:baocode/base/step_clock.dart';
 import 'package:baocode/chat/chat_models.dart';
 import 'package:baocode/chat/widgets/rolling_text.dart';
 import 'package:baocode/chat/widgets/turn_footer.dart';
@@ -46,7 +47,10 @@ void main() {
     await _pump(tester, const RollingText('12', style: style));
     await tester.pump(const Duration(milliseconds: 50));
     expect(tester.takeException(), isNull);
-    await tester.pumpAndSettle();
+    // On the shared clock's frames, not every vsync.
+    expect(tester.hasRunningAnimations, isFalse);
+    await tester.pump(RollingText.duration + StepClock.frame);
+    await tester.pump(StepClock.frame);
     expect(find.text('3'), findsNothing);
     expect(find.text('2'), findsOneWidget);
     // The one unchanged never moved.
@@ -129,5 +133,29 @@ void main() {
     for (var i = 1; i < rects.length; i++) {
       expect(rects[i - 1].right, lessThan(rects[i].left));
     }
+  });
+
+  testWidgets('a conversation too narrow for the line: the rest goes on '
+      'under it, nothing cut', (tester) async {
+    await _pump(
+      tester,
+      const SizedBox(
+        width: 220,
+        child: TurnFooter(
+          answer: 'Done.',
+          worked: Duration(seconds: 11),
+          usage: TurnUsage(
+            inputTokens: 90000,
+            outputTokens: 2720,
+            costUsd: 0.074,
+            tokensPerSecond: 136.92,
+          ),
+        ),
+      ),
+    );
+    expect(tester.takeException(), isNull);
+    final first = tester.getRect(find.text('11s'));
+    final last = tester.getRect(find.text('92.72k tokens'));
+    expect(last.top, greaterThan(first.bottom - 1));
   });
 }

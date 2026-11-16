@@ -151,6 +151,30 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cmdChatFocusPreviousPane => 'Focus Previous Pane';
 
   @override
+  String get cmdChatFocusPaneLeft => 'Focus Left Pane';
+
+  @override
+  String get cmdChatFocusPaneRight => 'Focus Right Pane';
+
+  @override
+  String get cmdChatFocusPaneUp => 'Focus Above Pane';
+
+  @override
+  String get cmdChatFocusPaneDown => 'Focus Below Pane';
+
+  @override
+  String get cmdChatNextPaneTab => 'Open Next Tab in Pane';
+
+  @override
+  String get cmdChatPreviousPaneTab => 'Open Previous Tab in Pane';
+
+  @override
+  String get cmdChatTogglePaneTabs => 'Toggle Pane Tabs';
+
+  @override
+  String get workspacePaneTabs => 'Show as Tabs';
+
+  @override
   String get cmdChatSearch => 'Search';
 
   @override
@@ -212,6 +236,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cmdChatAttachContext => 'Add Context…';
+
+  @override
+  String get cmdChatAttachSelection => 'Add Selection to Chat';
 
   @override
   String get cmdChatPasteRaw => 'Paste as Plain Text';
@@ -1064,6 +1091,30 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cmdToggleChat => 'Toggle Chat';
 
   @override
+  String get cmdToggleFullScreen => 'Toggle Full Screen';
+
+  @override
+  String get cmdZoomIn => 'Zoom In';
+
+  @override
+  String get cmdZoomOut => 'Zoom Out';
+
+  @override
+  String get cmdZoomReset => 'Reset Zoom';
+
+  @override
+  String get cmdToggleWordWrap => 'Toggle Word Wrap';
+
+  @override
+  String get menuWordWrap => 'Word Wrap';
+
+  @override
+  String get cmdToggleMinimap => 'Toggle Minimap';
+
+  @override
+  String get menuMinimap => 'Minimap';
+
+  @override
   String get cmdTogglePanel => 'Toggle Panel Visibility';
 
   @override
@@ -1183,6 +1234,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cmdOpenKeyboardShortcuts => 'Open Keyboard Shortcuts';
+
+  @override
+  String get cmdOpenLspSettings => 'Open Language Server Settings (JSON)';
 
   @override
   String get cmdJumpToBracket => 'Go to Bracket';
@@ -1430,6 +1484,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cmdSidePanelFiles => 'Show Agent Files';
 
   @override
+  String get cmdSidePanelUsage => 'Show Conversation Usage';
+
+  @override
   String get cmdSidePanelTerminal => 'Show Agent Terminals';
 
   @override
@@ -1629,20 +1686,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sidePanelHide => 'Hide side panel';
 
   @override
-  String get sidePanelMoveLeft => 'Move to the Left of the Conversation';
+  String get chatLayout => 'Layout';
 
   @override
-  String get sidePanelMoveRight => 'Move to the Right of the Conversation';
+  String get chatLayoutSidebarChatPanel => 'Sidebar · Chat · Panel';
+
+  @override
+  String get chatLayoutSidebarPanelChat => 'Sidebar · Panel · Chat';
+
+  @override
+  String get chatLayoutPanelChatSidebar => 'Panel · Chat · Sidebar';
+
+  @override
+  String get chatLayoutChatPanelSidebar => 'Chat · Panel · Sidebar';
 
   @override
   String get sidePanelChanges => 'Changes';
-
-  @override
-  String get sidePanelNoChanges => 'No changes yet';
-
-  @override
-  String get sidePanelNoChangesDetail =>
-      'Changes in the project\'s Git working tree and index show here.';
 
   @override
   String get sidePanelOpenFile => 'Open in side panel';
@@ -1663,7 +1722,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sidePanelSource => 'Source';
 
   @override
-  String get sidePanelEdit => 'Edit';
+  String get commandOpenDetails => 'Open details';
 
   @override
   String get sidePanelNoOriginal =>
@@ -1685,14 +1744,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sidePanelAddToChat => 'Add to Chat';
 
   @override
+  String get termClearTask => 'Clear';
+
+  @override
+  String get termClearEndedTasks => 'Clear All Ended Tasks';
+
+  @override
   String get sidePanelBackgroundTasks => 'Background Tasks';
 
   @override
   String get sidePanelSelectFile => 'Select a file to preview it';
-
-  @override
-  String get sidePanelSelectChange =>
-      'Select a changed file to see its changes';
 
   @override
   String get sidePanelSelectTerminal =>
@@ -1741,6 +1802,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get agentImageUntitled => 'Image';
 
   @override
+  String get chatTitleSummarize => 'Summarize into a new title';
+
+  @override
+  String get chatTitleSummarizing => 'Summarizing…';
+
+  @override
+  String get chatTitleSummarizeFailed => 'No title could be had. Try again';
+
+  @override
   String get sidebarNewAgent => 'New Chat';
 
   @override
@@ -1760,6 +1830,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sidebarByStatus => 'By status';
+
+  @override
+  String get sidebarProjectSortRecent => 'Recent activity';
+
+  @override
+  String get sidebarProjectSortManual => 'Manual';
 
   @override
   String get sidebarTimeNow => 'now';
@@ -1829,6 +1905,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sidebarUnread => 'Unread';
 
   @override
+  String sidebarHoverModel(String model) {
+    return 'Model: $model';
+  }
+
+  @override
   String get sidebarDone => 'Done';
 
   @override
@@ -1839,6 +1920,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sidebarAgents => 'Agents';
+
+  @override
+  String get sidebarCollapseAll => 'Collapse All';
+
+  @override
+  String get sidebarExpandAll => 'Expand All';
 
   @override
   String get sidebarNoMatchingAgents => 'No matching agents';
@@ -1965,6 +2052,45 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sidebarFork => 'Fork';
+
+  @override
+  String get sidebarDetachAside => 'Detach from Conversation';
+
+  @override
+  String sidebarDeleteAsidesToo(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Its $count /btw conversations are deleted with it.',
+      one: 'Its /btw conversation is deleted with it.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get btwCommandDetail =>
+      'Ask in a conversation of its own, beside this one';
+
+  @override
+  String get forkCommandDetail => 'Fork this conversation and open the copy';
+
+  @override
+  String get forkUnavailable =>
+      'This conversation can\'t be forked: it needs a message first, and its agent has to support forking.';
+
+  @override
+  String get sidebarFoldAsides => 'Hide /btw Conversations';
+
+  @override
+  String sidebarUnfoldAsides(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Show its $count /btw conversations',
+      one: 'Show its /btw conversation',
+    );
+    return '$_temp0';
+  }
 
   @override
   String sidebarShowMore(int count) {
@@ -2222,10 +2348,21 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get chatAgentMessageSent => 'sent';
+
+  @override
+  String chatAgentMessageSemantics(String agent) {
+    return 'Message from subagent $agent';
+  }
+
+  @override
   String get chatOpensItsConversation => 'Opens its conversation';
 
   @override
   String get chatLoadEarlier => 'Load earlier messages';
+
+  @override
+  String get chatReload => 'Reload (continued elsewhere)';
 
   @override
   String get chatStop => 'Stop';
@@ -2295,6 +2432,35 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get toolUpdatedTodos => 'Updated todos';
+
+  @override
+  String todoCount(int done, int total) {
+    return 'Todos $done/$total';
+  }
+
+  @override
+  String get todoAllDone => 'All done';
+
+  @override
+  String get todoNone => 'List empty';
+
+  @override
+  String get todoAdded => 'Added todo';
+
+  @override
+  String get todoStarted => 'Started todo';
+
+  @override
+  String get todoCompleted => 'Completed todo';
+
+  @override
+  String get todoRemoved => 'Removed todo';
+
+  @override
+  String get todoUpdated => 'Updated todo';
+
+  @override
+  String get todoChecked => 'Checked todos';
 
   @override
   String get toolSending => 'Saying';
@@ -2565,6 +2731,11 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String turnWorked(String duration) {
     return 'Worked for $duration';
+  }
+
+  @override
+  String turnStopped(String duration) {
+    return 'Stopped after $duration';
   }
 
   @override
@@ -2855,7 +3026,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get stripChangeUntracked =>
-      'What it was before is not known (the agent did not tell, it is too large, or outside the project): it can be kept, not undone.';
+      'What it was before is not known (too large to keep, or the agent did not tell): it can be kept, not undone.';
 
   @override
   String get stripChangesDiff => 'Agent Changes';
@@ -3087,11 +3258,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get mcpProbeNote =>
       'Started and greeted with MCP\'s initialize, as `claude mcp list` checks it.';
-
-  @override
-  String todoCount(int done, int total) {
-    return 'Todos $done/$total';
-  }
 
   @override
   String queuedMessages(int count) {
@@ -3534,7 +3700,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get generalSettingsClaudeCoreDescription =>
-      'Claude Code CLI: Anthropic\'s own program, with this machine\'s sign-in and setup; pick it to use a Claude subscription. Built-in: comes with Morning Mist, and uses only the models added in Settings → Models. The CLI is the default when Claude Code is installed here, the built-in core otherwise. Changes apply to new sessions.';
+      'Claude Code CLI: Anthropic\'s own program, with this machine\'s sign-in and setup; pick it to use a Claude subscription. Built-in: comes with Morning Mist, and uses only the models added in Settings → Models. By default, the CLI where this machine has Claude Code, else the built-in core; the CLI, picked where there is none, is downloaded for you. Changes apply to new sessions.';
 
   @override
   String get generalSettingsClaudeCoreBuiltin => 'Built-in';
@@ -3717,6 +3883,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get placeholderOpenAnyway => 'Open Anyway';
 
   @override
+  String get changeOpenWith => 'Open With';
+
+  @override
   String get openInDefaultApp => 'Open in Default App';
 
   @override
@@ -3768,8 +3937,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get themeHighContrastThemes => 'high contrast themes';
 
   @override
-  String get themeSelectPlaceholder =>
-      'Select Color Theme (detect system color mode disabled)';
+  String get themeAuto => 'Auto';
+
+  @override
+  String get themeFollowSystem => 'Follow system';
+
+  @override
+  String get themeSelectPlaceholder => 'Select Color Theme';
 
   @override
   String get dateNow => 'now';
@@ -4774,6 +4948,15 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get langNavigationUnavailable =>
+      'No language server is available for code navigation in this file.';
+
+  @override
+  String langNavigationInstall(String id) {
+    return 'Install the \'$id\' language server to enable code navigation in this file.';
+  }
+
+  @override
   String get langReferences => 'References';
 
   @override
@@ -4928,6 +5111,21 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get termKillTerminal => 'Kill Terminal';
+
+  @override
+  String get termKillOtherTerminals => 'Kill Other Terminals';
+
+  @override
+  String get termKillAllTerminals => 'Kill All Terminals';
+
+  @override
+  String get termStopAllTasks => 'Stop All Running Tasks';
+
+  @override
+  String get termRunInNewTerminal => 'Run in New Terminal';
+
+  @override
+  String get termNoTerminals => 'No terminals';
 
   @override
   String get termNewTerminal => 'New Terminal';
@@ -5096,6 +5294,11 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String wbSelectedLines(int lines, int count) {
+    return '($lines lines, $count selected)';
+  }
+
+  @override
   String get wbGoToLineColumn => 'Go to Line/Column';
 
   @override
@@ -5154,6 +5357,27 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get workspaceClosePane => 'Close pane';
+
+  @override
+  String workspaceCloseBackTo(String title) {
+    return 'Close pane, back to $title';
+  }
+
+  @override
+  String workspaceCovers(String title) {
+    return 'Over $title, which shows again once this closes';
+  }
+
+  @override
+  String workspaceCovered(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count conversations under this one',
+      one: '1 conversation under this one',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get workspaceLoadingProjects => 'Loading projects…';
@@ -5827,13 +6051,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get generalSettingsIde => 'Fast IDE';
 
   @override
-  String get generalSettingsAutoOpenChanges => 'Show agent changes as diffs';
-
-  @override
-  String get generalSettingsAutoOpenChangesDescription =>
-      'While the IDE shows, a file the agent changes opens as a diff of it against its text before, as the agent edits it.';
-
-  @override
   String get explorerExcludeSetting => 'Hidden files and folders';
 
   @override
@@ -5874,7 +6091,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get claudePathMissing =>
-      'None found yet: Claude Code is downloaded as the first conversation starts.';
+      'None found yet: with the Claude Code CLI picked, it is downloaded as the first conversation starts.';
 
   @override
   String get generalSettingsIdeWindows => 'Fast Ide Windows';
@@ -6400,6 +6617,32 @@ class AppLocalizationsEn extends AppLocalizations {
   String get modelsAddProvider => 'Add Upstream';
 
   @override
+  String get modelsMagpieJoin => 'Connect magpie';
+
+  @override
+  String get modelsMagpieBadge => 'Follows magpie';
+
+  @override
+  String get modelsMagpieGateway => 'magpie Gateway';
+
+  @override
+  String get modelsMagpieGatewayDescription =>
+      'Models, accounts and routing are set up in magpie, and this list follows it. New routing groups, image models and the models magpie gives Claude Code are turned on as they come; tick any other below.';
+
+  @override
+  String get modelsMagpieRunning => 'Running';
+
+  @override
+  String get modelsMagpieNotRunning => 'magpie isn\'t running';
+
+  @override
+  String get modelsMagpieNotRunningDetail =>
+      'Open magpie, or run magpie serve. Sessions on its models fail until it runs.';
+
+  @override
+  String get modelsMagpieSync => 'Sync Models';
+
+  @override
   String get modelsNewProviderName => 'New Upstream';
 
   @override
@@ -6447,6 +6690,52 @@ class AppLocalizationsEn extends AppLocalizations {
       'Opens ChatGPT\'s sign-in page in the browser.';
 
   @override
+  String get modelsAccountsImport => 'Import';
+
+  @override
+  String get modelsAccountsImportTitle => 'Import Accounts';
+
+  @override
+  String get modelsAccountsImportFile => 'Choose File…';
+
+  @override
+  String get modelsAccountsImportDescription =>
+      'Enter account credentials as JSON or choose a JSON file.';
+
+  @override
+  String get modelsAccountsPaste => 'Enter JSON…';
+
+  @override
+  String get modelsAccountsPastePlaceholder =>
+      'Type or paste your JSON credentials here.';
+
+  @override
+  String get modelsAccountsImportConfirm => 'Import these ChatGPT credentials?';
+
+  @override
+  String get modelsAccountsImportConfirmDetail =>
+      'BaoCode will keep the credentials securely without changing the original file or actively refreshing tokens during import. Renewing them later may rotate the refresh token and require the original tool to sign in again. Only import credentials you are authorized to use.';
+
+  @override
+  String get modelsAccountsImportFailed =>
+      'The credentials could not be read or imported.';
+
+  @override
+  String modelsAccountsImportSummary(int count) {
+    return 'Accounts imported: $count';
+  }
+
+  @override
+  String modelsAccountsImportKept(int count) {
+    return 'Already here, kept as signed in: $count';
+  }
+
+  @override
+  String modelsAccountsImportItemFailed(int index, String error) {
+    return 'Entry $index: $error';
+  }
+
+  @override
   String get modelsAccountSigningIn => 'Waiting for sign-in…';
 
   @override
@@ -6462,7 +6751,12 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get modelsRefreshQuota => 'Refresh Quota';
+  String get modelsRefreshQuota => 'Refresh All Quotas';
+
+  @override
+  String modelsAccountRefreshQuota(String name) {
+    return 'Refresh quota for $name';
+  }
 
   @override
   String get modelsAccountRemove => 'Remove account';
@@ -6482,10 +6776,24 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get modelsAccountDisabled => 'Disabled';
+
+  @override
   String get modelsAccountLimited => 'Out of quota';
 
   @override
   String get modelsAccountQuotaUnknown => 'Quota not known yet';
+
+  @override
+  String get modelsQuotaShortWindow => 'Short window';
+
+  @override
+  String get modelsQuotaLongWindow => 'Long window';
+
+  @override
+  String modelsQuotaLastUpdated(String time) {
+    return 'Last updated $time';
+  }
 
   @override
   String get modelsQuotaWeek => 'Weekly';
@@ -6504,6 +6812,40 @@ class AppLocalizationsEn extends AppLocalizations {
   String modelsQuotaUsed(int percent) {
     return '$percent% used';
   }
+
+  @override
+  String modelsQuotaRemaining(int percent) {
+    return '$percent% left';
+  }
+
+  @override
+  String quotaBarWindowLeft(String window, int percent) {
+    return '$window $percent% left';
+  }
+
+  @override
+  String quotaBarAvailable(int count, int total) {
+    return '$count/$total available';
+  }
+
+  @override
+  String quotaBarAllOut(String time) {
+    return 'All accounts out of quota · back $time';
+  }
+
+  @override
+  String quotaBarBackAt(String time) {
+    return 'Out of quota · back $time';
+  }
+
+  @override
+  String get quotaBarNone => 'No account can be used';
+
+  @override
+  String get quotaBarThisChat => 'This chat';
+
+  @override
+  String get quotaBarRefresh => 'Refresh Quota';
 
   @override
   String modelsQuotaResetsIn(String time) {
@@ -6603,6 +6945,31 @@ class AppLocalizationsEn extends AppLocalizations {
       'As the upstream documents it; without a version in its path (…/v1), /v1 is added.';
 
   @override
+  String get modelsCustomUrls => 'Custom URLs';
+
+  @override
+  String get modelsCustomUrlsDescription =>
+      'Where models are listed and conversations go is made from the Base URL. When the upstream has them elsewhere, give them in full here.';
+
+  @override
+  String get modelsModelsUrl => 'Models URL';
+
+  @override
+  String get modelsModelsUrlDescription =>
+      'Testing the connection and fetching models GET it. Empty, the one in grey (from the Base URL) is used.';
+
+  @override
+  String get modelsEndpointUrl => 'Endpoint URL';
+
+  @override
+  String get modelsEndpointUrlDescription =>
+      'Every conversation is POSTed to it. Empty, the one in grey (from the Base URL) is used. A model of another endpoint type still goes by the Base URL.';
+
+  @override
+  String get modelsEndpointUrlAnthropicDescription =>
+      'Every conversation is POSTed to it, Claude Code through the local proxy. Empty, the one in grey (from the Base URL) is used. A model of another endpoint type still goes by the Base URL.';
+
+  @override
   String get modelsApiKey => 'API Key';
 
   @override
@@ -6667,6 +7034,16 @@ class AppLocalizationsEn extends AppLocalizations {
       'No longer listed by the upstream; kept until you remove it.';
 
   @override
+  String modelsRemoveMissing(int count) {
+    return 'Remove Gone ($count)';
+  }
+
+  @override
+  String modelsRemoveMissingConfirm(int count) {
+    return 'Remove $count models the upstream no longer lists?';
+  }
+
+  @override
   String get modelsCustom => 'Manual';
 
   @override
@@ -6683,6 +7060,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get modelsEdit => 'Edit…';
+
+  @override
+  String get modelsDuplicate => 'Duplicate…';
 
   @override
   String get modelsRemove => 'Remove';
@@ -6719,7 +7099,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get modelsRolesDescription =>
-      'Which model Claude Code uses for each part of its work. Unset, the model picked stands in.';
+      'Which model Claude Code uses for each part of its work. Unset, the model picked stands in. All but the main model may be another upstream\'s: BaoCode\'s local proxy sends their requests there.';
 
   @override
   String get modelsRoleUnset => 'Unset';
@@ -6761,11 +7141,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get modelsRoleSubagentDescription =>
-      'CLAUDE_CODE_SUBAGENT_MODEL: the model every subagent runs on, over the one its definition or the agent\'s call names (but inherit). It may be another upstream\'s: Morning Mist\'s local proxy sends its requests there.';
+      'CLAUDE_CODE_SUBAGENT_MODEL: the model every subagent runs on, the built-in Explore and Plan and those defined as inherit too, over the one its definition or the agent\'s call names.';
 
   @override
   String get modelsRoleMissing =>
-      'This model is no longer one of its upstream\'s: subagents\' requests to it will fail.';
+      'This model is no longer one of its upstream\'s: requests to it will fail.';
 
   @override
   String get modelsAdvanced => 'Advanced';
@@ -6823,7 +7203,16 @@ class AppLocalizationsEn extends AppLocalizations {
       'One Name: Value a line, sent on every request to this upstream. Values may use the CLAUDE_SESSION_ID variable (this conversation\'s session) and ANTHROPIC_MODEL (the model asked for), each between double braces; over the direct Anthropic protocol those two go as written, so only fixed values work there. Auth headers (Authorization, x-api-key) are ignored here: the key is set above.';
 
   @override
-  String get modelsHeadersPlaceholder => 'x-session-id: my-session';
+  String get modelsDuplicateProvider => 'Duplicate Upstream';
+
+  @override
+  String get modelsDuplicateProviderDescription =>
+      'A copy of this upstream, with its models, settings and key.';
+
+  @override
+  String modelsDuplicateName(String name) {
+    return '$name Copy';
+  }
 
   @override
   String get modelsDelete => 'Delete Upstream';
@@ -6962,6 +7351,22 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get modelsKindDescription =>
       'Image models are not offered in the model picker: agents make pictures with them through the generate_image tool.';
+
+  @override
+  String get modelsEndpoint => 'Endpoint';
+
+  @override
+  String modelsEndpointUpstream(String protocol) {
+    return 'As the upstream ($protocol)';
+  }
+
+  @override
+  String get modelsEndpointDescription =>
+      'Which API this model\'s requests go to, at the upstream\'s base URL and with its key: on a relay that serves several, its Claude models at the Anthropic one and its GPT at Responses, say.';
+
+  @override
+  String get modelsModelEndpointUrlDescription =>
+      'Where this model\'s requests go, in full. Apart from the endpoint type: that says how a request is made, this only where it goes. Empty, the one in grey is used.';
 
   @override
   String get modelsImageBadge => 'Image';
@@ -7147,7 +7552,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get diagnosticsDescription =>
-      'Send Morning Mist\'s error logs to its developers to help track down a problem. Nothing is sent until you upload.';
+      'Send Morning Mist\'s error logs and the crash and hang reports the system kept of it to its developers to help track down a problem. Nothing is sent until you upload.';
 
   @override
   String get diagnosticsUpload => 'Upload…';
@@ -7394,6 +7799,24 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get appearanceSettingsEditDetail => 'File Edits';
+
+  @override
+  String get appearanceSettingsEditDetailDescription =>
+      'How the agent\'s edits to files show in the conversation: as a card of the changes, always open; or as one line that opens to them.';
+
+  @override
+  String get appearanceSettingsEditDetailCard => 'Card with changes';
+
+  @override
+  String get appearanceSettingsEditDetailCompact => 'Compact';
+
+  @override
+  String appearanceSettingsEditDetailLabel(String detail) {
+    return 'File edits: $detail';
+  }
+
+  @override
   String get appearanceSettingsReplyScroll => 'As a Reply Comes';
 
   @override
@@ -7417,6 +7840,13 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get appearanceSettingsMinimapDescription =>
       'A minimap of the whole conversation at the left of its column, where you are in it shown as you scroll; click or drag it to get somewhere. It stands in for the scrollbar, and is not shown in a window too narrow for it. Off: the scrollbar.';
+
+  @override
+  String get appearanceSettingsWindowBlur => 'Native Window Blur';
+
+  @override
+  String get appearanceSettingsWindowBlurDescription =>
+      'The system\'s blur under the windows (macOS\'s sidebar material, Windows 11\'s acrylic): what is behind them shows through the sidebar and the conversation. Off: the windows are opaque.';
 
   @override
   String get appearanceSettingsSidebarTimes => 'Times in the Sidebar';
@@ -7484,7 +7914,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get appearanceSettingsCodeSizeDescription =>
-      'The size of code in the IDE editor and the side panel\'s file and changes views. Code in the chat follows the interface size; the terminal has its own size.';
+      'The size of code in the IDE editor and the side panel\'s file and changes views at 100% interface size; zooming the interface scales it in proportion. Code in the chat follows the interface size; the terminal has its own size.';
 
   @override
   String appearanceSettingsCodeSizeLabel(String size) {
@@ -7499,11 +7929,25 @@ class AppLocalizationsEn extends AppLocalizations {
       'Draws sequences such as => and != as one glyph where the font has one. The terminal does not.';
 
   @override
+  String get appearanceSettingsWordWrap => 'Word Wrap';
+
+  @override
+  String get appearanceSettingsWordWrapDescription =>
+      'Wraps long lines at the editor\'s width, in every editor. An editor\'s context menu and the Command Palette (Toggle Word Wrap) switch it too. Files of more than 5,000 lines are not wrapped.';
+
+  @override
+  String get appearanceSettingsCodeMinimap => 'Code Minimap';
+
+  @override
+  String get appearanceSettingsCodeMinimapDescription =>
+      'A minimap of the file at the right of the code editor, in every editor; it is not shown in an editor too narrow for it. An editor tab\'s context menu and the Command Palette (Toggle Minimap) switch it too.';
+
+  @override
   String get appearanceSettingsUiScale => 'Interface Size';
 
   @override
   String get appearanceSettingsUiScaleDescription =>
-      'Zooms the whole interface (its text, icons and spacing), code in the chat, and terminal text while the terminal size follows it. Code in the IDE editor and side panel files and changes keeps its own size.';
+      'Zooms the whole interface (its text, icons and spacing) and the code in it, and terminal text while the terminal size follows it. Code in the editor zooms from its code size.';
 
   @override
   String appearanceSettingsUiScaleLabel(String percent) {
@@ -7630,6 +8074,9 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get remoteFolderRefresh => 'Read the folders again';
+
+  @override
   String get remoteOpenThisFolder => 'Open This Folder';
 
   @override
@@ -7643,6 +8090,11 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String remoteListFailed(String path) {
     return 'Could not list $path';
+  }
+
+  @override
+  String remoteReadingFolder(String path) {
+    return 'Reading $path…';
   }
 
   @override
@@ -7677,28 +8129,33 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String remoteStatus(String host) {
-    return 'SSH: $host';
+  String remoteStatus(String kind, String host) {
+    return '$kind: $host';
   }
 
   @override
-  String remoteStatusConnecting(String host) {
-    return 'SSH: $host (connecting...)';
+  String remoteStatusConnecting(String kind, String host) {
+    return '$kind: $host (connecting...)';
   }
 
   @override
-  String remoteStatusReconnecting(String host) {
-    return 'SSH: $host (reconnecting...)';
+  String remoteStatusReconnecting(String kind, String host) {
+    return '$kind: $host (reconnecting...)';
   }
 
   @override
-  String remoteStatusFailed(String host) {
-    return 'SSH: $host (disconnected)';
+  String remoteStatusFailed(String kind, String host) {
+    return '$kind: $host (disconnected)';
   }
 
   @override
-  String remoteStatusInstalling(String host, int percent) {
-    return 'SSH: $host (installing Claude Code $percent%)';
+  String remoteStatusInstalling(String kind, String host, int percent) {
+    return '$kind: $host (installing Claude Code $percent%)';
+  }
+
+  @override
+  String remoteStatusInstallingUnsized(String kind, String host) {
+    return '$kind: $host (installing Claude Code...)';
   }
 
   @override
@@ -7722,8 +8179,13 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String remoteStatusTooltip(String host) {
-    return 'Connected to $host over SSH';
+  String remoteStatusTooltip(String kind, String host) {
+    return 'Connected to $host over $kind';
+  }
+
+  @override
+  String remoteStatusSystem(String platform) {
+    return 'System: $platform';
   }
 
   @override
@@ -7732,11 +8194,16 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String remoteStatusTooltipResuming(String host) {
+    return 'The connection to $host is lost, and being made again: its terminals and Claude Code keep running there meanwhile. Click to reconnect now';
+  }
+
+  @override
   String get remoteReconnect => 'Reconnect';
 
   @override
-  String remoteProjectTooltip(String host) {
-    return 'On $host, over SSH';
+  String remoteProjectTooltip(String kind, String host) {
+    return 'On $host, over $kind';
   }
 
   @override
@@ -7941,6 +8408,38 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sidebarDeleteWorkspace => 'Delete Workspace';
+
+  @override
+  String get sidebarEditProject => 'Edit Project…';
+
+  @override
+  String get projectEditTitle => 'Edit Project';
+
+  @override
+  String get projectLocation => 'Location';
+
+  @override
+  String get projectLocationDescription =>
+      'Moved or renamed the folder? Point the project at it here, and its conversations move along. The folder itself is not moved.';
+
+  @override
+  String projectChooseFolder(String app) {
+    return 'Choose in $app…';
+  }
+
+  @override
+  String get projectFolderNotFound => 'There is no folder at this path.';
+
+  @override
+  String get projectRelocateBusy =>
+      'An agent of this project is still working, or open in a window of its own. Change its location once it is done.';
+
+  @override
+  String get projectRelocateFailed =>
+      'Couldn\'t move this project\'s conversations.';
+
+  @override
+  String get projectRelocating => 'Moving Conversations…';
 
   @override
   String ideWorkspaceTitle(String name) {
@@ -8446,14 +8945,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get mobileSettingsDescription =>
-      'Follow and drive this computer\'s agents from Morning Mist on your phone, over the local network or the internet. What goes between them is end-to-end encrypted.';
+      'Follow and drive this computer\'s agents from Morning Mist on your phone: directly on the same network, across the internet through a hole punched in the routers between them, or through Morning Mist\'s relay when neither works. What goes between them is end-to-end encrypted; a relay cannot read it.';
 
   @override
   String get mobileAllow => 'Allow Phones to Connect';
 
   @override
   String get mobileAllowDescription =>
-      'Phones paired with this computer connect to it directly.';
+      'Phones paired with this computer can connect to it, wherever they are.';
 
   @override
   String get mobileStatus => 'Status';
@@ -8465,56 +8964,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get mobileStatusStarting => 'Starting…';
 
   @override
-  String mobileStatusListening(int port) {
-    return 'Listening on port $port';
-  }
-
-  @override
   String mobileStatusFailed(String error) {
-    return 'Could not listen: $error';
+    return 'Could not start: $error';
   }
 
   @override
-  String get mobileAddresses => 'Addresses';
-
-  @override
-  String get mobileAddressesDescription =>
-      'Where phones reach this computer, in the order they try them: the local network first, then the internet.';
-
-  @override
-  String get mobileAddressesNone => 'No network found.';
-
-  @override
-  String get mobileAddressesRefresh => 'Refresh';
-
-  @override
-  String get mobilePort => 'Port';
-
-  @override
-  String get mobilePortDescription =>
-      'The port phones connect to. Forward it on the router to reach this computer from the internet.';
-
-  @override
-  String mobilePortInvalid(String text) {
-    return 'Not a port: $text. Enter a number from 1 to 65535.';
-  }
-
-  @override
-  String get mobilePublicAddress => 'Public Address';
-
-  @override
-  String get mobilePublicAddressDescription =>
-      'A domain or IP this computer can be reached at from the internet (with the port forwarded), put in the QR code; several separated by commas. Behind a proxy that only takes HTTPS (such as a Cloudflare Tunnel), write it as wss://domain. Public IPv6 addresses are found by themselves.';
-
-  @override
-  String get mobileRelay => 'Relay';
+  String get mobileRelay => 'Relays';
 
   @override
   String get mobileRelayDescription =>
-      'Reach this computer through Morning Mist\'s relay when none of its addresses can be reached. Coming later.';
-
-  @override
-  String get mobileRelayUnavailable => 'Not Available Yet';
+      'Phones that cannot reach this computer directly go through one. It only passes along what is sealed between the two. Nothing to set on the phone: it learns them when paired, and again each time it connects.';
 
   @override
   String get mobilePair => 'Pair a Phone';
@@ -8534,6 +8993,31 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get mobilePairCopyLink => 'Copy Link';
+
+  @override
+  String get mobilePairQrHint =>
+      'Click to copy the link, to paste on the phone';
+
+  @override
+  String get mobileGetApp => 'Get the Phone App';
+
+  @override
+  String get mobileGetAppDescription =>
+      'Scan with the phone\'s camera: the same downloads as on baocode.dev.';
+
+  @override
+  String get mobileGetAndroidDetail => 'The APK; it keeps itself up to date';
+
+  @override
+  String get mobileGetIos => 'iPhone and iPad';
+
+  @override
+  String get mobileGetIosDetail => 'The beta, on TestFlight';
+
+  @override
+  String mobileGetOpen(String url) {
+    return 'Click to open $url';
+  }
 
   @override
   String get mobilePairCopied => 'Copied';
@@ -8611,6 +9095,106 @@ class AppLocalizationsEn extends AppLocalizations {
   String get mobilePairAllow => 'Allow';
 
   @override
+  String mobileStatusOnline(String relay) {
+    return 'On, reachable through $relay';
+  }
+
+  @override
+  String get mobileStatusNoRelay =>
+      'On; no relay reached yet, so only phones on the same network can connect';
+
+  @override
+  String mobileStatusDenied(String reason) {
+    return 'On, but the relay turned this computer away: $reason';
+  }
+
+  @override
+  String get mobileRelayInvalid =>
+      'Not a relay address; one looks like https://relay.example.com';
+
+  @override
+  String get mobileRelayPinned => 'Relay Used';
+
+  @override
+  String get mobileRelayCustom => 'Custom';
+
+  @override
+  String get mobileRelayCustomAddress => 'Custom Address';
+
+  @override
+  String get mobileRelayCustomDescription =>
+      'The address of a relay you run yourself (baocode-relay).';
+
+  @override
+  String get mobileRelayMode => 'How';
+
+  @override
+  String get mobileRelayModeAuto => 'Automatic';
+
+  @override
+  String get mobileRelayModeAutoDescription =>
+      'BaoCode\'s relays, the nearest that answers.';
+
+  @override
+  String get mobileRelayModePinned => 'Pick One';
+
+  @override
+  String get mobileRelayModePinnedDescription =>
+      'Only the one picked: one of BaoCode\'s, or a custom address.';
+
+  @override
+  String get mobileRelayModeDirect => 'Direct Only';
+
+  @override
+  String get mobileRelayModeDirectDescription =>
+      'No relay: phones connect straight to this computer. It needs a public address, or the port below forwarded to it.';
+
+  @override
+  String get mobileDirectPort => 'Direct Port';
+
+  @override
+  String get mobileDirectPortDescription =>
+      'The UDP port phones connect to. Forward it to this computer at the router, and allow it in the firewall.';
+
+  @override
+  String get mobileDirectPortInvalid => 'A port from 1024 to 65535.';
+
+  @override
+  String get mobileDirectAddress => 'Direct Address';
+
+  @override
+  String get mobileDirectAddressDescription =>
+      'It goes in the pairing code and in every connection after.';
+
+  @override
+  String get mobileDirectAddressNone =>
+      'No public address yet: check again once this computer is online, or forward the port to it if it is behind a router.';
+
+  @override
+  String get mobileStatusDirect => 'On, direct only';
+
+  @override
+  String get mobilePathLan => 'Same network';
+
+  @override
+  String get mobilePathDirect => 'Direct';
+
+  @override
+  String get mobilePathRelay => 'Through the relay';
+
+  @override
+  String mobilePathRtt(int ms) {
+    return '$ms ms';
+  }
+
+  @override
+  String get mobileLegacyPhone =>
+      'Needs pairing again: paired before the connection was rebuilt';
+
+  @override
+  String get mobileLegacyRepair => 'Pair Again';
+
+  @override
   String get settingsSectionStash => 'Stash';
 
   @override
@@ -8634,6 +9218,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get stashLinkEdit => 'Edit link';
+
+  @override
+  String get stashLinkCopy => 'Copy link address';
+
+  @override
+  String get stashLinkRemove => 'Remove link';
+
+  @override
+  String get stashFormatMenu => 'Format';
 
   @override
   String get stashDraft => 'Draft';
@@ -8713,6 +9306,60 @@ class AppLocalizationsEn extends AppLocalizations {
   String get stashFormatCodeBlock => 'Code block';
 
   @override
+  String get markdownTableInsertRowAbove => 'Insert row above';
+
+  @override
+  String get markdownTableInsertRowBelow => 'Insert row below';
+
+  @override
+  String get markdownTableDeleteRow => 'Delete row';
+
+  @override
+  String get markdownTableInsertColumnLeft => 'Insert column left';
+
+  @override
+  String get markdownTableInsertColumnRight => 'Insert column right';
+
+  @override
+  String get markdownTableDeleteColumn => 'Delete column';
+
+  @override
+  String get markdownTableAlignLeft => 'Align left';
+
+  @override
+  String get markdownTableAlignCenter => 'Align center';
+
+  @override
+  String get markdownTableAlignRight => 'Align right';
+
+  @override
+  String get markdownTableDuplicateRow => 'Duplicate row';
+
+  @override
+  String get markdownTableMoveRowUp => 'Move row up';
+
+  @override
+  String get markdownTableMoveRowDown => 'Move row down';
+
+  @override
+  String get markdownTableClearRow => 'Clear row';
+
+  @override
+  String get markdownTableDuplicateColumn => 'Duplicate column';
+
+  @override
+  String get markdownTableMoveColumnLeft => 'Move column left';
+
+  @override
+  String get markdownTableMoveColumnRight => 'Move column right';
+
+  @override
+  String get markdownTableClearColumn => 'Clear column';
+
+  @override
+  String get markdownTableDeleteTable => 'Delete table';
+
+  @override
   String get stashFormatClear => 'Clear formatting';
 
   @override
@@ -8726,26 +9373,26 @@ class AppLocalizationsEn extends AppLocalizations {
       'Has AI make the selection clearer, in your words, without adding structure';
 
   @override
-  String get composerPolish => 'Polish';
+  String get composerPolish => 'Enhance prompt';
 
   @override
-  String get composerPolishing => 'Polishing…';
+  String get composerPolishing => 'Enhancing…';
 
   @override
   String get composerPolishHint =>
-      'Polish: the auxiliary model makes the message clearer, in your words; pictures, files, code and links stay as they are; Undo takes it back';
+      'Enhance prompt: the auxiliary model makes the message a clearer, more specific prompt for the agent, filling in what you left vague; pictures, files, code and links stay as they are; Undo takes it back';
 
   @override
   String composerPolishFailed(String error) {
-    return 'Could not polish: $error';
+    return 'Could not enhance the prompt: $error';
   }
 
   @override
-  String get generalSettingsComposerPolish => 'Polish button';
+  String get generalSettingsComposerPolish => 'Enhance Prompt button';
 
   @override
   String get generalSettingsComposerPolishDescription =>
-      'A button in the message box that has the auxiliary model make what you wrote clearer before you send it';
+      'A button in the message box that has the auxiliary model make what you wrote a clearer, more specific prompt before you send it';
 
   @override
   String get generalSettingsLiveTurnStats => 'Live Speed and Time';
@@ -9209,10 +9856,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get branchBarDetached => 'Detached HEAD';
 
   @override
-  String get branchBarRunning =>
-      'Branches can\'t be switched while the agent works';
-
-  @override
   String branchBarFailed(String branch) {
     return 'Couldn\'t switch to “$branch”';
   }
@@ -9232,7 +9875,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get accountsDescription =>
-      'Sign in to GitHub or GitLab to see the state of the issues and pull requests linked in Stash, import issues as stashes, and reply to them once you confirm.';
+      'Sign in to GitHub, GitLab or Gitee to see the state of the issues and pull requests linked in Stash, import issues as stashes, and reply to them once you confirm.';
 
   @override
   String get accountsSignedIn => 'Signed in';
@@ -9242,14 +9885,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get accountsKeptLocally =>
-      'Tokens are kept in this computer\'s keychain and are sent only to the GitHub or GitLab they are for. Nothing is posted without your confirmation.';
+      'Tokens are kept in this computer\'s keychain and are sent only to the GitHub, GitLab or Gitee they are for. Nothing is posted without your confirmation.';
 
   @override
   String get accountsGitHubHosts =>
       'github.com, or your company\'s GitHub Enterprise';
 
   @override
-  String get accountsGitLabHosts => 'gitlab.com, or a self-managed GitLab';
+  String get accountsGitLabHosts =>
+      'gitlab.com, or a self-managed GitLab (http:// or https://, with its port)';
+
+  @override
+  String get accountsGiteeHosts => 'gitee.com, with a personal access token';
 
   @override
   String get accountsSignInBrowser => 'Sign in with Browser';
@@ -9290,7 +9937,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get accountsSignIn => 'Sign In';
 
   @override
-  String get accountsHost => 'Host';
+  String get accountsHost => 'Server';
 
   @override
   String get accountsToken => 'Token';
@@ -9304,6 +9951,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'A personal access token with the api scope.';
 
   @override
+  String get accountsTokenGiteeScopes =>
+      'A personal access token with the user_info, projects, pull_requests, issues and notes scopes.';
+
+  @override
   String accountsTokenCreate(String host) {
     return 'Create a Token on $host';
   }
@@ -9311,6 +9962,21 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get accountsTokenRefused =>
       'The token was not accepted. Check that it is complete and has not expired.';
+
+  @override
+  String get accountsCertificateTitle => 'Untrusted Certificate';
+
+  @override
+  String accountsCertificateDetail(
+    String host,
+    String issuer,
+    String fingerprint,
+  ) {
+    return 'The certificate of $host cannot be verified ($issuer).\n\nSHA-256 fingerprint:\n$fingerprint\n\nTrusting it lets BaoCode reach this server, and only the certificate with this fingerprint is accepted. You are asked again if the certificate changes.';
+  }
+
+  @override
+  String get accountsCertificateTrust => 'Trust and Continue';
 
   @override
   String accountsBrowserTitle(String forge) {
@@ -9470,7 +10136,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get stashImportNotALink =>
-      'Not a GitHub or GitLab issue or pull request link.';
+      'Not a GitHub, GitLab or Gitee issue or pull request link.';
 
   @override
   String stashImportSignIn(String forge) {
@@ -9497,7 +10163,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get stashImportNoRepos =>
-      'No project has a GitHub or GitLab remote. Paste an issue link above.';
+      'No project has a GitHub, GitLab or Gitee remote. Paste an issue link above.';
 
   @override
   String get stashImportNone => 'No open issues here.';
@@ -9545,7 +10211,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get stashWelcomeTrack =>
-      'Cards show their conversations live, and the GitHub and GitLab issues and pull requests they link to stay in sync.';
+      'Cards show their conversations live, and the GitHub, GitLab and Gitee issues and pull requests they link to stay in sync.';
 
   @override
   String get stashWelcomeStart => 'Get Started';
@@ -9642,6 +10308,13 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get browserSettingsAppOld =>
       'The extension is newer than this Morning Mist. Update Morning Mist.';
+
+  @override
+  String get browserSettingsNoFileAccess => 'File access is off';
+
+  @override
+  String get browserSettingsNoFileAccessDescription =>
+      'Agents can\'t open local HTML files or upload files. In chrome://extensions, click Details on Morning Mist and turn on Allow access to file URLs.';
 
   @override
   String get browserSettingsInstall => 'Get the Extension';
@@ -10056,6 +10729,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'The server could not be reached: check the address, port and network.';
 
   @override
+  String get remoteFailWsl =>
+      'WSL could not start this distribution: check that WSL is installed and that the distribution is listed by wsl --list.';
+
+  @override
   String get channelSetupTitle => 'Welcome to Morning Mist';
 
   @override
@@ -10287,4 +10964,3021 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get aboutOpen => 'Open';
+
+  @override
+  String get stashSettingsIssueSync => 'Issues as stashes';
+
+  @override
+  String get stashSettingsIssueSyncDescription =>
+      'A project that is a Git repository on GitHub, GitLab or Gitee (signed in under Accounts): its open issues are stashes, each once, kept in step both ways. A stash deleted, or unlinked from its issue, does not come back.';
+
+  @override
+  String get stashIssueSyncMine => 'Only those assigned to or opened by me';
+
+  @override
+  String get stashIssueSyncOff => 'Off: imported or published ones only';
+
+  @override
+  String get stashIssueLocal => 'Local only';
+
+  @override
+  String get stashIssueAllow => 'Allow publishing as an issue';
+
+  @override
+  String get stashIssueNotPublished => 'Not an issue yet';
+
+  @override
+  String stashIssuePublishTo(String repo) {
+    return 'Publish as an issue of $repo…';
+  }
+
+  @override
+  String get stashIssueKeepLocal => 'Keep it local';
+
+  @override
+  String get stashIssuePush => 'Push changes to the issue…';
+
+  @override
+  String get stashIssuePushShort => 'Push';
+
+  @override
+  String get stashIssueTakeRemote => 'Discard local changes, use the issue\'s';
+
+  @override
+  String get stashIssueUnlinkOwn => 'Unlink, keep it local';
+
+  @override
+  String stashIssueConflict(String tag) {
+    return '$tag was changed on the forge too. Which version to keep?';
+  }
+
+  @override
+  String get stashIssueKeepMine => 'Keep mine (push)';
+
+  @override
+  String get stashIssueKeepTheirs => 'Use the issue\'s';
+
+  @override
+  String stashIssueChangedHere(String tag) {
+    return 'Changes here are not on $tag yet.';
+  }
+
+  @override
+  String get stashIssueDiscard => 'Discard';
+
+  @override
+  String stashIssuePublishTitle(String repo) {
+    return 'Publish as an issue of $repo';
+  }
+
+  @override
+  String stashIssuePushTitle(String tag) {
+    return 'Push changes to $tag';
+  }
+
+  @override
+  String get stashIssuePublish => 'Publish';
+
+  @override
+  String get stashIssueNoText => '(no description)';
+
+  @override
+  String stashIssuePicturesGitHub(int count, String branch) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count pictures are uploaded to the repository\'s $branch branch, for the issue to show them.',
+      one:
+          '1 picture is uploaded to the repository\'s $branch branch, for the issue to show it.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String stashIssuePicturesGitLab(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count pictures are uploaded to the project, for the issue to show them.',
+      one: '1 picture is uploaded to the project, for the issue to show it.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get stashImplementShort => 'Implement';
+
+  @override
+  String stashImplementIssue(String issue) {
+    return 'It is issue $issue: the pull request should say it fixes it.';
+  }
+
+  @override
+  String get stashIssueSyncAll => 'All open issues';
+
+  @override
+  String get stashIssueChecking => 'Looking for its repository…';
+
+  @override
+  String get stashIssueRefresh => 'Refresh now';
+
+  @override
+  String get stashIssuePublishButton => 'Publish as Issue';
+
+  @override
+  String get stashIssuePushButton => 'Push to Issue';
+
+  @override
+  String get stashIssueLoading => 'Loading…';
+
+  @override
+  String get stashSyncing => 'Syncing issues…';
+
+  @override
+  String stashSyncingRepo(String repo, int index, int total) {
+    return 'Syncing the issues of $repo ($index/$total)…';
+  }
+
+  @override
+  String get stashSyncTooltip => 'Sync issues now';
+
+  @override
+  String stashSyncTooltipLast(String time) {
+    return 'Sync issues now · last at $time';
+  }
+
+  @override
+  String stashSyncFailed(String repo, String error) {
+    return 'Could not sync the issues of $repo: $error';
+  }
+
+  @override
+  String stashSyncSignIn(String forge, String repo, int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          'Sign in to $forge for the issues of $repo and $count more repositories to be stashes.',
+      one: 'Sign in to $forge for the issues of $repo to be stashes.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get stashSyncingEmpty => 'Syncing the projects\' issues…';
+
+  @override
+  String get stashFilterAnyIssue => 'Any source';
+
+  @override
+  String get stashFilterIssue => 'Issues';
+
+  @override
+  String get stashFilterNotIssue => 'Local only';
+
+  @override
+  String get stashImplementEmpty =>
+      'Write something first, then implement it in BaoCode';
+
+  @override
+  String stashIssueDuplicateBanner(String issue, String stash) {
+    return '$issue, of stash $stash merged into this one, is still open. Close it as a duplicate?';
+  }
+
+  @override
+  String get stashIssueCloseDuplicate => 'Close as duplicate…';
+
+  @override
+  String get stashIssueDuplicateNoIssue =>
+      'Merged into another note; closing as a duplicate.';
+
+  @override
+  String get stashNewsOpened => 'New issue';
+
+  @override
+  String get stashNewsChanged => 'Changed on the forge';
+
+  @override
+  String get stashNewsCommented => 'New comments';
+
+  @override
+  String get stashNewsClosed => 'Closed on the forge';
+
+  @override
+  String get stashNewsReopened => 'Reopened on the forge';
+
+  @override
+  String stashNewsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count updates',
+      one: '1 update',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get stashNewsCountTooltip =>
+      'Show only the updates about you: your issues and pull requests, those assigned to you or naming you';
+
+  @override
+  String get stashNewsCountTooltipOn =>
+      'Showing only the updates about you; click for all';
+
+  @override
+  String get stashFilterNews => 'About you';
+
+  @override
+  String get stashMarkAllSeen => 'Mark all as seen';
+
+  @override
+  String stashIssueComments(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count comments',
+      one: '1 comment',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get stashIssueDiscussion => 'Discussion';
+
+  @override
+  String stashIssueDiscussionAll(int count, String forge) {
+    return 'See all $count on $forge';
+  }
+
+  @override
+  String get stashIssueDiscussionFailed => 'Couldn\'t load the comments.';
+
+  @override
+  String get stashIssueDiscussionLoading => 'Loading the comments…';
+
+  @override
+  String stashDeleteAndClose(String issue) {
+    return 'Delete and close $issue…';
+  }
+
+  @override
+  String stashDeleteOpenIssue(String issue) {
+    return 'Its issue $issue stays open on the forge unless closed too.';
+  }
+
+  @override
+  String stashIssueInSync(String issue) {
+    return 'Same as $issue';
+  }
+
+  @override
+  String stashIssueSyncedAt(String time) {
+    return 'synced $time';
+  }
+
+  @override
+  String get stashIssueNotPushed => 'Changed here, not pushed yet';
+
+  @override
+  String get stashIssueRemoteNewer => 'Changed on the forge';
+
+  @override
+  String get stashIssueBothChanged => 'Changed both here and on the forge';
+
+  @override
+  String get stashIssueDiscussionEmpty => 'No comments yet';
+
+  @override
+  String get stashNewsMerged => 'Pull request merged';
+
+  @override
+  String get stashNewsChangesRequested => 'Changes requested';
+
+  @override
+  String get stashNewsChecksFailed => 'Checks failed';
+
+  @override
+  String get stashNewsMarked => 'Marked as unread';
+
+  @override
+  String stashNewsOther(String news) {
+    return '$news (not about you)';
+  }
+
+  @override
+  String stashNewsSidebar(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count updates about you',
+      one: '1 update about you',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get stashFilterAllNews => 'Any updates';
+
+  @override
+  String get stashMarkSeen => 'Mark as Read';
+
+  @override
+  String get stashMarkUnseen => 'Mark as Unread';
+
+  @override
+  String stashPullChecksFailedBanner(String pull) {
+    return 'The checks of $pull failed.';
+  }
+
+  @override
+  String stashPullChangesBanner(String pull) {
+    return 'Changes were requested on $pull.';
+  }
+
+  @override
+  String stashPullMergedBanner(String pull) {
+    return '$pull was merged. Is this done too?';
+  }
+
+  @override
+  String get stashPullFix => 'Fix in Its Conversation';
+
+  @override
+  String get stashPullView => 'View';
+
+  @override
+  String stashPullFixChecks(String pull) {
+    return 'The checks of $pull failed. Find out what failed and fix it.';
+  }
+
+  @override
+  String stashPullFixChanges(String pull) {
+    return 'Changes were requested on $pull. Read the review and make them.';
+  }
+
+  @override
+  String stashWriteManyTitle(int count) {
+    return 'Comment on $count issues';
+  }
+
+  @override
+  String stashWriteCloseManyTitle(int count) {
+    return 'Close $count issues';
+  }
+
+  @override
+  String stashDeleteOpenIssues(int count, String issues) {
+    return 'Their issues $issues stay open on the forge unless closed too.';
+  }
+
+  @override
+  String stashDeleteAndCloseMany(int count) {
+    return 'Delete and close $count issues…';
+  }
+
+  @override
+  String get gitLogRepository => 'Repository';
+
+  @override
+  String get gitLogSearch => 'Search messages; separate several with |';
+
+  @override
+  String get gitLogClearSearch => 'Clear Search';
+
+  @override
+  String get gitLogUser => 'User';
+
+  @override
+  String get gitLogAllUsers => 'All Users';
+
+  @override
+  String get gitLogMe => 'Me';
+
+  @override
+  String get gitLogDate => 'Date';
+
+  @override
+  String get gitLogAnyDate => 'Any Time';
+
+  @override
+  String get gitLogLastDay => 'Last 24 Hours';
+
+  @override
+  String get gitLogLastWeek => 'Last 7 Days';
+
+  @override
+  String get gitLogLastMonth => 'Last 30 Days';
+
+  @override
+  String get gitLogLastYear => 'Last Year';
+
+  @override
+  String get gitLogHighlight => 'Highlight';
+
+  @override
+  String get gitLogHighlightNone => 'Nothing';
+
+  @override
+  String get gitLogHighlightMine => 'My Commits';
+
+  @override
+  String get gitLogClearFilters => 'Clear Filters';
+
+  @override
+  String get gitLogCheckout => 'Checkout to...';
+
+  @override
+  String get gitLogSortTopo => 'Topological Order';
+
+  @override
+  String get gitLogSortDate => 'Date Order';
+
+  @override
+  String get gitLogLocalBranches => 'Local Branches';
+
+  @override
+  String get gitLogRemoteBranches => 'Remote Branches';
+
+  @override
+  String get gitLogTags => 'Tags';
+
+  @override
+  String get gitLogBackToLog => 'Back to Log';
+
+  @override
+  String get gitLogNoCommits => 'No commits match.';
+
+  @override
+  String get gitLogLocalChanges => 'Local Changes';
+
+  @override
+  String gitLogLocalChangesCount(int count) {
+    return 'Local Changes ($count)';
+  }
+
+  @override
+  String get gitLogSelectCommit => 'Select a commit to see its details.';
+
+  @override
+  String get gitLogParents => 'Parent: ';
+
+  @override
+  String gitLogFileCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count files',
+      one: '1 file',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get gitLogInNoBranch => 'No branch has this commit.';
+
+  @override
+  String gitLogInBranches(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count branches',
+      one: '1 branch',
+    );
+    return 'In $_temp0';
+  }
+
+  @override
+  String get gitLogList => 'List';
+
+  @override
+  String get gitLogTree => 'Tree';
+
+  @override
+  String get gitLogFilterFiles => 'Filter files (* and ? match any)';
+
+  @override
+  String get gitLogCopyPath => 'Copy Path';
+
+  @override
+  String get gitLogCopyRelativePath => 'Copy Relative Path';
+
+  @override
+  String get gitLogBinary => 'binary';
+
+  @override
+  String get gitLogPreviousFile => 'Previous File';
+
+  @override
+  String get gitLogNextFile => 'Next File';
+
+  @override
+  String get gitLogOpenInEditor => 'Open in Editor';
+
+  @override
+  String get checkpointsTitle => 'Checkpoints';
+
+  @override
+  String get checkpointsDescription =>
+      'Snapshots of the projects agents work in, kept to undo their changes. A conversation\'s are tidied away 30 days after it last changed anything.';
+
+  @override
+  String checkpointsSize(String size) {
+    return 'Using $size';
+  }
+
+  @override
+  String get checkpointsMeasuring => 'Measuring…';
+
+  @override
+  String get checkpointsClear => 'Clear';
+
+  @override
+  String get checkpointsClearing => 'Clearing…';
+
+  @override
+  String get checkpointsClearConfirm => 'Clear the checkpoints?';
+
+  @override
+  String get checkpointsClearDetail =>
+      'The changes agents made in conversations that are not open can no longer be undone. The files themselves stay as they are.';
+
+  @override
+  String gitLogToday(String time) {
+    return 'Today $time';
+  }
+
+  @override
+  String gitLogYesterday(String time) {
+    return 'Yesterday $time';
+  }
+
+  @override
+  String get gitLogCheckoutRevision => 'Checkout Revision';
+
+  @override
+  String get gitLogNewBranch => 'New Branch…';
+
+  @override
+  String gitLogNewBranchAt(String commit) {
+    return 'New branch at $commit';
+  }
+
+  @override
+  String gitLogCheckoutBranch(String branch) {
+    return 'Checkout \'$branch\'';
+  }
+
+  @override
+  String get gitLogCopyHash => 'Copy the full hash';
+
+  @override
+  String get gitLogCopyRefNames => 'Copy Branch or Tag Name';
+
+  @override
+  String gitLogCopyName(String name) {
+    return 'Copy \'$name\'';
+  }
+
+  @override
+  String get gitLogLoading => 'Loading history…';
+
+  @override
+  String get gitLogWorktree => 'Worktree';
+
+  @override
+  String gitLogWorktreeOf(String path) {
+    return 'Worktree: $path';
+  }
+
+  @override
+  String get gitLogFollowAgent => 'Follow the Agent';
+
+  @override
+  String get gitLogAgentHere => 'The agent works here';
+
+  @override
+  String gitLogWorktreeAt(String name, String path) {
+    return 'Checked out in worktree $name\n$path';
+  }
+
+  @override
+  String get gitLogMainWorktree => 'main worktree';
+
+  @override
+  String get gitLogWorktreeMissing => 'missing';
+
+  @override
+  String branchBarWorktree(String name, String path) {
+    return 'In worktree $name\n$path';
+  }
+
+  @override
+  String get gitCommitChanges => 'Changes';
+
+  @override
+  String get gitCommitUnversioned => 'Unversioned Files';
+
+  @override
+  String get gitCommitConflicts => 'Merge Conflicts';
+
+  @override
+  String get gitCommitAmend => 'Amend';
+
+  @override
+  String get gitCommitMessage => 'Commit Message';
+
+  @override
+  String get gitCommitButton => 'Commit';
+
+  @override
+  String get gitCommitAndPush => 'Commit and Push';
+
+  @override
+  String get gitCommitRollback => 'Rollback…';
+
+  @override
+  String gitCommitRollbackConfirm(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count files',
+      one: '1 file',
+    );
+    return 'Roll back the changes of $_temp0?';
+  }
+
+  @override
+  String get gitCommitRollbackDetail =>
+      'They go back to how they were last committed; files not committed yet are deleted.';
+
+  @override
+  String get gitCommitRollbackButton => 'Rollback';
+
+  @override
+  String get gitCommitShowDiff => 'Show Diff';
+
+  @override
+  String get gitCommitJumpToSource => 'Jump to Source';
+
+  @override
+  String get gitCommitAddToVcs => 'Add to VCS';
+
+  @override
+  String get gitCommitMarkResolved => 'Mark Resolved';
+
+  @override
+  String get gitCommitExpandAll => 'Expand All';
+
+  @override
+  String get gitCommitCollapseAll => 'Collapse All';
+
+  @override
+  String get gitCommitEmptyMessage => 'Enter a commit message.';
+
+  @override
+  String get gitCommitNothingSelected => 'Check the files to commit.';
+
+  @override
+  String get gitCommitNoChanges => 'No local changes';
+
+  @override
+  String gitCommitSelected(int checked, int total) {
+    return '$checked of $total files checked';
+  }
+
+  @override
+  String get gitLogUndoCommit => 'Undo Commit';
+
+  @override
+  String get branchBarNewWorktree => 'New Worktree…';
+
+  @override
+  String branchBarNewWorktreeFrom(String branch, String folder) {
+    return 'A new branch from “$branch”, in a worktree of its own beside “$folder”: the agent works there, your checkout stays as it is';
+  }
+
+  @override
+  String branchBarInWorktree(String name) {
+    return 'In worktree $name';
+  }
+
+  @override
+  String branchBarWorkIn(String path, String branch) {
+    return 'From now on, work in $path (branch $branch): read and edit the files and run the commands there.';
+  }
+
+  @override
+  String get diffRevertChange => 'Undo this change (back to the left side)';
+
+  @override
+  String get diffRemoveChange => 'Undo this change (remove the added lines)';
+
+  @override
+  String get diffPreviousDifference => 'Previous Difference';
+
+  @override
+  String get diffNextDifference => 'Next Difference';
+
+  @override
+  String diffDifferenceOf(int current, int count) {
+    return '$current of $count';
+  }
+
+  @override
+  String diffDifferences(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count differences',
+      one: '1 difference',
+      zero: 'No differences',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get diffSettings => 'Viewer Settings';
+
+  @override
+  String get diffLayoutAuto => 'Side by Side When Wide Enough';
+
+  @override
+  String get diffSideBySide => 'Side-by-Side Viewer';
+
+  @override
+  String get diffUnified => 'Unified Viewer';
+
+  @override
+  String get gitDetailsLayout => 'Details Position';
+
+  @override
+  String get gitDetailsLayoutAuto => 'Right When Wide Enough';
+
+  @override
+  String get gitDetailsLayoutBeside => 'Right';
+
+  @override
+  String get gitDetailsLayoutBelow => 'Bottom';
+
+  @override
+  String get diffIgnoreWhitespace => 'Ignore Whitespace at Line Ends';
+
+  @override
+  String get diffWhitespaceNone => 'Do Not Ignore Whitespace';
+
+  @override
+  String get diffIgnoreAllWhitespace => 'Ignore All Whitespace';
+
+  @override
+  String get diffCollapseUnchanged => 'Collapse Unchanged Fragments';
+
+  @override
+  String diffUnchangedLines(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count unchanged lines',
+      one: '1 unchanged line',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get diffGoToFile => 'Go to Changed File';
+
+  @override
+  String get lineChangePrevious => 'Previous Change';
+
+  @override
+  String get lineChangeNext => 'Next Change';
+
+  @override
+  String get lineChangeRollback => 'Rollback';
+
+  @override
+  String get lineChangeShowDiff => 'Show Diff';
+
+  @override
+  String get lineChangeCopy => 'Copy Original Lines';
+
+  @override
+  String get cmdNextChange => 'Go to Next Change';
+
+  @override
+  String get cmdPreviousChange => 'Go to Previous Change';
+
+  @override
+  String get cmdShowNextChange => 'Show Next Change';
+
+  @override
+  String get cmdShowPreviousChange => 'Show Previous Change';
+
+  @override
+  String get gitAnnotate => 'Annotate with Git Blame';
+
+  @override
+  String get gitCloseAnnotations => 'Close Annotations';
+
+  @override
+  String get gitLogCopyPatch => 'Copy as Patch';
+
+  @override
+  String get gitLogCherryPick => 'Cherry-Pick';
+
+  @override
+  String get gitLogCompareWithLocal => 'Compare with Local';
+
+  @override
+  String get gitLogResetToHere => 'Reset Current Branch to Here';
+
+  @override
+  String get gitLogResetSoft => 'Soft: keep the changes staged';
+
+  @override
+  String get gitLogResetMixed => 'Mixed: keep the changes, not staged';
+
+  @override
+  String get gitLogResetHard => 'Hard: discard the changes';
+
+  @override
+  String get gitLogResetKeep => 'Keep: keep the local changes';
+
+  @override
+  String gitLogResetHardConfirm(String branch, String commit) {
+    return 'Reset “$branch” to $commit and discard every change since, committed or not?';
+  }
+
+  @override
+  String get gitLogResetButton => 'Reset';
+
+  @override
+  String get gitLogRevertCommit => 'Revert Commit';
+
+  @override
+  String get gitLogEditMessage => 'Edit Commit Message…';
+
+  @override
+  String get gitLogDropCommit => 'Drop Commit';
+
+  @override
+  String gitLogDropConfirm(String commit, String subject) {
+    return 'Take $commit “$subject” out of the branch?';
+  }
+
+  @override
+  String get gitLogDropButton => 'Drop';
+
+  @override
+  String get gitLogPushUpToHere => 'Push All up to Here';
+
+  @override
+  String get gitLogNewTag => 'New Tag…';
+
+  @override
+  String gitLogNewTagAt(String commit) {
+    return 'New tag at $commit';
+  }
+
+  @override
+  String get gitTagName => 'Tag name';
+
+  @override
+  String get gitTagMessage => 'Message (optional: an annotated tag)';
+
+  @override
+  String get gitLogCreateTag => 'Create Tag';
+
+  @override
+  String get gitLogGoToParent => 'Go to Parent Commit';
+
+  @override
+  String get gitLogGoToChild => 'Go to Child Commit';
+
+  @override
+  String gitLogComparedWithLocal(String commit) {
+    return '$commit ↔ Local';
+  }
+
+  @override
+  String get gitLogNoDifferences => 'No differences from the working tree';
+
+  @override
+  String get gitLogCopyHashes => 'Copy Commit Hashes';
+
+  @override
+  String gitLogCherryPickCount(int count) {
+    return 'Cherry-Pick $count Commits';
+  }
+
+  @override
+  String get gitLogCompareCommits => 'Compare Commits';
+
+  @override
+  String gitLogRevertCommits(int count) {
+    return 'Revert $count Commits';
+  }
+
+  @override
+  String gitLogSquashCommits(int count) {
+    return 'Squash $count Commits into One';
+  }
+
+  @override
+  String gitLogCommitsSelected(int count) {
+    return '$count commits selected';
+  }
+
+  @override
+  String get gitLogPaths => 'Paths';
+
+  @override
+  String get gitLogAllPaths => 'All Paths';
+
+  @override
+  String gitLogCurrentFile(String path) {
+    return 'Current File: $path';
+  }
+
+  @override
+  String gitLogCurrentFolder(String path) {
+    return 'Its Folder: $path';
+  }
+
+  @override
+  String gitLogPathCount(int count) {
+    return '$count paths';
+  }
+
+  @override
+  String gitLogLinesOf(String file, int start, int end) {
+    return '$file: lines $start–$end';
+  }
+
+  @override
+  String get gitShowHistory => 'Show History';
+
+  @override
+  String get gitShowHistoryForSelection => 'Show History for Selection';
+
+  @override
+  String get gitShowBranches => 'Show Branches';
+
+  @override
+  String get gitHideBranches => 'Hide Branches';
+
+  @override
+  String get gitBranchesFilter => 'Filter branches';
+
+  @override
+  String get gitBranchesHead => 'HEAD (Current Branch)';
+
+  @override
+  String get gitBranchCheckout => 'Checkout';
+
+  @override
+  String gitBranchNewFrom(String name) {
+    return 'New Branch from “$name”…';
+  }
+
+  @override
+  String gitBranchCheckoutRebase(String current) {
+    return 'Checkout and Rebase onto “$current”';
+  }
+
+  @override
+  String gitBranchCompare(String current) {
+    return 'Compare with “$current”';
+  }
+
+  @override
+  String get gitBranchDiffWorkingTree => 'Show Diff with Working Tree';
+
+  @override
+  String gitBranchRebaseOnto(String current, String name) {
+    return 'Rebase “$current” onto “$name”';
+  }
+
+  @override
+  String gitBranchMerge(String name, String current) {
+    return 'Merge “$name” into “$current”';
+  }
+
+  @override
+  String gitBranchPullRebase(String current) {
+    return 'Pull into “$current” Using Rebase';
+  }
+
+  @override
+  String gitBranchPullMerge(String current) {
+    return 'Pull into “$current” Using Merge';
+  }
+
+  @override
+  String get gitBranchUpdate => 'Update';
+
+  @override
+  String get gitBranchPush => 'Push';
+
+  @override
+  String gitBranchPushTo(String upstream) {
+    return 'Push to $upstream';
+  }
+
+  @override
+  String get gitBranchUpstream => 'Upstream';
+
+  @override
+  String get gitBranchUnsetUpstream => 'Unset Upstream';
+
+  @override
+  String get gitBranchRename => 'Rename…';
+
+  @override
+  String gitBranchRenameTitle(String name) {
+    return 'Rename the branch “$name”';
+  }
+
+  @override
+  String get gitBranchRenameButton => 'Rename';
+
+  @override
+  String get gitBranchFavorite => 'Add to Favorites';
+
+  @override
+  String get gitBranchUnfavorite => 'Remove from Favorites';
+
+  @override
+  String get gitBranchShowOnly => 'Show Only This in the Log';
+
+  @override
+  String get gitBranchDelete => 'Delete';
+
+  @override
+  String get gitTagDelete => 'Delete Tag';
+
+  @override
+  String get gitBranchDeleteButton => 'Delete';
+
+  @override
+  String gitBranchDeleteRemoteConfirm(String name) {
+    return 'Delete the branch “$name” on its remote?';
+  }
+
+  @override
+  String gitBranchNotMergedConfirm(String name) {
+    return '“$name” has commits merged into no other branch. Delete it anyway?';
+  }
+
+  @override
+  String gitBranchDeleted(String name) {
+    return 'Deleted the branch “$name”.';
+  }
+
+  @override
+  String gitTagDeleted(String name) {
+    return 'Deleted the tag “$name”.';
+  }
+
+  @override
+  String get gitBranchRestore => 'Restore';
+
+  @override
+  String gitBranchCompared(String name, String current, int ahead, int behind) {
+    return '“$name” has $ahead commits “$current” has not; “$current” has $behind it has not.';
+  }
+
+  @override
+  String get gitBranchCompareFiles => 'Show Changed Files';
+
+  @override
+  String scmGraphRangeIn(String to, String from) {
+    return 'Commits in “$to” Not in “$from”';
+  }
+
+  @override
+  String get gitBranchesRecent => 'Recent';
+
+  @override
+  String get gitBranchesSearch => 'Search for branches and actions';
+
+  @override
+  String get gitUpdateProject => 'Update Project';
+
+  @override
+  String get gitCommitEllipsis => 'Commit…';
+
+  @override
+  String get gitPushEllipsis => 'Push…';
+
+  @override
+  String get gitNewBranchEllipsis => 'New Branch…';
+
+  @override
+  String get gitCheckoutRevision => 'Checkout Tag or Revision…';
+
+  @override
+  String get gitBranchesTitle => 'Git Branches';
+
+  @override
+  String get gitRevisionPlaceholder => 'A tag, a branch or a commit hash';
+
+  @override
+  String get gitUpdateProjectDetail =>
+      'Bring each repository\'s current branch up to its upstream: merge its new commits in, or rebase the branch\'s own onto them. Local changes are stashed meanwhile.';
+
+  @override
+  String get gitUpdateMerge => 'Merge';
+
+  @override
+  String get gitUpdateRebase => 'Rebase';
+
+  @override
+  String get gitDontAskAgain => 'Don\'t ask again';
+
+  @override
+  String get gitPushTitle => 'Push Commits';
+
+  @override
+  String get gitPushTags => 'Push tags';
+
+  @override
+  String get gitPushForce => 'Force Push';
+
+  @override
+  String gitPushForceConfirm(String targets) {
+    return 'Force push to $targets?';
+  }
+
+  @override
+  String get gitPushForceDetail =>
+      'What is there is replaced by what you push (with lease: only as last fetched, so nobody\'s newer commits are lost).';
+
+  @override
+  String get gitPushNothing => 'Nothing to push';
+
+  @override
+  String get gitPushRemote => 'Remote';
+
+  @override
+  String get gitPushNew => 'new';
+
+  @override
+  String get gitPushSelectCommit => 'Select a commit to see its files';
+
+  @override
+  String get gitPushEllipsisCommand => 'Push…';
+
+  @override
+  String get gitOperationRebasing => 'Rebasing';
+
+  @override
+  String get gitOperationMerging => 'Merging';
+
+  @override
+  String get gitOperationCherryPicking => 'Cherry-picking';
+
+  @override
+  String get gitOperationReverting => 'Reverting';
+
+  @override
+  String gitOperationConflicts(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count conflicts left',
+      one: '1 conflict left',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get gitOperationResolved => 'conflicts resolved';
+
+  @override
+  String get gitOperationContinue => 'Continue';
+
+  @override
+  String get gitOperationSkip => 'Skip';
+
+  @override
+  String get gitOperationAbort => 'Abort';
+
+  @override
+  String gitOperationAbortConfirm(String what) {
+    return 'Abort? $what stops and what it did so far is undone.';
+  }
+
+  @override
+  String get gitConflictAcceptCurrent => 'Accept Current (Ours)';
+
+  @override
+  String get gitConflictAcceptIncoming => 'Accept Incoming (Theirs)';
+
+  @override
+  String get gitConflictMerge => 'Merge…';
+
+  @override
+  String gitMergeTitle(String path) {
+    return 'Merge Revisions for $path';
+  }
+
+  @override
+  String get gitMergeOurs => 'Current (Ours)';
+
+  @override
+  String get gitMergeResult => 'Result';
+
+  @override
+  String get gitMergeTheirs => 'Incoming (Theirs)';
+
+  @override
+  String gitMergeConflictsLeft(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count conflicts left',
+      one: '1 conflict left',
+      zero: 'All conflicts resolved',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String gitMergeChangesApplied(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count changes applied without conflict',
+      one: '1 change applied without conflict',
+      zero: '',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get gitMergePrevious => 'Previous Conflict';
+
+  @override
+  String get gitMergeNext => 'Next Conflict';
+
+  @override
+  String get gitMergeApply => 'Apply';
+
+  @override
+  String get gitMergeAppend => 'Append';
+
+  @override
+  String get gitMergeIgnore => 'Ignore';
+
+  @override
+  String get gitMergeAi => 'Merge with AI';
+
+  @override
+  String get gitMergeAiAll => 'Merge Conflicts with AI';
+
+  @override
+  String gitMergeAiFailed(String error) {
+    return 'AI could not merge the conflict: $error';
+  }
+
+  @override
+  String get gitMergeAiNoAnswer => 'the reply had no merged lines';
+
+  @override
+  String get gitMergeAcceptOurs => 'Accept Current';
+
+  @override
+  String get gitMergeAcceptTheirs => 'Accept Incoming';
+
+  @override
+  String gitMergeUnresolved(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count conflicts are not resolved.',
+      one: '1 conflict is not resolved.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get gitMergeUnresolvedDetail =>
+      'Save the result as it is and mark the file resolved?';
+
+  @override
+  String get gitMergeSaveAnyway => 'Save and Mark Resolved';
+
+  @override
+  String get gitMergeDiscard => 'Discard the merge result?';
+
+  @override
+  String get gitMergeDiscardButton => 'Discard';
+
+  @override
+  String get gitDiffExcludeChange => 'Leave This Change Out of the Commit';
+
+  @override
+  String get gitDiffIncludeChange => 'Include This Change in the Commit';
+
+  @override
+  String get gitDiffExcludeLine => 'Leave This Line Out of the Commit';
+
+  @override
+  String get gitDiffIncludeLine => 'Include This Line in the Commit';
+
+  @override
+  String get gitChangelistActive => 'active';
+
+  @override
+  String get gitChangelistMoveTo => 'Move to Another Changelist';
+
+  @override
+  String get gitChangelistNew => 'New Changelist…';
+
+  @override
+  String get gitChangelistCreate => 'Create';
+
+  @override
+  String get gitChangelistName => 'Changelist name';
+
+  @override
+  String get gitChangelistCommitOnly => 'Commit Only This Changelist';
+
+  @override
+  String get gitChangelistSetActive => 'Set Active Changelist';
+
+  @override
+  String get gitChangelistRename => 'Rename Changelist…';
+
+  @override
+  String get gitChangelistRenameButton => 'Rename';
+
+  @override
+  String get gitChangelistDelete => 'Delete Changelist';
+
+  @override
+  String get gitStashChangesTitle => 'Stash Changes';
+
+  @override
+  String gitStashFilesTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Stash $count Files',
+      one: 'Stash 1 File',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get gitStashButton => 'Stash';
+
+  @override
+  String get gitStashMessage => 'Message (optional)';
+
+  @override
+  String get gitStashUntracked => 'Include untracked files';
+
+  @override
+  String get gitStashBase => 'Base';
+
+  @override
+  String get gitStashApply => 'Apply';
+
+  @override
+  String get gitStashPop => 'Pop';
+
+  @override
+  String get gitStashAsBranch => 'Unstash as Branch…';
+
+  @override
+  String get gitStashCopyMessage => 'Copy Message';
+
+  @override
+  String get gitStashDrop => 'Drop…';
+
+  @override
+  String gitStashDropConfirm(String ref) {
+    return 'Drop $ref?';
+  }
+
+  @override
+  String get gitStashDropButton => 'Drop';
+
+  @override
+  String get gitStashClear => 'Clear Stashes…';
+
+  @override
+  String get gitStashClearConfirm => 'Drop every stash?';
+
+  @override
+  String get gitStashClearButton => 'Clear';
+
+  @override
+  String get gitStashNone => 'No stashes';
+
+  @override
+  String get gitStashTab => 'Stash';
+
+  @override
+  String get gitCommitTab => 'Commit';
+
+  @override
+  String get gitCommitPanelFold => 'Fold';
+
+  @override
+  String get gitCommitPanelUnfold => 'Unfold';
+
+  @override
+  String get gitStashSelected => 'Stash Selected Files…';
+
+  @override
+  String get gitCommitIgnored => 'Ignored Files';
+
+  @override
+  String get gitCommitShowIgnored => 'Show Ignored Files';
+
+  @override
+  String gitCommitLongSubject(int limit) {
+    return 'The subject is longer than $limit characters';
+  }
+
+  @override
+  String get gitCommitNoBlankLine =>
+      'Separate the subject from the body with a blank line';
+
+  @override
+  String get gitCommitMessageHistory => 'Commit Message History (Ctrl+M)';
+
+  @override
+  String get gitCommitNoMessageHistory => 'No messages yet';
+
+  @override
+  String get gitCommitOptions => 'Commit Options';
+
+  @override
+  String get gitCommitAuthor => 'Author…';
+
+  @override
+  String gitCommitAuthorIs(String author) {
+    return 'Author: $author';
+  }
+
+  @override
+  String get gitCommitAuthorReset => 'Use the Configured Author';
+
+  @override
+  String get gitCommitAuthorPlaceholder => 'Name <email>';
+
+  @override
+  String get gitCommitSignOff => 'Sign-off Commit';
+
+  @override
+  String get gitCommitRunHooks => 'Run Git Hooks';
+
+  @override
+  String get gitCommitSignedOff => 'Signed off';
+
+  @override
+  String get gitCommitNoHooks => 'Hooks skipped';
+
+  @override
+  String get gitLogInteractiveRebase => 'Interactively Rebase from Here…';
+
+  @override
+  String gitRebaseTitle(int count, String base) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Commits',
+      one: '1 Commit',
+    );
+    return 'Rebasing $_temp0 from $base';
+  }
+
+  @override
+  String get gitRebasePick => 'Pick';
+
+  @override
+  String get gitRebaseReword => 'Reword';
+
+  @override
+  String get gitRebaseEdit => 'Edit';
+
+  @override
+  String get gitRebaseSquash => 'Squash';
+
+  @override
+  String get gitRebaseFixup => 'Fixup';
+
+  @override
+  String get gitRebaseDrop => 'Drop';
+
+  @override
+  String get gitRebaseMoveUp => 'Move Up (Alt+Up)';
+
+  @override
+  String get gitRebaseMoveDown => 'Move Down (Alt+Down)';
+
+  @override
+  String get gitRebaseMessage => 'Commit message';
+
+  @override
+  String get gitRebaseStart => 'Start Rebasing';
+
+  @override
+  String get gitRebaseNothingBelow =>
+      'The oldest commit kept cannot be squashed or fixed up: there is nothing below it.';
+
+  @override
+  String get gitRebaseStopped =>
+      'The rebase stopped: amend the commit or resolve the conflicts, then Continue.';
+
+  @override
+  String get gitRebaseCleanUpWithAi => 'Clean Up with AI';
+
+  @override
+  String get gitRebaseCleanUpWithAiDetail =>
+      'Let the model suggest what to fix up, squash and reword; you look it over before the rebase starts';
+
+  @override
+  String get gitRebaseAiPlanning => 'Planning… (click to stop)';
+
+  @override
+  String get gitRebaseAiNoPlan =>
+      'The model\'s answer was not a rebase list of these commits.';
+
+  @override
+  String gitRebaseAiFailed(String error) {
+    return 'Could not clean up with AI: $error';
+  }
+
+  @override
+  String gitTagPushTo(String remote) {
+    return 'Push Tag to $remote';
+  }
+
+  @override
+  String gitTagDeleteOn(String remote) {
+    return 'Delete Tag on $remote';
+  }
+
+  @override
+  String gitTagDeleteOnConfirm(String name, String remote) {
+    return 'Delete the tag $name on $remote?';
+  }
+
+  @override
+  String get gitRemotesManage => 'Manage Remotes…';
+
+  @override
+  String get gitRemotesTitle => 'Git Remotes';
+
+  @override
+  String get gitRemotesNone => 'No remotes';
+
+  @override
+  String get gitRemoteAdd => 'Add Remote';
+
+  @override
+  String get gitRemoteEdit => 'Edit Remote';
+
+  @override
+  String get gitRemoteRemove => 'Remove';
+
+  @override
+  String get gitRemoteName => 'Name';
+
+  @override
+  String get gitRemoteUrl => 'URL';
+
+  @override
+  String gitRemoteRemoveConfirm(String name) {
+    return 'Remove the remote $name?';
+  }
+
+  @override
+  String get gitRemoteRemoveDetail =>
+      'Its remote branches go with it; nothing on the server changes.';
+
+  @override
+  String get gitCloneTitle => 'Get from Version Control';
+
+  @override
+  String get gitCloneUrl => 'URL';
+
+  @override
+  String get gitCloneDirectory => 'Directory';
+
+  @override
+  String get gitCloneBrowse => 'Browse…';
+
+  @override
+  String get gitCloneButton => 'Clone';
+
+  @override
+  String get gitCloning => 'Cloning…';
+
+  @override
+  String get gitCloneCommand => 'Clone Repository…';
+
+  @override
+  String get gitReviewWithAi => 'Review Changes with AI';
+
+  @override
+  String get gitReviewStop => 'Stop the Review';
+
+  @override
+  String get gitReviewBeforeCommit => 'Review with AI Before Committing';
+
+  @override
+  String get gitReviewRunning => 'Reviewing the changes…';
+
+  @override
+  String get gitReviewClean => 'No problems found';
+
+  @override
+  String gitReviewFound(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count problems found',
+      one: '1 problem found',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get gitReviewCommitAnyway => 'Commit Anyway';
+
+  @override
+  String get gitReviewCommitAndPushAnyway => 'Commit and Push Anyway';
+
+  @override
+  String gitReviewFailed(String error) {
+    return 'Could not review the changes: $error';
+  }
+
+  @override
+  String get gitAskAiCommit => 'Ask AI About This Commit';
+
+  @override
+  String gitAskAiCommitPrompt(String id, String subject) {
+    return 'Explain commit $id (“$subject”): what it changes and why, and anything in it that looks risky. Read it with `git show $id`.';
+  }
+
+  @override
+  String gitAskAiCommits(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Ask AI About These $count Commits',
+      one: 'Ask AI About This Commit',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String gitAskAiCommitsPrompt(String ids) {
+    return 'Explain commits $ids: what they change together, and anything in them that looks risky. Read them with `git show`.';
+  }
+
+  @override
+  String get gitAskAiHunk => 'Ask AI About This Change';
+
+  @override
+  String gitAskAiHunkPrompt(String path, int line, String change) {
+    return 'About this change in $path at line $line: explain what it does and whether anything in it is wrong.\n\n```diff\n$change\n```';
+  }
+
+  @override
+  String get gitAskAiChanges => 'Ask AI About These Changes';
+
+  @override
+  String gitAskAiChangesPrompt(String paths) {
+    return 'Review my uncommitted changes in $paths (`git diff HEAD -- $paths`): explain what they do and point out anything wrong.';
+  }
+
+  @override
+  String get gitAskAiConflicts => 'Ask AI to Resolve the Conflicts';
+
+  @override
+  String gitAskAiConflictsPrompt(String paths) {
+    return 'Resolve the merge conflicts in $paths: keep what both sides meant, then tell me what you chose. Don\'t stage or commit.';
+  }
+
+  @override
+  String get gitLogFixup => 'Fixup with Checked Changes';
+
+  @override
+  String get compareWith => 'Compare With';
+
+  @override
+  String get compareWithClipboard => 'Clipboard';
+
+  @override
+  String compareWithClipboardLabel(String name) {
+    return '$name (Clipboard ↔ File)';
+  }
+
+  @override
+  String get gitCompareWithBranch => 'Branch or Tag…';
+
+  @override
+  String get gitCompareWithRevision => 'Revision…';
+
+  @override
+  String get gitCompareWithBranchPlaceholder =>
+      'Select a branch or tag to compare the file with';
+
+  @override
+  String get gitCompareWithRevisionPlaceholder =>
+      'Select a revision of the file to compare it with';
+
+  @override
+  String gitCompareLabel(String name, String other) {
+    return '$name ($other ↔ Working Tree)';
+  }
+
+  @override
+  String get explorerSelectForCompare => 'Select for Compare';
+
+  @override
+  String explorerCompareWithSelected(String name) {
+    return 'Compare with \'$name\'';
+  }
+
+  @override
+  String compareFoldersSame(String original, String modified) {
+    return '“$original” and “$modified” have the same files.';
+  }
+
+  @override
+  String compareFoldersPick(String original, String modified) {
+    return 'Files “$original” and “$modified” differ in';
+  }
+
+  @override
+  String compareFoldersOnlyIn(String name) {
+    return 'Only in “$name”';
+  }
+
+  @override
+  String get compareFoldersModified => 'Changed';
+
+  @override
+  String get compareWithLocalHistory => 'Local History…';
+
+  @override
+  String get localHistoryShow => 'Show Local History';
+
+  @override
+  String localHistoryNone(String name) {
+    return 'No local history of “$name” yet: it is kept as the file is saved.';
+  }
+
+  @override
+  String localHistoryPick(String name) {
+    return 'A version of “$name” to compare with';
+  }
+
+  @override
+  String localHistoryLabel(String name, String time) {
+    return '$name (Local History, $time)';
+  }
+
+  @override
+  String get explorerCompareSelected => 'Compare Selected';
+
+  @override
+  String compareFilesLabel(String original, String modified) {
+    return '$original ↔ $modified';
+  }
+
+  @override
+  String get settingsSectionUsage => 'Usage';
+
+  @override
+  String get sidePanelUsage => 'Usage';
+
+  @override
+  String get ustatKeywords =>
+      'usage statistics tokens cache calls cost dashboard upstream model';
+
+  @override
+  String get ustatAll => 'All';
+
+  @override
+  String get ustatAgent => 'Agent';
+
+  @override
+  String get ustatKind => 'Kind';
+
+  @override
+  String get ustatModel => 'Model';
+
+  @override
+  String get ustatUpstream => 'Upstream';
+
+  @override
+  String get ustatConversation => 'Conversation';
+
+  @override
+  String get ustatFailedOnly => 'Failed only';
+
+  @override
+  String get ustatResetFilters => 'Reset filters';
+
+  @override
+  String get ustatRefresh => 'Refresh';
+
+  @override
+  String get ustatUnpin => 'Back to the whole range';
+
+  @override
+  String get ustatRangeHour => 'Last hour';
+
+  @override
+  String get ustatRangeToday => 'Today';
+
+  @override
+  String get ustatRangeDay => 'Last 24 hours';
+
+  @override
+  String get ustatRangeWeek => 'Last 7 days';
+
+  @override
+  String get ustatRangeMonth => 'Last 30 days';
+
+  @override
+  String get ustatRangeQuarter => 'Last 90 days';
+
+  @override
+  String get ustatRangeAll => 'All time';
+
+  @override
+  String get ustatClassMain => 'Main agent';
+
+  @override
+  String get ustatClassSubagent => 'Subagent';
+
+  @override
+  String get ustatClassWorkflow => 'Workflow';
+
+  @override
+  String get ustatClassCompaction => 'Compaction';
+
+  @override
+  String get ustatClassAuxiliary => 'Auxiliary';
+
+  @override
+  String get ustatClassSideReply => 'Side reply';
+
+  @override
+  String get ustatMainAgent => 'Main agent';
+
+  @override
+  String get ustatPartSystem => 'System prompt';
+
+  @override
+  String get ustatPartTools => 'Tool definitions';
+
+  @override
+  String get ustatPartUser => 'User messages';
+
+  @override
+  String get ustatPartAssistant => 'Replies';
+
+  @override
+  String get ustatPartThinking => 'Thinking';
+
+  @override
+  String get ustatPartToolUse => 'Tool calls';
+
+  @override
+  String get ustatPartToolResult => 'Tool results';
+
+  @override
+  String get ustatPartMedia => 'Images & files';
+
+  @override
+  String get ustatTokenInput => 'Input';
+
+  @override
+  String get ustatTokenOutput => 'Output';
+
+  @override
+  String get ustatTokenCacheRead => 'Cache read';
+
+  @override
+  String get ustatTokenCacheWrite => 'Cache write';
+
+  @override
+  String get ustatTokenReasoning => 'Reasoning';
+
+  @override
+  String get ustatTotalTokens => 'Tokens';
+
+  @override
+  String ustatTokensDetail(String input, String output) {
+    return '$input in · $output out';
+  }
+
+  @override
+  String get ustatCalls => 'Calls';
+
+  @override
+  String ustatCallsDetail(String count) {
+    return '$count tool calls asked';
+  }
+
+  @override
+  String get ustatCallsOk => 'Succeeded';
+
+  @override
+  String ustatCallsShort(int count) {
+    return '$count calls';
+  }
+
+  @override
+  String get ustatCacheHit => 'Cache hit rate';
+
+  @override
+  String ustatCacheDetail(String read, String written) {
+    return '$read read · $written written';
+  }
+
+  @override
+  String get ustatFirstToken => 'Time to first token';
+
+  @override
+  String ustatDurationDetail(String duration) {
+    return '$duration per call on average';
+  }
+
+  @override
+  String get ustatSpeed => 'Output speed';
+
+  @override
+  String ustatOutputDetail(String tokens) {
+    return '$tokens output in all';
+  }
+
+  @override
+  String ustatReasoningDetail(String tokens) {
+    return '$tokens of it reasoning';
+  }
+
+  @override
+  String get ustatErrors => 'Failed';
+
+  @override
+  String ustatErrorRate(String rate) {
+    return '$rate of calls';
+  }
+
+  @override
+  String get ustatOverTime => 'Over time';
+
+  @override
+  String get ustatMetricTokens => 'Tokens';
+
+  @override
+  String get ustatMetricCalls => 'Calls';
+
+  @override
+  String get ustatMetricLatency => 'Latency';
+
+  @override
+  String get ustatMetricSpeed => 'Speed';
+
+  @override
+  String get ustatByUpstream => 'By upstream';
+
+  @override
+  String get ustatByModel => 'By model';
+
+  @override
+  String get ustatByConversation => 'By conversation';
+
+  @override
+  String get ustatByTurn => 'By turn';
+
+  @override
+  String get ustatByTurnDetail =>
+      'Each of your messages and all the requests that answered it';
+
+  @override
+  String ustatTurnDetail(String duration, String peak) {
+    return '$duration · context up to $peak';
+  }
+
+  @override
+  String get ustatNoConversations => 'No conversation named its session';
+
+  @override
+  String get ustatTools => 'Tools';
+
+  @override
+  String get ustatToolsDetail =>
+      'What their results brought into the context (estimated), how often they were called, how long they ran';
+
+  @override
+  String get ustatToolSortTokens => 'Context';
+
+  @override
+  String get ustatToolSortCalls => 'Calls';
+
+  @override
+  String get ustatToolSortTime => 'Time';
+
+  @override
+  String get ustatNoTools => 'No tools were used';
+
+  @override
+  String get ustatToolCalled => 'Called';
+
+  @override
+  String get ustatToolResult => 'result';
+
+  @override
+  String ustatShowAll(int count) {
+    return 'Show all $count';
+  }
+
+  @override
+  String get ustatShowLess => 'Show less';
+
+  @override
+  String get ustatContextGrowth => 'Context growth';
+
+  @override
+  String ustatContextNow(String tokens) {
+    return '$tokens now';
+  }
+
+  @override
+  String ustatContextPeak(String tokens) {
+    return 'peak $tokens';
+  }
+
+  @override
+  String ustatCompactions(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count compactions',
+      one: '1 compaction',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String ustatCompactedFrom(String tokens) {
+    return 'Compacted at $tokens';
+  }
+
+  @override
+  String get ustatContextMakeup => 'What fills the context';
+
+  @override
+  String get ustatRecentCalls => 'Recent calls';
+
+  @override
+  String get ustatCallsTitle => 'Calls';
+
+  @override
+  String ustatRecentCallsDetail(int count) {
+    return '$count in all, newest first';
+  }
+
+  @override
+  String ustatShowMoreCalls(int count) {
+    return 'Show more ($count left)';
+  }
+
+  @override
+  String get ustatNoCalls => 'No calls';
+
+  @override
+  String get ustatCopyJson => 'Copy the call as JSON';
+
+  @override
+  String get ustatFieldTime => 'Time';
+
+  @override
+  String get ustatFieldStatus => 'Status';
+
+  @override
+  String get ustatFieldUpstream => 'Upstream';
+
+  @override
+  String get ustatFieldModel => 'Model';
+
+  @override
+  String get ustatFieldEffort => 'Effort';
+
+  @override
+  String get ustatFieldClass => 'Kind';
+
+  @override
+  String get ustatFieldSession => 'Session';
+
+  @override
+  String get ustatFieldAgent => 'Agent';
+
+  @override
+  String get ustatFieldTask => 'Task';
+
+  @override
+  String get ustatFieldAccount => 'Account';
+
+  @override
+  String get ustatFieldUpstreamLatency => 'Upstream answered';
+
+  @override
+  String get ustatCallAsking => 'Requesting';
+
+  @override
+  String get ustatCallAnswering => 'Answering';
+
+  @override
+  String get ustatCallCancelled => 'Cancelled';
+
+  @override
+  String get ustatFieldFirstToken => 'First token';
+
+  @override
+  String get ustatFieldDuration => 'Duration';
+
+  @override
+  String get ustatFieldSpeed => 'Speed';
+
+  @override
+  String get ustatFieldMessages => 'Messages';
+
+  @override
+  String get ustatFieldTools => 'tools';
+
+  @override
+  String get ustatFieldBytes => 'Size';
+
+  @override
+  String get ustatFieldCompacted => 'After compaction';
+
+  @override
+  String get ustatFieldError => 'Error';
+
+  @override
+  String get ustatEmptyTitle => 'No calls yet';
+
+  @override
+  String get ustatEmptyDetail => 'Calls show here once a conversation runs.';
+
+  @override
+  String get ustatEmptyFiltered => 'Nothing matches these filters';
+
+  @override
+  String get ustatConversationNew => 'Usage shows once the conversation starts';
+
+  @override
+  String get ustatConversationEmpty => 'No calls kept for this conversation';
+
+  @override
+  String get ustatConversationEmptyDetail =>
+      'Only conversations on a custom upstream are counted: Claude\'s official service does not go through BaoCode\'s proxy.';
+
+  @override
+  String get ustatRecordOff => 'Usage is not being recorded';
+
+  @override
+  String get ustatTurnOn => 'Turn on';
+
+  @override
+  String get ustatDataTitle => 'Data';
+
+  @override
+  String get ustatDataDescription =>
+      'Detailed records take room: keep them as long as you like, and clear what you no longer need.';
+
+  @override
+  String get ustatRecord => 'Record usage';
+
+  @override
+  String get ustatRecordDescription =>
+      'Claude Code\'s own calls are read from what it prints; sessions on a custom upstream go through BaoCode\'s local proxy, which keeps each call. Applies to agents started from now on.';
+
+  @override
+  String get ustatRecordOffDescription =>
+      'Turn it on to keep each call to a model: tokens, the cache, time, by conversation, subagent and tool.';
+
+  @override
+  String get ustatDetailed => 'Detailed records';
+
+  @override
+  String get ustatDetailedDescription =>
+      'Also keeps what filled each request\'s context and the tools\' share. Takes more room.';
+
+  @override
+  String get ustatRetention => 'Keep records for';
+
+  @override
+  String get ustatRetentionDescription =>
+      'Older days are deleted as they pass.';
+
+  @override
+  String ustatKeepDays(int days) {
+    return '$days days';
+  }
+
+  @override
+  String get ustatKeepForever => 'Forever';
+
+  @override
+  String ustatSpace(String size) {
+    return 'Using $size';
+  }
+
+  @override
+  String ustatSpaceDetail(int days, String oldest) {
+    return '$days days kept, since $oldest';
+  }
+
+  @override
+  String get ustatSpaceEmpty => 'Nothing kept yet';
+
+  @override
+  String get ustatLoading => 'Reading the calls…';
+
+  @override
+  String get ustatClearEllipsis => 'Clear…';
+
+  @override
+  String get ustatClear => 'Clear';
+
+  @override
+  String ustatClearOlderThan(int days) {
+    return 'Clear all but the last $days days';
+  }
+
+  @override
+  String get ustatClearShown => 'Clear the time shown';
+
+  @override
+  String get ustatClearShownFiltered => 'Clear what the filters show';
+
+  @override
+  String get ustatClearAll => 'Clear everything';
+
+  @override
+  String ustatClearConfirm(String what) {
+    return '$what?';
+  }
+
+  @override
+  String get ustatClearDetail =>
+      'The calls are deleted from this computer. This cannot be undone.';
+
+  @override
+  String get autoResetCreditsToggle => 'Auto-Use Reset Credits';
+
+  @override
+  String modelsResetCredits(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count resets left',
+      one: '1 reset left',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String modelsResetCreditsTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count reset credits',
+      one: '1 reset credit',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get modelsResetCreditsDetail =>
+      'Using one starts this account\'s quota windows over at once.';
+
+  @override
+  String modelsResetCreditExpires(String time) {
+    return 'Expires $time';
+  }
+
+  @override
+  String get modelsResetCreditUse => 'Reset Now';
+
+  @override
+  String modelsResetCreditConfirm(String account) {
+    return 'Use a reset credit of $account?';
+  }
+
+  @override
+  String get modelsResetCreditConfirmDetail =>
+      'Its quota starts over at once. The credit can\'t be given back, and whatever quota is left now is lost.';
+
+  @override
+  String claudeResets(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count resets',
+      one: '1 reset',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get claudeResetsTitle => 'Claude limit resets';
+
+  @override
+  String get claudeResetsDetail =>
+      'Granted by Anthropic. Using one sets the limits it lists back to nothing used. With more than one, they are used one at a time, in the order Anthropic sets.';
+
+  @override
+  String claudeResetClears(String windows) {
+    return 'Clears $windows';
+  }
+
+  @override
+  String claudeResetWindowUsed(String window, int percent) {
+    return '$window ($percent% used)';
+  }
+
+  @override
+  String claudeResetWeeklyOf(String model) {
+    return '$model weekly';
+  }
+
+  @override
+  String get claudeResetNext => 'Usable now';
+
+  @override
+  String get claudeResetQueued =>
+      'Waits its turn: usable once the one above is used';
+
+  @override
+  String get claudeResetUse => 'Use This One…';
+
+  @override
+  String get claudeResetConfirm => 'Use a Claude limit reset?';
+
+  @override
+  String claudeResetConfirmDetail(String label, String windows) {
+    return '“$label” sets $windows back to nothing used, at once. The reset can\'t be given back, and what is left of these limits now is lost.';
+  }
+
+  @override
+  String get claudeResetPaused => 'Paused';
+
+  @override
+  String claudeResetCooldown(String time) {
+    return 'Usable again $time';
+  }
+
+  @override
+  String claudeResetUnavailable(String reason) {
+    return 'Not usable now ($reason)';
+  }
+
+  @override
+  String get claudeResetSignedOut =>
+      'The Claude.ai sign-in has expired; Claude Code renews it as it next runs.';
+
+  @override
+  String claudeResetDone(String windows) {
+    return 'Reset: $windows';
+  }
+
+  @override
+  String claudeResetNotDone(String reason) {
+    return 'Not reset: $reason';
+  }
+
+  @override
+  String get claudeResetNotNext =>
+      'Another reset is the one usable now; nothing was used. Refresh and try again.';
+
+  @override
+  String get claudeResetNotLimited =>
+      'This reset can only be used once a limit is reached; nothing was used.';
+
+  @override
+  String get claudeResetAlreadyUsed =>
+      'This reset was already used; nothing was used now.';
+
+  @override
+  String get claudeResetCoolingDown =>
+      'A reset was just used; wait a little before the next. Nothing was used.';
+
+  @override
+  String get claudeResetsRefresh => 'Refresh';
+
+  @override
+  String resetCreditsHint(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count reset credits expire',
+      one: 'A reset credit expires',
+    );
+    return '$_temp0 within a week. To get their worth, use Codex models on this plan, resetting once the quota runs out:';
+  }
+
+  @override
+  String resetCreditsHintDay(String day, int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count times',
+      one: 'once',
+    );
+    return '$day: reset $_temp0';
+  }
+
+  @override
+  String resetCreditsHintBy(String time) {
+    return 'by $time';
+  }
+
+  @override
+  String get resetCreditsHintToday => 'Today';
+
+  @override
+  String get resetCreditsHintTomorrow => 'Tomorrow';
+
+  @override
+  String get resetCreditsHintAuto => 'Reset Automatically';
+
+  @override
+  String get resetCreditsHintLater => 'Got It';
+
+  @override
+  String get ustatPartMemory => 'CLAUDE.md & rules';
+
+  @override
+  String get ustatPartSkills => 'Skills';
+
+  @override
+  String get ustatPartMcp => 'MCP';
+
+  @override
+  String get ustatPartMessages => 'Conversation';
+
+  @override
+  String ustatCacheHitShort(String rate) {
+    return '$rate cached';
+  }
+
+  @override
+  String get ustatCompactedAfter => 'First after compacting';
+
+  @override
+  String get ustatContextPickHint => 'Click to see what filled it';
+
+  @override
+  String ustatRequests(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count requests',
+      one: '1 request',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String ustatRequestOf(int index, int count) {
+    return '#$index of $count';
+  }
+
+  @override
+  String get ustatPreviousRequest => 'Previous request';
+
+  @override
+  String get ustatNextRequest => 'Next request';
+
+  @override
+  String get ustatNoMakeup =>
+      'What filled this request\'s context was not recorded (turn on Detailed recording).';
+
+  @override
+  String get ustatMakeupNoDetail =>
+      'Recorded before the breakdown by tool, MCP server and skill: requests from now on have it.';
+
+  @override
+  String get ustatMakeupShapeMissing =>
+      'The breakdown of this request\'s tools and skills was not found.';
+
+  @override
+  String ustatMcpTools(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count tools',
+      one: '1 tool',
+      zero: 'instructions only',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get ustatMcpInstructions => 'Instructions';
+
+  @override
+  String get ustatSkillPlugin => 'plugin';
+
+  @override
+  String ustatToolInputs(String tokens) {
+    return 'inputs $tokens';
+  }
+
+  @override
+  String get ustatSwitchedHint =>
+      'Saved to Settings → Customize. The agent\'s next requests go without what was turned off.';
+
+  @override
+  String get ustatShowAuxiliary => 'Show auxiliary requests';
+
+  @override
+  String get ustatShowAuxiliaryDescription =>
+      'Count Claude Code\'s requests beside the conversation (suggesting the next prompt, naming the conversation, summing up a web page) in the charts and totals. They are kept either way.';
+
+  @override
+  String get ustatTrace => 'Debug capture';
+
+  @override
+  String get ustatTraceDescription =>
+      'Also keep every request to a custom upstream whole: as Claude Code sent it, as it went to the upstream, the upstream\'s raw answer and what went back; of Claude Code\'s own models, only their answers. Keys are masked. Takes a lot of space: turn it off when done.';
+
+  @override
+  String get ustatTraceTitle => 'Raw exchange';
+
+  @override
+  String get ustatTraceLoading => 'Reading…';
+
+  @override
+  String get ustatTraceGone => 'The raw exchange was cleared.';
+
+  @override
+  String get ustatTraceNone =>
+      'Nothing went this way (it was answered before).';
+
+  @override
+  String get ustatTraceRequestBody => 'Request body';
+
+  @override
+  String get ustatTraceRawResponse => 'Raw response';
+
+  @override
+  String get ustatTraceToUpstream => 'Sent upstream';
+
+  @override
+  String ustatTraceResponseHeaders(int count) {
+    return 'Response headers · $count';
+  }
+
+  @override
+  String get ustatTraceAnswerOnly =>
+      'As Claude Code printed it; the request to Anthropic is not seen';
+
+  @override
+  String ustatTraceTry(int n) {
+    return 'Try $n';
+  }
+
+  @override
+  String get ustatTraceCopyAll => 'Copy all';
+
+  @override
+  String get ustatTraceCopyBody => 'Copy';
+
+  @override
+  String ustatTraceHeaders(int count) {
+    return 'Request headers · $count';
+  }
+
+  @override
+  String get ustatTraceRaw => 'As sent';
+
+  @override
+  String get ustatTraceFormatted => 'Formatted';
+
+  @override
+  String get ustatTraceEmpty => 'Empty';
+
+  @override
+  String ustatTraceMore(String size) {
+    return 'Show more ($size left)';
+  }
+
+  @override
+  String get ustatTraceTruncated => 'cut at 24M characters';
+
+  @override
+  String ustatSpaceTraces(String size, int count) {
+    return '; raw exchanges $size ($count)';
+  }
+
+  @override
+  String get ustatClearTraces => 'Clear the raw exchanges only';
+
+  @override
+  String get ustatClearTracesDetail =>
+      'The calls stay; their raw requests and answers are deleted from this computer.';
+
+  @override
+  String get ustatColumnTotal => 'Total';
+
+  @override
+  String get ustatColumnMix => 'Breakdown';
+
+  @override
+  String ustatDeferred(String size) {
+    return 'deferred, $size';
+  }
+
+  @override
+  String get ustatSwitchedOff => 'turned off';
+
+  @override
+  String usageUntilCompaction(String tokens) {
+    return '$tokens to auto-compact';
+  }
+
+  @override
+  String get usageAgentDefinition => 'agent';
+
+  @override
+  String get usageAttachments => 'Reminders & attachments';
+
+  @override
+  String get ustatCost => 'Cost';
+
+  @override
+  String get ustatCostEstimated => 'At the prices as they are now';
+
+  @override
+  String ustatCostUnpriced(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count calls unpriced',
+      one: '1 call unpriced',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get ustatCostNoPrices => 'No prices set';
+
+  @override
+  String get ustatPrices => 'Model prices';
+
+  @override
+  String get ustatPricesDetail =>
+      'A million tokens each. Costs are worked out at the prices as they are now, the calls before a change included, unless a price is set from a date on.';
+
+  @override
+  String get ustatPricesAgentHint =>
+      'BaoCode can keep these for you: ask it in a chat to look up the current prices of these models and update them. It checks the upstream\'s own pricing page and writes them here.';
+
+  @override
+  String get ustatPriceCurrency => 'Currency';
+
+  @override
+  String get ustatPriceAnyUpstream => 'any upstream';
+
+  @override
+  String get ustatPriceSource => 'Where the price was read';
+
+  @override
+  String ustatPriceUpdated(String when) {
+    return 'updated $when';
+  }
+
+  @override
+  String get ustatPriceClear => 'Clear the price';
+
+  @override
+  String get ustatPriceIncomplete =>
+      'Fill in both the input and the output price';
+
+  @override
+  String get ustatPriceSpent => 'In this time';
+
+  @override
+  String get modelsAutoResetCreditsOff => 'Off';
+
+  @override
+  String get modelsAutoResetCreditsLong => 'When the Week or Month Runs Out';
+
+  @override
+  String get modelsAutoResetCreditsAny => 'When Any Window Runs Out';
+
+  @override
+  String get modelsAutoResetCreditsOffDescription =>
+      'An account out of quota waits for it to start over.';
+
+  @override
+  String get modelsAutoResetCreditsLongDescription =>
+      'An account out of its week (or month) uses a reset credit and goes on. Five hours running out is waited for: they start over soon.';
+
+  @override
+  String get modelsAutoResetCreditsAnyDescription =>
+      'An account out of any window, five hours too, uses a reset credit at once and goes on. Credits go faster.';
+
+  @override
+  String get ustatQuota => 'Claude Plan';
+
+  @override
+  String get ustatQuotaDetail =>
+      'How much of the plan\'s limits Claude Code\'s own models took in this time, from the limits as they stood after each call.';
+
+  @override
+  String get ustatQuotaFiveHour => '5-hour limit';
+
+  @override
+  String get ustatQuotaWeek => 'Weekly limit';
+
+  @override
+  String ustatQuotaWeekOf(String model) {
+    return 'Weekly $model limit';
+  }
+
+  @override
+  String ustatQuotaUsed(String percent) {
+    return '$percent used in this time';
+  }
+
+  @override
+  String ustatQuotaPeak(String percent, int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count times',
+      one: 'once',
+    );
+    return 'Peak $percent in this time · reset $_temp0';
+  }
+
+  @override
+  String ustatQuotaPerPercent(String tokens) {
+    return '1% of the weekly limit ≈ $tokens tokens';
+  }
+
+  @override
+  String ustatQuotaPerPercentCost(String cost) {
+    return '≈ $cost at API prices';
+  }
+
+  @override
+  String ustatCacheSaved(String amount) {
+    return '$amount saved';
+  }
+
+  @override
+  String ustatCostIn(String currency) {
+    return 'In $currency only; the other currencies are in the totals';
+  }
+
+  @override
+  String get ustatPriceClaudeDefault =>
+      'Claude Code\'s own models without a price of yours are priced at Anthropic\'s API prices: the grey figures.';
+
+  @override
+  String ustatPriceRuleTiers(int count) {
+    return '$count tiers by prompt length';
+  }
+
+  @override
+  String get ustatPriceRuleSchedule => 'peak and off-peak hours';
+
+  @override
+  String ustatPriceRuleFast(String factor) {
+    return 'fast mode ×$factor';
+  }
+
+  @override
+  String get ustatPriceRuleServiceTiers => 'by service tier';
+
+  @override
+  String get ustatPriceRuleGeo => 'by region';
+
+  @override
+  String ustatPriceRulePerCall(String amount) {
+    return '$amount a call';
+  }
+
+  @override
+  String get ustatPriceRuleTools => 'tools priced a use';
+
+  @override
+  String ustatPriceRuleVersions(int count) {
+    return '$count prices by date';
+  }
+
+  @override
+  String ustatPriceRuleRate(String factor) {
+    return 'upstream rate ×$factor';
+  }
+
+  @override
+  String ustatPriceRuleTime(String factor) {
+    return 'time of week ×$factor';
+  }
+
+  @override
+  String ustatPriceRuleFees(String amount) {
+    return 'fees $amount';
+  }
+
+  @override
+  String get ustatFees => 'Fees';
+
+  @override
+  String get ustatPricedBy => 'Priced by';
+
+  @override
+  String get ustatUpstreamRates => 'Upstream rates';
+
+  @override
+  String get ustatUpstreamRatesDetail =>
+      'The models of these upstreams without a price of their own: the same model\'s price elsewhere, times the rate.';
+
+  @override
+  String get ustatUpstreamRateClear => 'Clear the rate';
+
+  @override
+  String get ustatContextUnpickHint =>
+      'Click again to unpick: back to the context as it is now';
+
+  @override
+  String get localRunTitle => 'Run on this computer';
+
+  @override
+  String localRunReason(String host, String system) {
+    return 'The agent on $host wants to run this command on your computer ($system), not on $host.';
+  }
+
+  @override
+  String localRunAlways(String host) {
+    return 'Always allow for $host';
+  }
+
+  @override
+  String get remoteLocalAccess => 'Allow Remote Agents to Act on This Computer';
+
+  @override
+  String get remoteLocalAccessDetail =>
+      'Agents on these hosts may run commands on this computer (asking you each time), copy files both ways and forward ports.';
+
+  @override
+  String get remoteLocalAccessNoAsking => 'Runs commands without asking';
+
+  @override
+  String get remoteLocalAccessAskAgain => 'Ask Each Time';
+
+  @override
+  String get sidePanelPorts => 'Ports';
+
+  @override
+  String portsEmpty(String host) {
+    return 'No ports are forwarded. A server on $host that prints its http://localhost address is forwarded here on its own.';
+  }
+
+  @override
+  String get portsAdd => 'Forward a Port';
+
+  @override
+  String get portsCopy => 'Copy Address';
+
+  @override
+  String get portsOpen => 'Open in Browser';
+
+  @override
+  String get portsStop => 'Stop Forwarding';
+
+  @override
+  String portsHostToHere(String host) {
+    return '$host → this computer';
+  }
+
+  @override
+  String portsHereToHost(String host) {
+    return 'This computer → $host';
+  }
+
+  @override
+  String get portsAuto => 'Auto';
+
+  @override
+  String get portsPort => 'Port';
+
+  @override
+  String get portsListen => 'Listen on (optional)';
+
+  @override
+  String get portsForward => 'Forward';
+
+  @override
+  String portsCopied(String address) {
+    return 'Copied $address';
+  }
+
+  @override
+  String branchBarFolder(String path) {
+    return '$path\nClick to copy its path';
+  }
+
+  @override
+  String get branchBarPathCopied => 'Path copied';
+
+  @override
+  String get rewindFilesTitle =>
+      'Undo the file changes made after this message?';
+
+  @override
+  String rewindFilesChanged(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count files',
+      one: '1 file',
+    );
+    return 'The agent changed $_temp0 after this message:';
+  }
+
+  @override
+  String rewindFilesMore(int count) {
+    return '…and $count more';
+  }
+
+  @override
+  String rewindFilesMerged(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count of them were',
+      one: '1 of them was',
+    );
+    return '$_temp0 also changed elsewhere since: those changes are kept.';
+  }
+
+  @override
+  String rewindFilesConflicts(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count files can\'t',
+      one: '1 file can\'t',
+    );
+    String _temp1 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'they are',
+      one: 'it is',
+    );
+    return '$_temp0 be undone cleanly and will stay as $_temp1:';
+  }
+
+  @override
+  String get rewindFilesCommands =>
+      'What commands changed (Bash) isn\'t tracked and stays.';
+
+  @override
+  String get rewindFilesRevert => 'Undo and Send';
+
+  @override
+  String get rewindFilesKeep => 'Keep and Send';
+
+  @override
+  String get rewindFilesRemember => 'Remember my choice';
+
+  @override
+  String get generalSettingsRewindFiles => 'Edited Messages';
+
+  @override
+  String get generalSettingsRewindFilesDescription =>
+      'When you edit an earlier message and send it again, what happens to the files the agent changed after it. Commands\' (Bash) changes are not tracked. Claude Code and BaoCode agent only.';
+
+  @override
+  String get generalSettingsRewindAsk => 'Ask Each Time';
+
+  @override
+  String get generalSettingsRewindRevert => 'Undo the Changes';
+
+  @override
+  String get generalSettingsRewindKeep => 'Keep the Changes';
 }

@@ -4,8 +4,14 @@ Future<IdeGitOutput> runGit(
   List<String> arguments, {
   required String workingDirectory,
   int? limit,
+  String? stdin,
+  Map<String, String>? environment,
 }) async => throw const IdeGitException(
   'Git is unavailable in the browser. Open this project in the desktop app.',
 );
 
-Stream<void> watchRepository(String repositoryRoot) => const Stream.empty();
+Stream<String> watchRepository(String repositoryRoot) => const Stream.empty();
+
+/// [data] inflated from zlib's format.
+List<int> zlibInflate(List<int> data) =>
+    throw UnsupportedError('zlib is unavailable in the browser.');

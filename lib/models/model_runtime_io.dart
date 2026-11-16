@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import '../network/network_proxy_io.dart';
+import '../usage/usage_ledger.dart';
 import '../workspace/editor_launcher.dart';
 import 'codex/codex_accounts_io.dart';
 import 'codex/codex_service.dart';
@@ -31,6 +32,7 @@ final ModelProxy _proxy = ModelProxy(
   onError: (id, error) => ModelProviders.current.reportError(id, error),
   findProxy: (url) => NetworkProxy.instance.findProxy(url),
   codex: _codex,
+  usage: () => UsageLedger.current,
 );
 
 /// The app's image generation, over [ModelProviders.current].
@@ -111,8 +113,15 @@ Future<List<RemoteModel>> _listModels(
   // Anthropic's list comes in pages.
   String? after;
   for (var page = 0; page < 20; page++) {
+    // Its own query kept (magpie's `kind`).
     final pageUrl = provider.protocol == ProviderProtocol.anthropic
-        ? url.replace(queryParameters: {'limit': '1000', 'after_id': ?after})
+        ? url.replace(
+            queryParameters: {
+              ...url.queryParameters,
+              'limit': '1000',
+              'after_id': ?after,
+            },
+          )
         : url;
     final request = await client.getUrl(pageUrl);
     upstreamHeaders(provider, key).forEach(request.headers.set);
@@ -166,7 +175,10 @@ Future<Map<String, String>> providerLaunchEnvironment(
   String model,
 ) async {
   final key = await ModelProviders.current.key(provider.id);
-  final proxy = provider.throughProxy
+  // Its calls kept (Settings → Usage): through the proxy, which keeps
+  // them, whatever it speaks.
+  final recordUsage = UsageLedger.current.enabled;
+  final proxy = provider.throughProxy || recordUsage
       ? await _proxy.endpoint(provider.id)
       : null;
   // What the session's own NO_PROXY keeps out of the user's proxy, beside
@@ -178,10 +190,13 @@ Future<Map<String, String>> providerLaunchEnvironment(
     key: key,
     proxy: proxy,
     noProxy: route.direct ? null : route.noProxy,
+    recordUsage: recordUsage,
   );
 }
 
 Future<void> stopModelProxy() async {
+  // What was kept of the calls but not yet written.
+  UsageLedger.current.flush();
   _codex.close();
   await _proxy.close();
 }

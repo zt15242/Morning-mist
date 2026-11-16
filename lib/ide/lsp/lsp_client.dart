@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import '../host_paths.dart';
 import 'json_rpc.dart';
 import 'language_features.dart';
 import 'lsp_glob.dart';
@@ -76,8 +77,10 @@ class LspClient {
     this.requestTimeout = const Duration(seconds: 30),
     this.onDiagnostics,
     this.onChanged,
+    this.onProgress,
     this.onApplyEdit,
     this.onExit,
+    this.notifications = const {},
     this.logLimit = 200,
     this.processId,
     this.windowsPaths,
@@ -122,8 +125,12 @@ class LspClient {
   final void Function(String uri, List<LspDiagnostic> diagnostics)?
   onDiagnostics;
 
-  /// Capabilities, progress or the log changed.
+  /// Its state or capabilities changed.
   final void Function()? onChanged;
+
+  /// [progress] changed: [onChanged] when null. Apart, as a server indexing
+  /// reports it many times a second and only a status bar shows it.
+  final void Function()? onProgress;
 
   /// `workspace/applyEdit`: completes with whether the edit was applied.
   final Future<bool> Function(LspWorkspaceEdit edit, String? label)?
@@ -131,6 +138,10 @@ class LspClient {
 
   /// The process ended; [crashed] unless it was asked to stop.
   final void Function(int exitCode, {required bool crashed})? onExit;
+
+  /// Server notifications outside the protocol, by method (e.g.
+  /// vue-language-server's `tsserver/request`).
+  final Map<String, void Function(Object? params)> notifications;
 
   /// How many log lines ([log]) are kept.
   final int logLimit;
@@ -763,6 +774,9 @@ class LspClient {
         return null;
       });
     }
+    for (final MapEntry(key: method, value: handler) in notifications.entries) {
+      _rpc.onNotification(method, handler);
+    }
   }
 
   /// What `workspace/configuration` answers for [section]: the settings,
@@ -812,7 +826,7 @@ class LspClient {
       default:
         return;
     }
-    onChanged?.call();
+    (onProgress ?? onChanged)?.call();
   }
 
   void _logMessage(Object? params) {
@@ -825,10 +839,10 @@ class LspClient {
       3 => 'info',
       _ => 'log',
     };
+    // Kept for [log], read when asked: nothing shows it as it comes.
     for (final line in const LineSplitter().convert(message)) {
       _log('[$level] $line');
     }
-    onChanged?.call();
   }
 
   void _log(String line) {
@@ -893,7 +907,9 @@ List<JsonMap> _maps(Object? value) => [
 String? _pathOf(String uri, {bool? windows}) {
   try {
     final parsed = Uri.parse(uri);
-    return parsed.scheme == 'file' ? parsed.toFilePath(windows: windows) : null;
+    if (parsed.scheme != 'file') return null;
+    final path = parsed.toFilePath(windows: windows);
+    return windows == true ? capitalDrive(path) : path;
   } on Object {
     return null;
   }
