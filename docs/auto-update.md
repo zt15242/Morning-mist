@@ -349,7 +349,7 @@ windows-x64
 | 项目 | 位置与说明 |
 | --- | --- |
 | 私钥 | `~/.baocode-release/update-signing.key`，权限 600。内容是一行 base64，解码后是 32 字节的随机种子 |
-| 公钥 | `lib/update/update_signature.dart` 的 `updatePublicKey`，当前是 `iBSgPUxNeT4jvgaua22aN/jCDwG+ry8rGc17kMcU4II=` |
+| 公钥 | `lib/update/update_signature.dart` 的 `updatePublicKey`，当前是 `6IcogXxnvlxtqFNH21rjifdz2F+Vd/x7svV3/I6SPNk=` |
 | 发布时 | 用环境变量 `BAOCODE_UPDATE_SIGNING_KEY` 指向私钥文件 |
 
 常用命令：
