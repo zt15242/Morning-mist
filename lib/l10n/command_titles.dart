@@ -48,7 +48,6 @@ String localizedCommandLabel(AppLocalizations l10n, String id, String english) {
     checkForUpdatesCommandId => l10n.cmdCheckForUpdates,
     showSetupGuideCommandId => l10n.cmdShowSetupGuide,
     resetFeatureTipsCommandId => l10n.cmdResetFeatureTips,
-    starOnGitHubCommandId => l10n.cmdStarOnGitHub,
     browserWelcomeCommandId => l10n.cmdBrowserWelcome,
     stashWelcomeCommandId => l10n.cmdStashWelcome,
     modelWelcomeCommandId => l10n.cmdModelWelcome,
