@@ -57,6 +57,8 @@ class McpOAuth {
   /// The headers a request to the server [key] signs in with: its token,
   /// refreshed if it has expired.
   Future<Map<String, String>> headers(String key) async {
+    // Another process or the settings page may have just signed in.
+    _store = null;
     var entry = asMap(_tokens[key]);
     final token = asString(entry['access_token']);
     if (token == null) return const {};
@@ -196,13 +198,19 @@ class McpOAuth {
     final registeredFor = asString(asMap(_tokens[key])['redirect_uri']);
     if ((clientId == null || registeredFor != redirect) &&
         registration != null) {
-      final registered = await _post(Uri.parse(registration), {
-        'client_name': 'BaoCode',
-        'redirect_uris': [redirect],
-        'grant_types': ['authorization_code', 'refresh_token'],
-        'response_types': ['code'],
-        'token_endpoint_auth_method': 'none',
-      });
+      final Map<String, Object?> registered;
+      try {
+        registered = await _post(Uri.parse(registration), {
+          'client_name': 'Morning Mist',
+          'redirect_uris': [redirect],
+          'grant_types': ['authorization_code', 'refresh_token'],
+          'response_types': ['code'],
+          'token_endpoint_auth_method': 'none',
+        });
+      } on Object {
+        await callback.close(force: true);
+        rethrow;
+      }
       clientId = asString(registered['client_id']);
       clientSecret = asString(registered['client_secret']);
     }
@@ -245,32 +253,47 @@ class McpOAuth {
           final query = request.uri.queryParameters;
           final ok = query['state'] == state && query['code'] != null;
           request.response.headers.contentType = ContentType.html;
-          request.response.write(
-            ok
-                ? '<html><body style="font-family:sans-serif"><h3>Signed in to $name.</h3>You can close this window and return to BaoCode.</body></html>'
-                : '<html><body style="font-family:sans-serif"><h3>Sign-in failed.</h3>${const HtmlEscape().convert(query['error_description'] ?? query['error'] ?? 'Unexpected response')}</body></html>',
-          );
-          await request.response.close();
           if (!ok) {
             failure = query['error'] ?? 'Sign-in failed';
+            request.response.write(
+              '<html><body><h3>Sign-in failed.</h3>${const HtmlEscape().convert(query['error_description'] ?? query['error'] ?? 'Unexpected response')}</body></html>',
+            );
+            await request.response.close();
             break;
           }
-          final tokens = await _post(Uri.parse(tokenEndpoint), {
-            'grant_type': 'authorization_code',
-            'code': query['code']!,
-            'redirect_uri': redirect,
-            'client_id': clientId!,
-            'code_verifier': verifier,
-            'resource': server.toString(),
-            'client_secret': ?clientSecret,
-          }, form: true);
-          _keep(key, tokens, {
-            'client_id': clientId,
-            'client_secret': ?clientSecret,
-            'token_endpoint': tokenEndpoint,
-            'redirect_uri': redirect,
-            'resource': server.toString(),
-          });
+          try {
+            final tokens = await _post(Uri.parse(tokenEndpoint), {
+              'grant_type': 'authorization_code',
+              'code': query['code']!,
+              'redirect_uri': redirect,
+              'client_id': clientId!,
+              'code_verifier': verifier,
+              'resource': server.toString(),
+              'client_secret': ?clientSecret,
+            }, form: true);
+            if (asString(tokens['access_token'])?.isNotEmpty != true) {
+              throw const HttpException(
+                'The server did not return an access token',
+              );
+            }
+            _keep(key, tokens, {
+              'client_id': clientId,
+              'client_secret': ?clientSecret,
+              'token_endpoint': tokenEndpoint,
+              'redirect_uri': redirect,
+              'resource': server.toString(),
+            });
+            request.response.write(
+              '<html><body><h3>Signed in to ${const HtmlEscape().convert(name)}.</h3>You can close this window and return to Morning Mist.</body></html>',
+            );
+          } on Object catch (error) {
+            failure = error;
+            request.response.statusCode = 500;
+            request.response.write(
+              '<html><body><h3>Sign-in failed.</h3>Return to Morning Mist for details.</body></html>',
+            );
+          }
+          await request.response.close();
           break;
         }
       } on Object catch (error) {
@@ -288,6 +311,8 @@ class McpOAuth {
     Map<String, Object?> tokens,
     Map<String, Object?> client,
   ) {
+    // Merge with sessions written by the desktop or another agent meanwhile.
+    _store = null;
     final expiresIn = asInt(tokens['expires_in']);
     _tokens[key] = {
       ...asMap(_tokens[key]),

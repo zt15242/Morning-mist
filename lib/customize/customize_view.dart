@@ -132,6 +132,18 @@ class CustomizeView extends StatefulWidget {
   @visibleForTesting
   static McpProber? mcpProber = platformMcpProber;
 
+  @visibleForTesting
+  static Future<Uri> Function(
+    String name,
+    Map<String, Object?> config, {
+    Uri? resourceMetadata,
+    required void Function(Object? error) onSignedIn,
+  })
+  mcpSignIn = beginMcpSignIn;
+
+  @visibleForTesting
+  static Future<bool> Function(String url) openMcpSignIn = openExternal;
+
   @override
   State<CustomizeView> createState() => CustomizeViewState();
 }
@@ -275,7 +287,10 @@ class CustomizeViewState extends State<CustomizeView> {
     setState(() => _probes.remove(key));
     McpProbeResult result;
     try {
-      result = await prober(item.server!, cwd: _projectPath);
+      result = await prober({
+        ...item.server!,
+        '_morningMistServerName': item.name,
+      }, cwd: _projectPath);
     } on Object catch (error) {
       result = McpProbeResult(McpProbeStatus.failed, message: '$error');
     }
@@ -286,6 +301,50 @@ class CustomizeViewState extends State<CustomizeView> {
   void _probeAll(Iterable<Customization> items) {
     for (final item in items) {
       unawaited(_probe(item));
+    }
+  }
+
+  final Set<String> _signingIn = {};
+
+  Future<void> _signInMcp(Customization item) async {
+    final config = item.server;
+    final key = _probeKey(item);
+    if (config == null || !_signingIn.add(key)) return;
+    setState(() {});
+    try {
+      final url = await CustomizeView.mcpSignIn(
+        item.name,
+        config,
+        resourceMetadata: _probes[key]?.resourceMetadata,
+        onSignedIn: (error) {
+          _signingIn.remove(key);
+          if (!mounted) return;
+          if (error != null) {
+            setState(
+              () => _probes[key] = McpProbeResult(
+                McpProbeStatus.failed,
+                message: '$error',
+              ),
+            );
+          } else {
+            setState(() {});
+            unawaited(_probe(item));
+          }
+        },
+      );
+      if (!await CustomizeView.openMcpSignIn(url.toString())) {
+        throw StateError('Could not open the sign-in page');
+      }
+    } on Object catch (error) {
+      _signingIn.remove(key);
+      if (mounted) {
+        setState(
+          () => _probes[key] = McpProbeResult(
+            McpProbeStatus.failed,
+            message: '$error',
+          ),
+        );
+      }
     }
   }
 
@@ -430,6 +489,9 @@ class CustomizeViewState extends State<CustomizeView> {
                     status: switch (_statusOf(open)) {
                       final status? => _McpStatusPanel(
                         status: status,
+                        onSignIn: _signingIn.contains(_probeKey(open))
+                            ? null
+                            : () => unawaited(_signInMcp(open)),
                         onTest: _probeable(open)
                             ? () => unawaited(_probe(open))
                             : null,
@@ -787,6 +849,9 @@ class CustomizeViewState extends State<CustomizeView> {
     return _ItemRow(
       item: item,
       status: _statusOf(item),
+      onSignIn: _signingIn.contains(_probeKey(item))
+          ? null
+          : () => unawaited(_signInMcp(item)),
       onOpen: () => setState(() => _open = item),
       menu: () => _menu(item),
       toggle: _switchOf(item),
@@ -1031,6 +1096,7 @@ class _ItemRow extends StatelessWidget {
     this.expanded,
     this.onExpand,
     this.detail,
+    this.onSignIn,
   });
 
   final Customization item;
@@ -1039,6 +1105,7 @@ class _ItemRow extends StatelessWidget {
 
   /// An MCP server's: whether it answers.
   final McpProbeResult? status;
+  final VoidCallback? onSignIn;
 
   /// Its switch, before its actions; none when null.
   final Widget? toggle;
@@ -1166,17 +1233,13 @@ class _ItemRow extends StatelessWidget {
                     ],
                   ),
                 ),
-                if (status?.status == McpProbeStatus.needsAuth) ...[
+                if (status?.status == McpProbeStatus.needsAuth &&
+                    status?.resourceMetadata != null) ...[
                   const SizedBox(width: 6),
                   _Button(
                     label: l10n.mcpSignIn,
                     primary: true,
-                    onTap: () {
-                      final target = _mcpUrl(status?.server ?? item.description);
-                      if (target != null) {
-                        unawaited(openExternal(target));
-                      }
-                    },
+                    onTap: onSignIn,
                   ),
                 ],
                 const SizedBox(width: 8),
@@ -1681,7 +1744,9 @@ extension on McpProbeResult {
 
   /// One line of why it failed (or what it wants); null otherwise.
   String? reason(AppLocalizations l10n) {
-    if (status == McpProbeStatus.needsAuth) return null;
+    if (status == McpProbeStatus.needsAuth) {
+      return resourceMetadata == null ? l10n.mcpBearerAuthHint : null;
+    }
     if (status != McpProbeStatus.failed) return null;
     final last = log
         .split('\n')
@@ -1735,10 +1800,11 @@ class _McpStatusBadge extends StatelessWidget {
 /// An MCP server's status over its entry: why it failed and what it
 /// wrote, and the way to ask again.
 class _McpStatusPanel extends StatelessWidget {
-  const _McpStatusPanel({required this.status, this.onTest});
+  const _McpStatusPanel({required this.status, this.onTest, this.onSignIn});
 
   final McpProbeResult status;
   final VoidCallback? onTest;
+  final VoidCallback? onSignIn;
 
   @override
   Widget build(BuildContext context) {
@@ -1767,18 +1833,14 @@ class _McpStatusPanel extends StatelessWidget {
                   style: TextStyle(color: AppColors.textFaint, fontSize: 12),
                 ),
               ),
-              if (status.status == McpProbeStatus.needsAuth)
+              if (status.status == McpProbeStatus.needsAuth &&
+                  status.resourceMetadata != null)
                 Padding(
                   padding: const EdgeInsets.only(right: 6),
                   child: _Button(
                     label: l10n.mcpSignIn,
                     primary: true,
-                    onTap: () {
-                      final target = _mcpUrl(status.server);
-                      if (target != null) {
-                        unawaited(openExternal(target));
-                      }
-                    },
+                    onTap: onSignIn,
                   ),
                 ),
               if (onTest case final onTest?)
@@ -1800,7 +1862,8 @@ class _McpStatusPanel extends StatelessWidget {
               ),
             ),
           ],
-          if (status.status == McpProbeStatus.needsAuth) ...[
+          if (status.status == McpProbeStatus.needsAuth &&
+              status.resourceMetadata != null) ...[
             const SizedBox(height: 6),
             Text(
               l10n.mcpSignInHint,
@@ -2066,10 +2129,4 @@ class _NameDialogState extends State<_NameDialog> {
       ),
     );
   }
-}
-
-String? _mcpUrl(String? text) {
-  if (text == null) return null;
-  final match = RegExp(r'https?://[^\s,;]+').firstMatch(text);
-  return match?.group(0);
 }

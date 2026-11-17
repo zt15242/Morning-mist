@@ -5591,8 +5591,14 @@ abstract class AppLocalizations {
   /// No description provided for @mcpSignInHint.
   ///
   /// In en, this message translates to:
-  /// **'Sign in from a chat\'s MCP servers panel, or with /mcp.'**
+  /// **'The connection is checked again after sign-in. Reconnect the MCP server in existing chats or start a new chat.'**
   String get mcpSignInHint;
+
+  /// No description provided for @mcpBearerAuthHint.
+  ///
+  /// In en, this message translates to:
+  /// **'The server requires authentication. Check its documentation and configure the Authorization header.'**
+  String get mcpBearerAuthHint;
 
   /// No description provided for @mcpProbeNote.
   ///

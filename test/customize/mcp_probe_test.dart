@@ -1,8 +1,12 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:async';
 
+import 'package:bao_agent/mcp_oauth.dart';
 import 'package:baocode/customize/mcp_probe.dart';
 import 'package:baocode/kernel/claude_code/claude_environment.dart';
+import 'package:baocode/network/network_proxy_io.dart';
+import 'package:baocode/network/proxy_settings.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Checking a remote MCP server as `claude mcp list` does: its
@@ -14,6 +18,173 @@ void main() {
     HttpOverrides.global = null;
   });
   tearDown(() => ClaudeEnvironment.use(null));
+
+  test('remote checks use the configured network proxy', () async {
+    final proxy = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(() => proxy.close(force: true));
+    final previous = NetworkProxy.instance;
+    NetworkProxy.instance = NetworkProxy(
+      system: () async =>
+          ProxyRoute.manual(ProxyServer('127.0.0.1', proxy.port)),
+      environment: () async => {},
+    );
+    addTearDown(() => NetworkProxy.instance = previous);
+    final requested = Completer<Uri>();
+    proxy.listen((request) async {
+      requested.complete(request.uri);
+      request.response.statusCode = HttpStatus.unauthorized;
+      await request.response.close();
+    });
+    final result = await platformMcpProber!({
+      'type': 'sse',
+      'url': 'http://mcp-proxy-test.invalid/api/mcp/sse',
+    });
+    expect(result.status, McpProbeStatus.needsAuth);
+    expect((await requested.future).host, 'mcp-proxy-test.invalid');
+  });
+
+  test('OAuth login is shared with the probe and running agent', () async {
+    final dir = await Directory.systemTemp.createTemp('mcp-oauth-test-');
+    addTearDown(() => dir.delete(recursive: true));
+    ClaudeEnvironment.use({'HOME': dir.path, 'USERPROFILE': dir.path});
+    final oldProxy = NetworkProxy.instance;
+    NetworkProxy.instance = NetworkProxy(
+      system: () async => const ProxyRoute.direct(),
+      environment: () async => {},
+    );
+    addTearDown(() => NetworkProxy.instance = oldProxy);
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(() => server.close(force: true));
+    final base = 'http://127.0.0.1:${server.port}';
+    var failTokenExchange = false;
+    server.listen((request) async {
+      request.response.headers.contentType = ContentType.json;
+      switch (request.uri.path) {
+        case '/.well-known/oauth-protected-resource/mcp':
+          request.response.write(
+            jsonEncode({
+              'authorization_servers': [base],
+            }),
+          );
+        case '/.well-known/oauth-authorization-server':
+          request.response.write(
+            jsonEncode({
+              'authorization_endpoint': '$base/authorize',
+              'token_endpoint': '$base/token',
+              'registration_endpoint': '$base/register',
+            }),
+          );
+        case '/register':
+          request.response.write(jsonEncode({'client_id': 'test-client'}));
+        case '/token':
+          request.response.write(
+            jsonEncode(
+              failTokenExchange
+                  ? <String, Object?>{}
+                  : {'access_token': 'test-token'},
+            ),
+          );
+        case '/mcp':
+          if (request.headers.value('authorization') != 'Bearer test-token') {
+            request.response.statusCode = 401;
+            request.response.headers.set(
+              'www-authenticate',
+              'Bearer resource_metadata="$base/.well-known/oauth-protected-resource/mcp"',
+            );
+          } else {
+            final body = jsonDecode(await utf8.decodeStream(request)) as Map;
+            if (body['method'] == 'notifications/initialized') {
+              request.response.statusCode = 202;
+            } else {
+              request.response.write(
+                jsonEncode({
+                  'jsonrpc': '2.0',
+                  'id': body['id'],
+                  'result': body['method'] == 'tools/list'
+                      ? {'tools': []}
+                      : {
+                          'serverInfo': {'name': 'test'},
+                        },
+                }),
+              );
+            }
+          }
+        default:
+          request.response.statusCode = 404;
+      }
+      await request.response.close();
+    });
+    final config = <String, Object?>{
+      'type': 'http',
+      'url': '$base/mcp',
+      '_morningMistServerName': 'secure',
+    };
+    final before = await platformMcpProber!(config);
+    expect(before.status, McpProbeStatus.needsAuth);
+    expect(
+      before.resourceMetadata.toString(),
+      '$base/.well-known/oauth-protected-resource/mcp',
+    );
+    final cachedAgent = McpOAuth(
+      storeFile: '${dir.path}/.claude/.baocode-mcp-oauth.json',
+    );
+    expect(
+      cachedAgent.hasToken(McpOAuth.keyOf('secure', Uri.parse('$base/mcp'))),
+      false,
+    );
+    final completed = Completer<Object?>();
+    final url = await beginMcpSignIn(
+      'secure',
+      config,
+      resourceMetadata: before.resourceMetadata,
+      onSignedIn: completed.complete,
+    );
+    final redirect = Uri.parse(url.queryParameters['redirect_uri']!);
+    final callback = redirect.replace(
+      queryParameters: {
+        'state': url.queryParameters['state']!,
+        'code': 'test-code',
+      },
+    );
+    final client = HttpClient();
+    addTearDown(() => client.close(force: true));
+    await (await client.getUrl(callback))
+        .close()
+        .then((response) => response.drain<void>());
+    expect(await completed.future.timeout(const Duration(seconds: 5)), isNull);
+    expect(
+      await cachedAgent.headers(
+        McpOAuth.keyOf('secure', Uri.parse('$base/mcp')),
+      ),
+      {'Authorization': 'Bearer test-token'},
+    );
+    final after = await platformMcpProber!(config);
+    expect(after.status, McpProbeStatus.connected, reason: after.message);
+
+    failTokenExchange = true;
+    final failed = Completer<Object?>();
+    final retry = await beginMcpSignIn(
+      'another',
+      config,
+      resourceMetadata: before.resourceMetadata,
+      onSignedIn: failed.complete,
+    );
+    final failedCallback = Uri.parse(retry.queryParameters['redirect_uri']!)
+        .replace(
+          queryParameters: {
+            'state': retry.queryParameters['state']!,
+            'code': 'bad-code',
+          },
+        );
+    final response = await (await client.getUrl(failedCallback)).close();
+    final responseBody = await utf8.decodeStream(response);
+    expect(response.statusCode, 500);
+    expect(responseBody, contains('Sign-in failed'));
+    expect(
+      await failed.future.timeout(const Duration(seconds: 5)),
+      isA<HttpException>(),
+    );
+  });
 
   test("Streamable HTTP: initialize sent as plain application/json, which "
       "strict servers insist on", () async {

@@ -439,6 +439,68 @@ void main() {
     expect(_inView(find.text('Failed')), findsOneWidget);
   }, variant: _mac);
 
+  testWidgets('MCP sign-in starts OAuth and checks again after callback', (
+    tester,
+  ) async {
+    final store = _MemoryStore()
+      ..servers = [
+        const Customization(
+          kind: CustomizationKind.mcps,
+          scope: CustomizationScope.user,
+          name: 'secure',
+          description: 'streamableHttp · https://example.test/mcp',
+          path: '/home/.claude.json',
+          editable: false,
+          server: {'type': 'http', 'url': 'https://example.test/mcp'},
+        ),
+      ];
+    var signedIn = false;
+    var probes = 0;
+    CustomizeView.mcpProber = (config, {cwd}) async {
+      probes++;
+      return signedIn
+          ? const McpProbeResult(McpProbeStatus.connected)
+          : McpProbeResult(
+              McpProbeStatus.needsAuth,
+              resourceMetadata: Uri.parse('https://example.test/metadata'),
+            );
+    };
+    final originalSignIn = CustomizeView.mcpSignIn;
+    final originalOpen = CustomizeView.openMcpSignIn;
+    addTearDown(() {
+      CustomizeView.mcpSignIn = originalSignIn;
+      CustomizeView.openMcpSignIn = originalOpen;
+    });
+    void Function(Object?)? complete;
+    Uri? discovery;
+    String? opened;
+    CustomizeView.mcpSignIn =
+        (name, config, {resourceMetadata, required onSignedIn}) async {
+          expect(name, 'secure');
+          discovery = resourceMetadata;
+          complete = onSignedIn;
+          return Uri.parse('https://example.test/authorize');
+        };
+    CustomizeView.openMcpSignIn = (url) async {
+      opened = url;
+      return true;
+    };
+    await _pumpApp(tester, store);
+    await tester.tap(_inSidebar(find.text('Skills')));
+    await tester.pumpAndSettle();
+    await tester.tap(_inView(find.text('MCPs')));
+    await tester.pumpAndSettle();
+    await tester.tap(_inView(find.text('Sign in')));
+    await tester.pump();
+    expect(discovery.toString(), 'https://example.test/metadata');
+    expect(opened, 'https://example.test/authorize');
+    signedIn = true;
+    complete!(null);
+    await tester.pumpAndSettle();
+    expect(probes, 2);
+    expect(_inView(find.text('Connected')), findsOneWidget);
+  }, variant: _mac);
+
   testWidgets('switches: a skill, an MCP server and one of its tools, kept '
       'as they are turned', (tester) async {
     tester.view.physicalSize = const Size(1200, 1000);

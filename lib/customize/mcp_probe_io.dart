@@ -3,10 +3,51 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:bao_agent/mcp_oauth.dart';
+import 'package:path/path.dart' as p;
+
 import '../kernel/claude_code/claude_environment.dart';
+import '../network/network_proxy_io.dart';
 import 'mcp_probe.dart';
 
 McpProber? get platformMcpProber => probeMcpServer;
+
+Future<McpOAuth> _oauth() async {
+  final base = await ClaudeEnvironment.of();
+  final environment = <String, String>{
+    ...base,
+    ...await NetworkProxy.instance.environment(),
+    ...ClaudeEnvironment.stateDirectory(base),
+  };
+  final paths = AgentPaths.from(environment);
+  return McpOAuth(
+    storeFile: p.join(paths.configDir, '.baocode-mcp-oauth.json'),
+    environment: environment,
+  );
+}
+
+Future<Uri> beginMcpSignIn(
+  String name,
+  Map<String, Object?> config, {
+  Uri? resourceMetadata,
+  required void Function(Object? error) onSignedIn,
+}) async {
+  final environment = await ClaudeEnvironment.of();
+  final raw = config['url'];
+  if (raw is! String) throw ArgumentError('MCP server has no URL');
+  final url = Uri.parse(expandMcpVariables(raw, environment));
+  if (url.scheme != 'https' &&
+      url.host != 'localhost' &&
+      url.host != '127.0.0.1') {
+    throw ArgumentError('MCP OAuth requires HTTPS');
+  }
+  return (await _oauth()).begin(
+    name,
+    url,
+    resourceMetadata: resourceMetadata,
+    onSignedIn: onSignedIn,
+  );
+}
 
 /// The `initialize` request a client opens with.
 final String _initialize = jsonEncode({
@@ -48,13 +89,19 @@ Future<McpProbeResult> probeMcpServer(
   final environment = await ClaudeEnvironment.of();
   String expand(Object? value) => expandMcpVariables('$value', environment);
   if (config['url'] case final String url) {
+    final uri = Uri.tryParse(expand(url));
+    final name = config['_morningMistServerName'];
+    final oauthHeaders = uri != null && name is String
+        ? await (await _oauth()).headers(McpOAuth.keyOf(name, uri))
+        : <String, String>{};
     return _probeRemote(
-      Uri.tryParse(expand(url)),
+      uri,
       sse: config['type'] == 'sse',
       headers: {
         if (config['headers'] case final Map<Object?, Object?> headers)
           for (final MapEntry(:key, :value) in headers.entries)
             '$key': expand(value),
+        ...oauthHeaders,
       },
       timeout: timeout,
     );
@@ -269,7 +316,10 @@ Future<McpProbeResult> _probeRemote(
     return const McpProbeResult(McpProbeStatus.failed);
   }
   // Through the app's proxy (see network_proxy_io.dart).
-  final client = HttpClient()..connectionTimeout = timeout;
+  final route = await NetworkProxy.instance.resolve();
+  final client = HttpClient()
+    ..connectionTimeout = timeout
+    ..findProxy = route.findProxy;
   try {
     final request = await (sse ? client.getUrl(url) : client.postUrl(url))
         .timeout(timeout);
@@ -290,6 +340,13 @@ Future<McpProbeResult> _probeRemote(
       return McpProbeResult(
         McpProbeStatus.needsAuth,
         message: 'HTTP $status ${response.reasonPhrase}'.trim(),
+        resourceMetadata: switch (RegExp(r'resource_metadata="([^"]+)"')
+            .firstMatch(
+              response.headers.value(HttpHeaders.wwwAuthenticateHeader) ?? '',
+            )) {
+          final match? => Uri.tryParse(match[1]!),
+          _ => null,
+        },
       );
     }
     final body = await _start(response);

@@ -3253,7 +3253,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get mcpSignInHint =>
-      'Sign in from a chat\'s MCP servers panel, or with /mcp.';
+      'The connection is checked again after sign-in. Reconnect the MCP server in existing chats or start a new chat.';
+
+  @override
+  String get mcpBearerAuthHint =>
+      'The server requires authentication. Check its documentation and configure the Authorization header.';
 
   @override
   String get mcpProbeNote =>

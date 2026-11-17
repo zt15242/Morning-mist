@@ -36,6 +36,7 @@ class McpProbeResult {
     this.log = '',
     this.server,
     this.tools,
+    this.resourceMetadata,
   });
 
   static const checking = McpProbeResult(McpProbeStatus.checking);
@@ -60,6 +61,9 @@ class McpProbeResult {
   /// The name and version it gave, once connected.
   final String? server;
 
+  /// OAuth discovery URL advertised by the server, when available.
+  final Uri? resourceMetadata;
+
   /// The tools it lists (`tools/list`), once connected; null where it did
   /// not say.
   final List<McpProbeTool>? tools;
@@ -73,6 +77,7 @@ class McpProbeResult {
     log: log,
     server: server,
     tools: tools,
+    resourceMetadata: resourceMetadata,
   );
 }
 
@@ -112,6 +117,18 @@ const mcpProbeTimeout = Duration(seconds: 60);
 
 /// This machine's way to ask; null where there is none (the web).
 McpProber? get platformMcpProber => platform.platformMcpProber;
+
+Future<Uri> beginMcpSignIn(
+  String name,
+  Map<String, Object?> config, {
+  Uri? resourceMetadata,
+  required void Function(Object? error) onSignedIn,
+}) => platform.beginMcpSignIn(
+  name,
+  config,
+  resourceMetadata: resourceMetadata,
+  onSignedIn: onSignedIn,
+);
 
 /// [text] with `${VAR}` and `${VAR:-default}` filled in from
 /// [environment], as Claude Code expands an MCP server's command, args,

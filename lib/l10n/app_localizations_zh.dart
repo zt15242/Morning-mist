@@ -3138,7 +3138,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get mcpNoLog => '没有任何输出。';
 
   @override
-  String get mcpSignInHint => '在对话的 MCP 服务器面板或用 /mcp 登录。';
+  String get mcpSignInHint => '登录后此处会自动重新检测；已有对话请重新连接 MCP 或新建对话。';
+
+  @override
+  String get mcpBearerAuthHint => '服务器需要认证；请检查其文档并配置 Authorization 请求头。';
 
   @override
   String get mcpProbeNote =>

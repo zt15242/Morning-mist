@@ -2117,7 +2117,8 @@
   },
   "mcpLog": "Output (stderr)",
   "mcpNoLog": "It wrote nothing.",
-  "mcpSignInHint": "Sign in from a chat's MCP servers panel, or with /mcp.",
+  "mcpSignInHint": "The connection is checked again after sign-in. Reconnect the MCP server in existing chats or start a new chat.",
+  "mcpBearerAuthHint": "The server requires authentication. Check its documentation and configure the Authorization header.",
   "mcpProbeNote": "Started and greeted with MCP's initialize, as `claude mcp list` checks it.",
   "queuedMessages": "{count, plural, =1{1 queued} other{{count} queued}} · sent when the agent is done",
   "@queuedMessages": {
