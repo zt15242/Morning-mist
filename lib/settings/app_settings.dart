@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/widgets.dart';
 
+import '../bash_exe/bao_bash.dart';
 import '../channel/channel_gate.dart';
 import '../channel/channel_setup.dart' show ChannelSetup;
 import '../diagnostics/diagnostics_upload.dart';
@@ -26,19 +27,23 @@ import '../update/update_controller.dart';
 import '../usage/ui/usage_dashboard.dart';
 import '../workspace/workspace.dart';
 import 'app_locale.dart';
+import 'pages/about_page.dart';
 import 'pages/accounts_page.dart';
 import 'pages/appearance_page.dart';
 import 'pages/browser_page.dart';
+import 'pages/builtin_core_page.dart';
 import 'pages/channel_account_page.dart';
 import 'pages/customize_page.dart';
 import 'pages/data_dir_page.dart';
 import 'pages/general_page.dart';
 import 'pages/keybindings_page.dart';
 import 'pages/models_page.dart';
+import 'pages/mobile_page.dart';
 import 'pages/language_page.dart';
 import 'pages/network_page.dart';
 import 'pages/notifications_page.dart';
 import 'pages/ssh_page.dart';
+import 'pages/settings_widgets.dart' show SettingsPage;
 import 'pages/stash_hotkey_field.dart';
 import 'pages/stash_page.dart';
 import 'pages/updates_page.dart';
@@ -115,6 +120,17 @@ class AppSettings {
     null => null,
   };
 
+  /// BaoCode Bash and the shell agents run commands in, where they are
+  /// offered (Windows, with settings files); main() makes it the app's
+  /// ([BaoBash.current]).
+  late final BaoBash? bash = switch (files) {
+    final files? => BaoBash.forPlatform(
+      _TipStorage(files.storage),
+      settings: _ShellSettings(files.settings),
+    ),
+    null => null,
+  };
+
   /// Writes the keyboard page's changes into keybindings.json: one for
   /// the app, so they are made one at a time.
   late final KeybindingsEditingService editing = KeybindingsEditingService(
@@ -139,7 +155,11 @@ class AppSettings {
   Widget buildNotice(
     BuildContext context,
     void Function(SettingsSection section) open,
-  ) => BrowserHistoryNotice(open: () => open(SettingsSection.browser));
+  ) => Column(
+    mainAxisSize: MainAxisSize.min,
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [BrowserHistoryNotice(open: () => open(SettingsSection.browser))],
+  );
 
   /// [section]'s page of the settings dialog.
   Widget buildPage(BuildContext context, SettingsSection section) {
@@ -149,6 +169,7 @@ class AppSettings {
           settings: files?.settings,
           tips: tips,
           claudeStatus: claudeStatus,
+          bash: bash,
         );
       case SettingsSection.appearance:
         final themes = WorkbenchThemeService.instance;
@@ -164,12 +185,23 @@ class AppSettings {
           providers: ModelProviders.current,
           workspace: workspace,
         );
+      case SettingsSection.builtinCore:
+        return BuiltinCoreSettingsPage(settings: files?.settings);
       case SettingsSection.usage:
         return UsageSettingsPage(workspace: workspace);
       case SettingsSection.network:
         return NetworkSettingsPage(settings: files?.settings);
       case SettingsSection.ssh:
         return SshSettingsPage(workspace: workspace);
+      case SettingsSection.mobile:
+        return switch (link) {
+          final link? => MobileSettingsPage(host: link),
+          null => SettingsPage(
+            title: context.l10n.settingsSectionMobile,
+            description: context.l10n.mobileSettingsDescription,
+            children: const [],
+          ),
+        };
       case SettingsSection.browser:
         return BrowserSettingsPage(settings: files?.settings);
       case SettingsSection.notifications:
@@ -214,6 +246,8 @@ class AppSettings {
           settings: files?.settings,
           diagnostics: diagnostics,
         );
+      case SettingsSection.about:
+        return AboutSettingsPage(host: link);
     }
   }
 
@@ -258,6 +292,26 @@ class AppSettings {
 }
 
 /// The app's global storage, as the tips remember themselves in it.
+/// The pick of the shell, in settings.json.
+class _ShellSettings implements ShellSettings {
+  _ShellSettings(this.settings);
+
+  final UserSettings settings;
+
+  @override
+  Object? operator [](String key) => settings[key];
+
+  @override
+  Future<void> update(String key, Object? value) => settings.update(key, value);
+
+  @override
+  void addListener(VoidCallback listener) => settings.addListener(listener);
+
+  @override
+  void removeListener(VoidCallback listener) =>
+      settings.removeListener(listener);
+}
+
 class _TipStorage implements TipStorage {
   _TipStorage(this.storage);
 
