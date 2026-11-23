@@ -103,7 +103,8 @@ class ModelDialogFrame extends StatelessWidget {
     final border = colors.get('widget.border');
     final shadow = colors.get('widget.shadow');
     final size = MediaQuery.sizeOf(context);
-    final width = math.max(440.0, math.min(maxWidth, size.width * .9));
+    // Keep the IDE dialog frame usable in the narrow settings drawer too.
+    final width = math.min(maxWidth, size.width * .9);
     return CallbackShortcuts(
       bindings: {
         const SingleActivator(LogicalKeyboardKey.escape): () =>

@@ -235,6 +235,57 @@ void main() {
       expect(create.json, {'name': 'Codex', 'group_id': 2});
     });
 
+    test('creates a balance recharge order with the selected method', () async {
+      site.routes['GET /api/v1/payment/checkout-info'] = (_) => sub({
+        'global_min': 5,
+        'global_max': 500,
+        'methods': {
+          'alipay': {
+            'display_name': 'Alipay',
+            'single_min': 10,
+            'single_max': 300,
+          },
+          'stripe': {'available': false},
+        },
+      });
+      site.routes['POST /api/v1/payment/orders'] = (sent) => sub({
+        'order_id': 81,
+        'amount': 25,
+        'pay_amount': 26,
+        'qr_code': 'https://pay.example/qr/81',
+        'out_trade_no': 'trade-81',
+      });
+      site.routes['POST /api/v1/payment/orders/verify'] = (sent) {
+        expect(sent.json, {'out_trade_no': 'trade-81'});
+        return sub({'status': 'COMPLETED'});
+      };
+
+      final options = await adapter.rechargeOptions();
+      expect(options.minAmount, 5);
+      expect(options.maxAmount, 500);
+      expect(options.methods.single.id, 'alipay');
+      expect(options.methods.single.minAmount, 10);
+
+      final order = await adapter.createRechargeOrder(
+        amount: 25,
+        paymentType: 'alipay',
+      );
+      expect(order.id, '81');
+      expect(order.amount, 26);
+      expect(order.qrCode, 'https://pay.example/qr/81');
+      final request = site.sent.last;
+      expect(request.headers['Authorization'], 'Bearer a1');
+      expect(request.json, {
+        'amount': 25,
+        'payment_type': 'alipay',
+        'order_type': 'balance',
+        'payment_source': 'hosted_redirect',
+        'is_mobile': false,
+        'return_url': 'https://sub.example/payment/result',
+      });
+      expect(await adapter.rechargeCompleted('trade-81'), isTrue);
+    });
+
     test('signs out with the refresh token', () async {
       await adapter.signOut();
       expect(site.sent.last.json, {'refresh_token': 'rt0'});

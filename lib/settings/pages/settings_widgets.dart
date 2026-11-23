@@ -686,13 +686,10 @@ class SettingsButtons extends StatelessWidget {
   final List<Widget> children;
 
   @override
-  Widget build(BuildContext context) => Row(
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      for (final (i, child) in children.indexed) ...[
-        if (i > 0) const SizedBox(width: 6),
-        child,
-      ],
-    ],
+  Widget build(BuildContext context) => Wrap(
+    alignment: WrapAlignment.end,
+    spacing: 6,
+    runSpacing: 6,
+    children: children,
   );
 }

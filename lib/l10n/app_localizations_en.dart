@@ -11170,6 +11170,47 @@ class AppLocalizationsEn extends AppLocalizations {
   String get channelAccountRefresh => 'Refresh';
 
   @override
+  String get channelAccountRecharge => 'Recharge';
+
+  @override
+  String get channelAccountRechargeAmountLabel => 'Amount (USD)';
+
+  @override
+  String channelAccountRechargeLimits(Object max, Object min) {
+    return 'Allowed amount: \$$min–\$$max';
+  }
+
+  @override
+  String get channelAccountRechargeMethod => 'Payment method';
+
+  @override
+  String get channelAccountRechargeContinue => 'Create recharge order';
+
+  @override
+  String get channelAccountRechargePending => 'Order created';
+
+  @override
+  String get channelAccountRechargeUnavailable =>
+      'No recharge methods are currently available on this site.';
+
+  @override
+  String get channelAccountRechargeFailed =>
+      'The recharge order was created, but the site returned no payment QR code or link.';
+
+  @override
+  String channelAccountRechargeAmount(Object amount) {
+    return 'Payment amount: \$$amount';
+  }
+
+  @override
+  String channelAccountRechargeOrder(Object id) {
+    return 'Order: $id';
+  }
+
+  @override
+  String get channelAccountRechargeOpen => 'Open payment page';
+
+  @override
   String get channelAccountSignOut => 'Sign Out';
 
   @override

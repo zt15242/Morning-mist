@@ -10571,6 +10571,45 @@ class AppLocalizationsZh extends AppLocalizations {
   String get channelAccountRefresh => '刷新账户';
 
   @override
+  String get channelAccountRecharge => '充值';
+
+  @override
+  String get channelAccountRechargeAmountLabel => '充值金额（美元）';
+
+  @override
+  String channelAccountRechargeLimits(Object max, Object min) {
+    return '可充值范围：$min–$max 美元';
+  }
+
+  @override
+  String get channelAccountRechargeMethod => '支付方式';
+
+  @override
+  String get channelAccountRechargeContinue => '创建充值订单';
+
+  @override
+  String get channelAccountRechargePending => '订单已创建';
+
+  @override
+  String get channelAccountRechargeUnavailable => '此站点当前没有可用的充值方式。';
+
+  @override
+  String get channelAccountRechargeFailed => '充值订单已创建，但站点没有返回付款二维码或付款链接。';
+
+  @override
+  String channelAccountRechargeAmount(Object amount) {
+    return '支付金额：\$$amount';
+  }
+
+  @override
+  String channelAccountRechargeOrder(Object id) {
+    return '订单号：$id';
+  }
+
+  @override
+  String get channelAccountRechargeOpen => '打开支付页面';
+
+  @override
   String get channelAccountSignOut => '退出登录';
 
   @override

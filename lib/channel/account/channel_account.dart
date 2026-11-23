@@ -395,6 +395,28 @@ class ChannelAccount extends ChangeNotifier {
     if (key != null) await use(key);
   }
 
+  /// Calls Sub2API's account-scoped mobile-control API. A missing session or
+  /// a non-Sub2API account is reported without changing the account session.
+  Future<AccountResponse> mobileAccountRequest(
+    String method,
+    String path, {
+    String? mobileAccountToken,
+    Map<String, String> headers = const {},
+    Object? json,
+  }) async {
+    if (_adapter case final Sub2ApiAdapter adapter) {
+      if (!signedIn) throw const AccountSignedOut();
+      return adapter.mobileAccountRequest(
+        method,
+        path,
+        mobileAccountToken: mobileAccountToken,
+        headers: headers,
+        json: json,
+      );
+    }
+    throw const AccountError('mobile account service requires Sub2API');
+  }
+
   /// Reads the account and its keys again.
   Future<void> refresh() => _run(() async {
     final profile = await _adapter.profile();
@@ -419,6 +441,52 @@ class ChannelAccount extends ChangeNotifier {
       notifyListeners();
       return const [];
     }
+  }
+
+  bool get supportsRecharge => _adapter is Sub2ApiAdapter;
+
+  Future<AccountRechargeOptions> rechargeOptions() async {
+    final adapter = _adapter;
+    if (adapter is! Sub2ApiAdapter) {
+      throw const AccountError('recharge is unavailable');
+    }
+    _busy = true;
+    _error = null;
+    notifyListeners();
+    try {
+      return await adapter.rechargeOptions();
+    } on AccountSignedOut {
+      _error = null;
+      rethrow;
+    } on Object catch (error) {
+      _error = error;
+      rethrow;
+    } finally {
+      _busy = false;
+      notifyListeners();
+    }
+  }
+
+  Future<AccountRechargeOrder?> createRechargeOrder({
+    required double amount,
+    required String paymentType,
+  }) async {
+    final adapter = _adapter;
+    if (adapter is! Sub2ApiAdapter) return null;
+    AccountRechargeOrder? order;
+    await _run(() async {
+      order = await adapter.createRechargeOrder(
+        amount: amount,
+        paymentType: paymentType,
+      );
+    });
+    return order;
+  }
+
+  Future<bool> rechargeCompleted(String outTradeNo) async {
+    final adapter = _adapter;
+    if (adapter is! Sub2ApiAdapter) return false;
+    return adapter.rechargeCompleted(outTradeNo);
   }
 
   /// Makes a key named [name], in [group] (one the site picks, without):

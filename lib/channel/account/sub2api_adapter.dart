@@ -142,6 +142,40 @@ class Sub2ApiAdapter extends AccountAdapter {
     }
   }
 
+  /// Calls Sub2API's account-scoped Morning Mist mobile-control proxy.
+  /// Unlike the account site's own API, the proxy returns the service's JSON
+  /// directly and may require a short-lived mobile-account session.
+  Future<AccountResponse> mobileAccountRequest(
+    String method,
+    String path, {
+    String? mobileAccountToken,
+    Map<String, String> headers = const {},
+    Object? json,
+  }) async {
+    if (!path.startsWith('/') || path.startsWith('//')) {
+      throw ArgumentError.value(path, 'path', 'must be an absolute API path');
+    }
+    final route = Uri.parse(path);
+    for (var attempt = 0; ; attempt++) {
+      final token = await _token(fresh: attempt > 0);
+      final response = await send(
+        method,
+        site.url.replace(
+          path: '/api/v1/user/mobile-account${route.path}',
+          queryParameters: route.queryParameters,
+        ),
+        headers: {
+          ...headers,
+          'Authorization': 'Bearer $token',
+          'X-Mobile-Account-Token': ?mobileAccountToken,
+        },
+        json: json,
+      );
+      if (response.status == 401 && attempt == 0) continue;
+      return response;
+    }
+  }
+
   @override
   Future<AccountProfile> profile() async {
     final me = await _call('GET', '/auth/me');
@@ -230,6 +264,120 @@ class Sub2ApiAdapter extends AccountAdapter {
             platform: text(group['platform']),
           ),
     ];
+  }
+
+  Future<AccountRechargeOptions> rechargeOptions() async {
+    final data = await _call('GET', '/payment/checkout-info');
+    if (data is! Map) throw const AccountError('no recharge options');
+    double? limit(Object? value) => switch (value) {
+      final num amount when amount > 0 => amount.toDouble(),
+      _ => null,
+    };
+    final methods = data['methods'];
+    final available = <AccountRechargeMethod>[];
+    if (methods is Map) {
+      for (final entry in methods.entries) {
+        final id = entry.key;
+        final method = entry.value;
+        if (id is! String || method is! Map || method['available'] == false) {
+          continue;
+        }
+        available.add(
+          AccountRechargeMethod(
+            id: id,
+            name: switch (method['display_name']) {
+              final String name when name.trim().isNotEmpty => name.trim(),
+              _ => id,
+            },
+            minAmount: limit(method['single_min']),
+            maxAmount: limit(method['single_max']),
+          ),
+        );
+      }
+    }
+    return AccountRechargeOptions(
+      methods: available,
+      minAmount: limit(data['global_min']),
+      maxAmount: limit(data['global_max']),
+    );
+  }
+
+  Future<AccountRechargeOrder> createRechargeOrder({
+    required double amount,
+    required String paymentType,
+  }) async {
+    final data = await _call(
+      'POST',
+      '/payment/orders',
+      json: {
+        'amount': amount,
+        'payment_type': paymentType,
+        'order_type': 'balance',
+        'payment_source': 'hosted_redirect',
+        'is_mobile': false,
+        'return_url': '${site.url}/payment/result',
+      },
+    );
+    if (data is! Map || data['order_id'] == null) {
+      throw const AccountError('the recharge order was not created');
+    }
+    String? text(Object? value) =>
+        value is String && value.trim().isNotEmpty ? value.trim() : null;
+    final resumeToken = text(data['resume_token']);
+    final orderId = '${data['order_id']}';
+    final outTradeNo = text(data['out_trade_no']);
+    final clientSecret = text(data['client_secret']);
+    final intentId = text(data['intent_id']);
+    final responseType = text(data['payment_type']);
+    final paymentUrl = switch (text(data['pay_url'])) {
+      final url? => url,
+      _
+          when clientSecret != null &&
+              intentId != null &&
+              responseType == 'airwallex' =>
+        site.url
+            .replace(
+              path: '/payment/airwallex',
+              queryParameters: {
+                'order_id': orderId,
+                'out_trade_no': ?outTradeNo,
+                'resume_token': ?resumeToken,
+              },
+            )
+            .toString(),
+      _ when clientSecret != null =>
+        site.url
+            .replace(
+              path: '/payment/stripe',
+              queryParameters: {
+                'order_id': orderId,
+                'resume_token': ?resumeToken,
+              },
+            )
+            .toString(),
+      _ => null,
+    };
+    return AccountRechargeOrder(
+      id: orderId,
+      amount: (data['pay_amount'] as num?)?.toDouble() ?? amount,
+      qrCode: text(data['qr_code']),
+      payUrl: paymentUrl,
+      resumeToken: resumeToken,
+      outTradeNo: outTradeNo,
+    );
+  }
+
+  Future<bool> rechargeCompleted(String outTradeNo) async {
+    final data = await _call(
+      'POST',
+      '/payment/orders/verify',
+      json: {'out_trade_no': outTradeNo},
+    );
+    if (data is! Map) return false;
+    return switch (data['status']) {
+      'COMPLETED' => true,
+      _ => false,
+    };
   }
 
   @override

@@ -14,6 +14,8 @@ import '../../ide/ide_menu.dart';
 import '../../l10n/l10n.dart';
 import '../../theme/app_theme.dart';
 import '../../theme/codicons.dart';
+import '../../link/qr_view.dart';
+import '../../workspace/editor_launcher.dart' show openExternal;
 import 'model_dialogs.dart' show ModelDialogFrame;
 import 'settings_dropdown.dart';
 import 'settings_widgets.dart';
@@ -103,6 +105,74 @@ class _AccountView extends StatelessWidget {
     await account.create(made.name, group: made.group);
   }
 
+  Future<void> _recharge(BuildContext context) async {
+    final l10n = context.l10n;
+    late final AccountRechargeOptions options;
+    try {
+      options = await account.rechargeOptions();
+    } on Object catch (error) {
+      if (context.mounted) {
+        await showIdeDialog(
+          context,
+          message: l10n.channelAccountFailed('$error'),
+          buttons: [l10n.commonOk],
+          cancel: null,
+          type: IdeDialogType.error,
+        );
+      }
+      return;
+    }
+    if (!context.mounted) return;
+    if (options.methods.isEmpty) {
+      await showIdeDialog(
+        context,
+        message: l10n.channelAccountRechargeUnavailable,
+        buttons: [l10n.commonOk],
+        cancel: null,
+        type: IdeDialogType.info,
+      );
+      return;
+    }
+    final request = await showDialog<({double amount, String method})>(
+      context: context,
+      builder: (context) => _RechargeDialog(options: options),
+    );
+    if (request == null) return;
+    final order = await account.createRechargeOrder(
+      amount: request.amount,
+      paymentType: request.method,
+    );
+    if (!context.mounted) return;
+    if (order == null) {
+      await showIdeDialog(
+        context,
+        message: l10n.channelAccountFailed(
+          '${account.error ?? l10n.channelAccountRechargeFailed}',
+        ),
+        buttons: [l10n.commonOk],
+        cancel: null,
+        type: IdeDialogType.error,
+      );
+      return;
+    }
+    if (order.qrCode != null || order.payUrl != null) {
+      final completed = await showDialog<bool>(
+        context: context,
+        builder: (context) =>
+            _RechargePaymentDialog(account: account, order: order),
+      );
+      if (completed == true) await account.refresh();
+    } else {
+      await showIdeDialog(
+        context,
+        message: l10n.channelAccountRechargeFailed,
+        buttons: [l10n.commonOk],
+        cancel: null,
+        type: IdeDialogType.error,
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
@@ -138,6 +208,8 @@ class _AccountView extends StatelessWidget {
                     busy: account.busy,
                     onRefresh: () => unawaited(account.refresh()),
                     onSignOut: () => unawaited(_signOut(context)),
+                    canRecharge: account.supportsRecharge,
+                    onRecharge: () => unawaited(_recharge(context)),
                   ),
               ],
             ),
@@ -172,12 +244,16 @@ class _ProfileRow extends StatelessWidget {
     required this.busy,
     required this.onRefresh,
     required this.onSignOut,
+    required this.canRecharge,
+    required this.onRecharge,
   });
 
   final AccountProfile? profile;
   final bool busy;
   final VoidCallback onRefresh;
   final VoidCallback onSignOut;
+  final bool canRecharge;
+  final VoidCallback onRecharge;
 
   @override
   Widget build(BuildContext context) {
@@ -185,50 +261,80 @@ class _ProfileRow extends StatelessWidget {
     final name = profile?.email ?? profile?.name ?? '';
     final balance = profile?.balance;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-      child: Wrap(
-        spacing: 16,
-        runSpacing: 12,
-        alignment: WrapAlignment.spaceBetween,
-        crossAxisAlignment: WrapCrossAlignment.center,
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(
-            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _Avatar(name: name),
               const SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(name.isEmpty ? '—' : name, style: SettingsText.label),
-                  const SizedBox(height: 3),
-                  Text.rich(
-                    TextSpan(
-                      children: [
-                        TextSpan(text: '${l10n.channelAccountBalance}  '),
-                        TextSpan(
-                          text: balance == null
-                              ? '—'
-                              : '\$${balance.toStringAsFixed(2)}',
-                          style: TextStyle(
-                            color: AppColors.textPrimary,
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            fontFeatures: const [FontFeature.tabularFigures()],
-                          ),
-                        ),
-                      ],
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      name.isEmpty ? '—' : name,
+                      style: SettingsText.label.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                    style: SettingsText.description,
+                  ],
+                ),
+              ),
+              if (busy)
+                const Padding(
+                  padding: EdgeInsets.only(top: 8),
+                  child: SizedBox(
+                    width: 14,
+                    height: 14,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Container(
+            padding: const EdgeInsets.fromLTRB(12, 10, 12, 11),
+            decoration: BoxDecoration(
+              color: SettingsColors.hover,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text.rich(
+              TextSpan(
+                children: [
+                  TextSpan(text: '${l10n.channelAccountBalance}\n'),
+                  TextSpan(
+                    text: balance == null
+                        ? '—'
+                        : '\$${balance.toStringAsFixed(2)}',
+                    style: TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 21,
+                      fontWeight: FontWeight.w600,
+                      height: 1.25,
+                      fontFeatures: const [FontFeature.tabularFigures()],
+                    ),
                   ),
                 ],
               ),
-            ],
+              style: SettingsText.description,
+            ),
           ),
-          Row(
-            mainAxisSize: MainAxisSize.min,
+          const SizedBox(height: 14),
+          Wrap(
+            alignment: WrapAlignment.end,
+            spacing: 8,
+            runSpacing: 8,
             children: [
+              if (canRecharge)
+                IdeButton(
+                  label: l10n.channelAccountRecharge,
+                  icon: Codicons.creditCard,
+                  spinning: busy,
+                  onPressed: busy ? null : onRecharge,
+                ),
               IdeButton(
                 label: l10n.channelAccountRefresh,
                 icon: Codicons.refresh,
@@ -236,7 +342,6 @@ class _ProfileRow extends StatelessWidget {
                 secondary: true,
                 onPressed: busy ? null : onRefresh,
               ),
-              const SizedBox(width: 8),
               IdeButton(
                 label: l10n.channelAccountSignOut,
                 icon: Codicons.signOut,
@@ -247,6 +352,195 @@ class _ProfileRow extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _RechargePaymentDialog extends StatefulWidget {
+  const _RechargePaymentDialog({required this.account, required this.order});
+
+  final ChannelAccount account;
+  final AccountRechargeOrder order;
+
+  @override
+  State<_RechargePaymentDialog> createState() => _RechargePaymentDialogState();
+}
+
+class _RechargePaymentDialogState extends State<_RechargePaymentDialog> {
+  bool _checking = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.order.payUrl case final url?) {
+      unawaited(openExternal(url));
+    }
+    unawaited(_poll());
+  }
+
+  Future<void> _poll() async {
+    final outTradeNo = widget.order.outTradeNo;
+    if (outTradeNo == null) return;
+    while (mounted) {
+      await Future<void>.delayed(const Duration(seconds: 4));
+      if (!mounted || _checking) continue;
+      setState(() => _checking = true);
+      try {
+        if (await widget.account.rechargeCompleted(outTradeNo) && mounted) {
+          Navigator.of(context).pop(true);
+          return;
+        }
+      } on Object {
+        // Retry on the next interval; payment-site verification can be transient.
+      } finally {
+        if (mounted) setState(() => _checking = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return ModelDialogFrame(
+      title: l10n.channelAccountRechargePending,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (widget.order.qrCode case final qr?) ...[
+            Center(child: QrView(data: qr, size: 220)),
+            const SizedBox(height: 14),
+          ],
+          Text(
+            l10n.channelAccountRechargeAmount(
+              widget.order.amount.toStringAsFixed(2),
+            ),
+            style: SettingsText.label.copyWith(fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            l10n.channelAccountRechargeOrder(widget.order.id),
+            style: SettingsText.description,
+          ),
+          if (_checking) ...[
+            const SizedBox(height: 14),
+            const LinearProgressIndicator(minHeight: 2),
+          ],
+        ],
+      ),
+      actions: [
+        if (widget.order.payUrl case final url?)
+          IdeButton(
+            label: l10n.channelAccountRechargeOpen,
+            icon: Codicons.linkExternal,
+            secondary: true,
+            onPressed: () => unawaited(openExternal(url)),
+          ),
+        IdeButton(
+          label: l10n.commonClose,
+          secondary: true,
+          onPressed: () => Navigator.pop(context),
+        ),
+      ],
+    );
+  }
+}
+
+class _RechargeDialog extends StatefulWidget {
+  const _RechargeDialog({required this.options});
+
+  final AccountRechargeOptions options;
+
+  @override
+  State<_RechargeDialog> createState() => _RechargeDialogState();
+}
+
+class _RechargeDialogState extends State<_RechargeDialog> {
+  late final _amount = TextEditingController();
+  late String _method = widget.options.methods.first.id;
+
+  @override
+  void dispose() {
+    _amount.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final method = widget.options.methods.firstWhere(
+      (item) => item.id == _method,
+    );
+    final amount = double.tryParse(_amount.text.trim());
+    final min = method.minAmount ?? widget.options.minAmount;
+    final max = method.maxAmount ?? widget.options.maxAmount;
+    final valid =
+        amount != null &&
+        amount > 0 &&
+        (min == null || amount >= min) &&
+        (max == null || amount <= max);
+    return ModelDialogFrame(
+      title: l10n.channelAccountRecharge,
+      onSubmit: valid
+          ? () => Navigator.pop(context, (amount: amount!, method: _method))
+          : null,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            l10n.channelAccountRechargeAmountLabel,
+            style: SettingsText.label,
+          ),
+          const SizedBox(height: 5),
+          IdeInputBox(
+            controller: _amount,
+            autofocus: true,
+            semanticsLabel: l10n.channelAccountRechargeAmountLabel,
+            onChanged: (_) => setState(() {}),
+          ),
+          if (min != null || max != null) ...[
+            const SizedBox(height: 5),
+            Text(
+              l10n.channelAccountRechargeLimits(
+                min?.toStringAsFixed(2) ?? '0',
+                max?.toStringAsFixed(2) ?? '∞',
+              ),
+              style: SettingsText.description,
+            ),
+          ],
+          const SizedBox(height: 16),
+          Text(l10n.channelAccountRechargeMethod, style: SettingsText.label),
+          const SizedBox(height: 5),
+          SettingsDropdown(
+            current: method.name,
+            width: 240,
+            semanticLabel:
+                '${l10n.channelAccountRechargeMethod}: ${method.name}',
+            entries: () => [
+              for (final option in widget.options.methods)
+                IdeMenuAction(
+                  option.name,
+                  checked: option.id == _method,
+                  onSelected: () => setState(() => _method = option.id),
+                ),
+            ],
+          ),
+        ],
+      ),
+      actions: [
+        IdeButton(
+          secondary: true,
+          label: l10n.commonCancel,
+          onPressed: () => Navigator.pop(context),
+        ),
+        IdeButton(
+          label: l10n.channelAccountRechargeContinue,
+          onPressed: valid
+              ? () => Navigator.pop(context, (amount: amount!, method: _method))
+              : null,
+        ),
+      ],
     );
   }
 }

@@ -18199,6 +18199,72 @@ abstract class AppLocalizations {
   /// **'Refresh'**
   String get channelAccountRefresh;
 
+  /// No description provided for @channelAccountRecharge.
+  ///
+  /// In en, this message translates to:
+  /// **'Recharge'**
+  String get channelAccountRecharge;
+
+  /// No description provided for @channelAccountRechargeAmountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount (USD)'**
+  String get channelAccountRechargeAmountLabel;
+
+  /// No description provided for @channelAccountRechargeLimits.
+  ///
+  /// In en, this message translates to:
+  /// **'Allowed amount: \${min}–\${max}'**
+  String channelAccountRechargeLimits(Object max, Object min);
+
+  /// No description provided for @channelAccountRechargeMethod.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment method'**
+  String get channelAccountRechargeMethod;
+
+  /// No description provided for @channelAccountRechargeContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'Create recharge order'**
+  String get channelAccountRechargeContinue;
+
+  /// No description provided for @channelAccountRechargePending.
+  ///
+  /// In en, this message translates to:
+  /// **'Order created'**
+  String get channelAccountRechargePending;
+
+  /// No description provided for @channelAccountRechargeUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No recharge methods are currently available on this site.'**
+  String get channelAccountRechargeUnavailable;
+
+  /// No description provided for @channelAccountRechargeFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The recharge order was created, but the site returned no payment QR code or link.'**
+  String get channelAccountRechargeFailed;
+
+  /// No description provided for @channelAccountRechargeAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment amount: \${amount}'**
+  String channelAccountRechargeAmount(Object amount);
+
+  /// No description provided for @channelAccountRechargeOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'Order: {id}'**
+  String channelAccountRechargeOrder(Object id);
+
+  /// No description provided for @channelAccountRechargeOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open payment page'**
+  String get channelAccountRechargeOpen;
+
   /// No description provided for @channelAccountSignOut.
   ///
   /// In en, this message translates to:

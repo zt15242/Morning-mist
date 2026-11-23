@@ -11,6 +11,7 @@ import '../../l10n/l10n.dart';
 import '../../link/link_host.dart';
 import '../../link/phone_downloads.dart';
 import '../../link/qr_view.dart';
+import '../../theme/app_theme.dart';
 import '../../theme/codicons.dart';
 import '../../workspace/editor_launcher.dart' show openExternal;
 import 'settings_dropdown.dart';
@@ -134,6 +135,7 @@ class _MobileSettingsPageState extends State<MobileSettingsPage> {
         ),
         SettingsCard(
           children: [
+            _ConnectionOverview(status: _status(l10n), kind: host.status),
             SettingsSwitchRow(
               label: l10n.mobileAllow,
               description: l10n.mobileAllowDescription,
@@ -146,7 +148,6 @@ class _MobileSettingsPageState extends State<MobileSettingsPage> {
               value: host.discoverable,
               onChanged: host.setDiscoverable,
             ),
-            SettingsRow(label: l10n.mobileStatus, description: _status(l10n)),
           ],
         ),
         SettingsFolding(
@@ -176,10 +177,11 @@ class _MobileSettingsPageState extends State<MobileSettingsPage> {
             if (host.phones.isEmpty && host.legacyPhones.isEmpty)
               SettingsRow(label: l10n.mobilePhonesNone),
             for (final phone in host.phones)
-              SettingsRow(
-                label: phone.name.isEmpty ? phone.fingerprint : phone.name,
-                description: [
-                  if (phone.system.isNotEmpty) phone.system,
+              _PairedPhoneCard(
+                name: phone.name.isEmpty ? phone.fingerprint : phone.name,
+                system: phone.system,
+                connected: host.isConnected(phone.id),
+                detail: [
                   if (host.pathOf(phone.id) case final path?)
                     _path(l10n, path)
                   else if (host.isConnected(phone.id))
@@ -187,38 +189,19 @@ class _MobileSettingsPageState extends State<MobileSettingsPage> {
                   else if (phone.lastSeen case final seen?)
                     l10n.mobilePhoneLastSeen(_time(seen)),
                 ].join(' · '),
-                trailing: IdeButton(
-                  label: l10n.mobilePhoneRemove,
-                  icon: Codicons.trash,
-                  secondary: true,
-                  onPressed: () => host.unpair(phone),
-                ),
+                removeLabel: l10n.mobilePhoneRemove,
+                onRemove: () => host.unpair(phone),
               ),
             for (final phone in host.legacyPhones)
-              SettingsRow(
-                label: phone.name.isEmpty ? phone.system : phone.name,
-                description: [
-                  if (phone.system.isNotEmpty && phone.name.isNotEmpty)
-                    phone.system,
-                  l10n.mobileLegacyPhone,
-                ].join(' · '),
-                trailing: SettingsButtons(
-                  children: [
-                    IdeButton(
-                      label: l10n.mobileLegacyRepair,
-                      icon: Codicons.deviceMobile,
-                      onPressed: host.supported
-                          ? () => unawaited(host.beginPairing())
-                          : null,
-                    ),
-                    IdeButton(
-                      label: l10n.mobilePhoneRemove,
-                      icon: Codicons.trash,
-                      secondary: true,
-                      onPressed: () => host.forgetLegacy(phone),
-                    ),
-                  ],
-                ),
+              _LegacyPhoneCard(
+                name: phone.name.isEmpty ? phone.system : phone.name,
+                system: phone.system,
+                legacyLabel: l10n.mobileLegacyPhone,
+                repairLabel: l10n.mobileLegacyRepair,
+                removeLabel: l10n.mobilePhoneRemove,
+                supported: host.supported,
+                onRepair: () => unawaited(host.beginPairing()),
+                onRemove: () => host.forgetLegacy(phone),
               ),
             SettingsRow(
               label: l10n.mobileThisComputerKey,
@@ -395,124 +378,125 @@ class _MobileSettingsPageState extends State<MobileSettingsPage> {
       final name = pending.name.isEmpty ? pending.system : pending.name;
       if (pending.needsApproval) {
         // Found nearby, with no code scanned: allowed here, or not.
-        return SettingsRow(
-          label: l10n.mobilePairRequestTitle(name),
+        return _PairingPanel(
+          icon: Codicons.personAdd,
+          title: l10n.mobilePairRequestTitle(name),
           description: l10n.mobilePairRequestBody,
-          below: [
-            Text(
-              pending.code.join('  '),
-              style: SettingsText.path.copyWith(
-                fontSize: 26,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 2,
-              ),
-            ),
-            if (!pending.approved)
-              SettingsButtons(
-                children: [
-                  IdeButton(
-                    label: l10n.mobilePairAllow,
-                    icon: Codicons.check,
-                    onPressed: host.approvePending,
-                  ),
-                  IdeButton(
-                    label: l10n.mobilePairMismatch,
-                    secondary: true,
-                    onPressed: host.rejectPending,
-                  ),
-                ],
-              ),
-          ],
+          content: _SafetyCode(code: pending.code),
+          actions: !pending.approved
+              ? SettingsButtons(
+                  children: [
+                    IdeButton(
+                      label: l10n.mobilePairAllow,
+                      icon: Codicons.check,
+                      onPressed: host.approvePending,
+                    ),
+                    IdeButton(
+                      label: l10n.mobilePairMismatch,
+                      secondary: true,
+                      onPressed: host.rejectPending,
+                    ),
+                  ],
+                )
+              : null,
         );
       }
-      return SettingsRow(
-        label: l10n.mobilePairVerifyTitle(name),
+      return _PairingPanel(
+        icon: Codicons.shield,
+        title: l10n.mobilePairVerifyTitle(name),
         description: l10n.mobilePairVerifyBody,
-        below: [
-          Text(
-            pending.code.join('  '),
-            style: SettingsText.path.copyWith(
-              fontSize: 26,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 2,
+        content: _SafetyCode(code: pending.code),
+        actions: SettingsButtons(
+          children: [
+            IdeButton(
+              label: l10n.mobilePairMismatch,
+              secondary: true,
+              onPressed: host.rejectPending,
             ),
-          ),
-        ],
-        trailing: IdeButton(
-          label: l10n.mobilePairMismatch,
-          secondary: true,
-          onPressed: host.rejectPending,
+          ],
         ),
       );
     }
     if (offer != null) {
       final expired = offer.expiredAt(DateTime.now());
       final link = offer.uri;
-      return SettingsRow(
-        label: l10n.mobilePair,
+      return _PairingPanel(
+        icon: Codicons.link,
+        title: l10n.mobilePair,
         description: expired
             ? l10n.mobilePairExpired
             : [
                 l10n.mobilePairExpires(host.offerLifetime.inMinutes),
                 if (host.advertised) l10n.mobilePairNearbyHint,
               ].join(' '),
-        below: [
-          if (!expired)
-            Padding(
-              padding: const EdgeInsets.only(top: 4),
-              // Clicked, its link copied: for a phone that cannot scan
-              // it (the same as Copy Link under it).
-              child: IdeHover(
-                message: _copied
-                    ? l10n.mobilePairCopied
-                    : l10n.mobilePairQrHint,
-                child: MouseRegion(
-                  cursor: SystemMouseCursors.click,
-                  child: GestureDetector(
-                    onTap: () => _copy(link),
-                    child: QrView(data: link),
+        content: !expired
+            ? Padding(
+                padding: const EdgeInsets.only(top: 4),
+                // Clicked, its link copied: for a phone that cannot scan
+                // it (the same as Copy Link under it).
+                child: Center(
+                  child: IdeHover(
+                    message: _copied
+                        ? l10n.mobilePairCopied
+                        : l10n.mobilePairQrHint,
+                    child: MouseRegion(
+                      cursor: SystemMouseCursors.click,
+                      child: GestureDetector(
+                        onTap: () => _copy(link),
+                        child: QrView(data: link),
+                      ),
+                    ),
                   ),
                 ),
-              ),
+              )
+            : null,
+        actions: SettingsButtons(
+          children: [
+            IdeButton(
+              label: l10n.mobilePairNewCode,
+              icon: Codicons.refresh,
+              secondary: true,
+              onPressed: () => unawaited(host.beginPairing()),
             ),
-          SettingsButtons(
-            children: [
+            if (!expired)
               IdeButton(
-                label: l10n.mobilePairNewCode,
-                icon: Codicons.refresh,
+                label: _copied
+                    ? l10n.mobilePairCopied
+                    : l10n.mobilePairCopyLink,
+                icon: _copied ? Codicons.check : Codicons.copy,
                 secondary: true,
-                onPressed: () => unawaited(host.beginPairing()),
+                onPressed: () => _copy(link),
               ),
-              if (!expired)
-                IdeButton(
-                  label: _copied
-                      ? l10n.mobilePairCopied
-                      : l10n.mobilePairCopyLink,
-                  icon: _copied ? Codicons.check : Codicons.copy,
-                  secondary: true,
-                  onPressed: () => _copy(link),
-                ),
-              IdeButton(
-                label: l10n.mobilePairCancel,
-                secondary: true,
-                onPressed: host.endPairing,
-              ),
-            ],
-          ),
-        ],
+            IdeButton(
+              label: l10n.mobilePairCancel,
+              secondary: true,
+              onPressed: host.endPairing,
+            ),
+          ],
+        ),
       );
     }
     final paired = host.justPaired;
-    return SettingsRow(
-      label: l10n.mobilePair,
+    return _PairingPanel(
+      icon: paired == null ? Codicons.deviceMobile : Codicons.check,
+      title: l10n.mobilePair,
       description: paired == null
           ? l10n.mobilePairDescription
           : l10n.mobilePaired(paired.name),
-      trailing: IdeButton(
-        label: l10n.mobilePairShow,
-        icon: Codicons.deviceMobile,
-        onPressed: host.supported ? () => unawaited(host.beginPairing()) : null,
-      ),
+      actions: paired == null
+          ? SettingsButtons(
+              children: [
+                IdeButton(
+                  label: l10n.mobilePairShow,
+                  icon: Codicons.deviceMobile,
+                  expand: true,
+                  onPressed: host.supported
+                      ? () => unawaited(host.beginPairing())
+                      : null,
+                ),
+              ],
+            )
+          : null,
     );
   }
 
@@ -521,6 +505,311 @@ class _MobileSettingsPageState extends State<MobileSettingsPage> {
     return '${time.year}-${two(time.month)}-${two(time.day)} '
         '${two(time.hour)}:${two(time.minute)}';
   }
+}
+
+class _ConnectionOverview extends StatelessWidget {
+  const _ConnectionOverview({required this.status, required this.kind});
+
+  final String status;
+  final LinkHostStatus kind;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = switch (kind) {
+      LinkHostStatus.listening => AppColors.added,
+      LinkHostStatus.starting => AppColors.accent,
+      LinkHostStatus.failed => AppColors.caution,
+      LinkHostStatus.off => SettingsColors.textQuaternary,
+    };
+    final icon = switch (kind) {
+      LinkHostStatus.listening => Codicons.radioTower,
+      LinkHostStatus.starting => Codicons.sync,
+      LinkHostStatus.failed => Codicons.warning,
+      LinkHostStatus.off => Codicons.plug,
+    };
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 10),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 34,
+            height: 34,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: .14),
+              borderRadius: BorderRadius.circular(9),
+            ),
+            child: Icon(icon, size: 17, color: color),
+          ),
+          const SizedBox(width: 11),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  status,
+                  style: SettingsText.label.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          _StatusPill(label: kind.name, color: color),
+        ],
+      ),
+    );
+  }
+}
+
+class _StatusPill extends StatelessWidget {
+  const _StatusPill({required this.label, required this.color});
+
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+    decoration: BoxDecoration(
+      color: color.withValues(alpha: .12),
+      borderRadius: BorderRadius.circular(6),
+    ),
+    child: Text(
+      label,
+      style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w600),
+    ),
+  );
+}
+
+class _PairingPanel extends StatelessWidget {
+  const _PairingPanel({
+    required this.icon,
+    required this.title,
+    required this.description,
+    this.content,
+    this.actions,
+  });
+
+  final IconData icon;
+  final String title;
+  final String description;
+  final Widget? content;
+  final Widget? actions;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, size: 17, color: SettingsColors.iconTertiary),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: SettingsText.label.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(description, style: SettingsText.description),
+                ],
+              ),
+            ),
+          ],
+        ),
+        if (content case final content?) ...[
+          const SizedBox(height: 14),
+          content,
+        ],
+        if (actions case final actions?) ...[
+          const SizedBox(height: 14),
+          Align(alignment: AlignmentDirectional.centerEnd, child: actions),
+        ],
+      ],
+    ),
+  );
+}
+
+class _SafetyCode extends StatelessWidget {
+  const _SafetyCode({required this.code});
+
+  final List<String> code;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+    decoration: BoxDecoration(
+      color: SettingsColors.hover,
+      borderRadius: BorderRadius.circular(8),
+      border: Border.all(color: SettingsColors.stroke),
+    ),
+    child: Text(
+      code.join('  '),
+      textAlign: TextAlign.center,
+      style: SettingsText.path.copyWith(
+        fontSize: 26,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 2,
+      ),
+    ),
+  );
+}
+
+class _PairedPhoneCard extends StatelessWidget {
+  const _PairedPhoneCard({
+    required this.name,
+    required this.system,
+    required this.connected,
+    required this.detail,
+    required this.removeLabel,
+    required this.onRemove,
+  });
+
+  final String name;
+  final String system;
+  final bool connected;
+  final String detail;
+  final String removeLabel;
+  final VoidCallback onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    final stateColor = connected
+        ? AppColors.added
+        : SettingsColors.textTertiary;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(Codicons.deviceMobile, size: 17, color: stateColor),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      name,
+                      style: SettingsText.label.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    if (system.isNotEmpty)
+                      Text(system, style: SettingsText.description),
+                  ],
+                ),
+              ),
+              if (connected)
+                _StatusPill(
+                  label: context.l10n.mobilePhoneConnected,
+                  color: AppColors.added,
+                ),
+            ],
+          ),
+          if (detail.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(detail, style: SettingsText.path),
+          ],
+          const SizedBox(height: 10),
+          Align(
+            alignment: AlignmentDirectional.centerEnd,
+            child: IdeButton(
+              label: removeLabel,
+              icon: Codicons.trash,
+              secondary: true,
+              onPressed: onRemove,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LegacyPhoneCard extends StatelessWidget {
+  const _LegacyPhoneCard({
+    required this.name,
+    required this.system,
+    required this.legacyLabel,
+    required this.repairLabel,
+    required this.removeLabel,
+    required this.supported,
+    required this.onRepair,
+    required this.onRemove,
+  });
+
+  final String name;
+  final String system;
+  final String legacyLabel;
+  final String repairLabel;
+  final String removeLabel;
+  final bool supported;
+  final VoidCallback onRepair;
+  final VoidCallback onRemove;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            Icon(Codicons.deviceMobile, size: 17, color: AppColors.caution),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    name,
+                    style: SettingsText.label.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  Text(
+                    [
+                      if (system.isNotEmpty && system != name) system,
+                      legacyLabel,
+                    ].join(' · '),
+                    style: SettingsText.description,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        SettingsButtons(
+          children: [
+            IdeButton(
+              label: repairLabel,
+              icon: Codicons.deviceMobile,
+              onPressed: supported ? onRepair : null,
+            ),
+            IdeButton(
+              label: removeLabel,
+              icon: Codicons.trash,
+              secondary: true,
+              onPressed: onRemove,
+            ),
+          ],
+        ),
+      ],
+    ),
+  );
 }
 
 /// The phone app's downloads, as codes to scan: the site's own links
@@ -534,9 +823,10 @@ class _PhoneDownloads extends StatelessWidget {
     final l10n = context.l10n;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 16),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Wrap(
+        alignment: WrapAlignment.center,
+        spacing: 24,
+        runSpacing: 20,
         children: [
           _PhoneDownload(
             os: 'android',
@@ -569,6 +859,7 @@ class _PhoneDownload extends StatelessWidget {
   Widget build(BuildContext context) {
     final url = phoneDownloadUrl(os);
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
         IdeHover(
           message: context.l10n.mobileGetOpen(url),
@@ -582,7 +873,14 @@ class _PhoneDownload extends StatelessWidget {
         ),
         const SizedBox(height: 10),
         Text(name, style: SettingsText.label),
-        Text(detail, style: SettingsText.description),
+        SizedBox(
+          width: 148,
+          child: Text(
+            detail,
+            textAlign: TextAlign.center,
+            style: SettingsText.description,
+          ),
+        ),
       ],
     );
   }

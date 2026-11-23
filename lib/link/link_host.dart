@@ -5,10 +5,12 @@ import 'package:bao_link/bao_link.dart';
 import 'package:flutter/foundation.dart';
 
 import '../bots/bots.dart';
+import '../channel/account/account_api.dart';
 import '../customize/customization_store.dart';
 import '../workspace/workspace.dart';
 import 'link_platform.dart';
 import 'link_quota.dart';
+import 'mobile_account_client.dart';
 import 'phone_push.dart';
 import 'workspace_bridge.dart';
 
@@ -128,6 +130,7 @@ class PendingPairing {
     this.system,
     this.code, {
     this.needsApproval = false,
+    this.mobilePairingId,
   });
 
   final _Connection _connection;
@@ -139,6 +142,9 @@ class PendingPairing {
 
   /// Found nearby: the user here has to allow it ([LinkHost.approvePending]).
   final bool needsApproval;
+
+  /// The Sub2API control-plane request associated with this connection.
+  final String? mobilePairingId;
 
   /// The user here allowed it.
   bool approved = false;
@@ -222,6 +228,7 @@ class LinkHost extends ChangeNotifier {
     this.filesOf = hostFilesOf,
     this.reachHost = reachProjectHost,
     this.pathSettle = const Duration(seconds: 15),
+    this.mobileAccountRequest,
   }) : platform = platform ?? LinkPlatform.current();
 
   final Workspace workspace;
@@ -240,6 +247,10 @@ class LinkHost extends ChangeNotifier {
 
   /// A project's host connected, before its files are asked of it.
   final Future<void> Function(Project project) reachHost;
+
+  /// Sub2API's authenticated mobile-account proxy, absent outside a signed-in
+  /// Sub2API channel build.
+  final MobileAccountRequest? mobileAccountRequest;
 
   /// None on the web: the link is not there.
   final LinkPlatform? platform;
@@ -352,6 +363,15 @@ class LinkHost extends ChangeNotifier {
   StreamSubscription<LinkConnection>? _accepting;
   StreamSubscription<LinkNodeInfo>? _watching;
   DeviceInfo? _device;
+  final Map<String, String> _mobileDeviceIds = {};
+  MobileAccountClient? _mobileAccountClient;
+  String? _mobileAccountUserId;
+  String? _mobileAccountDeviceId;
+  String? _mobileAccountInfo;
+  bool _mobileAccountSyncing = false;
+  int _mobileAccountEpoch = 0;
+  bool _mobileAccountRevoked = false;
+  String? get mobileAccountDeviceId => _mobileAccountDeviceId;
 
   /// The connections' paths, for the usage report.
   LinkPathCounts _counts = LinkPathCounts();
@@ -419,9 +439,16 @@ class LinkHost extends ChangeNotifier {
       });
     }
     _device = await platform.device();
+    if (json['mobileDevices'] case final Map<String, Object?> devices) {
+      _mobileDeviceIds.addAll({
+        for (final MapEntry(:key, :value) in devices.entries)
+          if (value is String) key: value,
+      });
+    }
     if (save) await _save();
     notifyListeners();
     if (_enabled) await _start();
+    unawaited(syncMobileAccountDevice());
     _syncPush();
   }
 
@@ -433,6 +460,7 @@ class LinkHost extends ChangeNotifier {
     'relayMode': _relayMode.name,
     'pinnedRelay': ?_pinnedRelay,
     'linkPort': _linkPort,
+    if (_mobileDeviceIds.isNotEmpty) 'mobileDevices': _mobileDeviceIds,
     'phones': [for (final phone in _phones.values) phone.toJson()],
     if (_legacy.isNotEmpty)
       'legacyPhones': [for (final phone in _legacy) phone.toJson()],
@@ -456,6 +484,122 @@ class LinkHost extends ChangeNotifier {
   void pathCountsSent(Map<String, int> sent) {
     _counts.sent(sent);
     unawaited(_save());
+  }
+
+  /// Registers this Link identity with the signed-in Sub2API account.
+  /// Safe to call when the channel account changes or the network addresses
+  /// change; the service upserts by account and public key.
+  Future<void> syncMobileAccountDevice() async {
+    final send = mobileAccountRequest;
+    if (!_loaded || _disposed || send == null || _mobileAccountSyncing) return;
+    _mobileAccountSyncing = true;
+    final epoch = _mobileAccountEpoch;
+    try {
+      var client = _mobileAccountClient;
+      var userId = _mobileAccountUserId;
+      if (client == null || userId == null) {
+        client = MobileAccountClient(request: send, identity: _identity);
+        userId = await client.userId;
+      }
+      final device = _deviceInfo();
+      final fingerprint = jsonEncode([
+        userId,
+        _identity.id,
+        device.name,
+        device.kind,
+        device.system,
+        device.relays,
+        device.addrs,
+      ]);
+      if (_mobileAccountRevoked && _mobileAccountInfo == fingerprint) return;
+      final knownDeviceId = _mobileDeviceIds[userId];
+      if (knownDeviceId != null) {
+        final devices = await client.devices();
+        if (!devices.any((item) => item['id'] == knownDeviceId)) {
+          if (epoch != _mobileAccountEpoch || _disposed) return;
+          _mobileAccountClient = client;
+          _mobileAccountUserId = userId;
+          _mobileAccountDeviceId = null;
+          _mobileAccountInfo = fingerprint;
+          _mobileAccountRevoked = true;
+          notifyListeners();
+          return;
+        }
+      }
+      if (_mobileAccountInfo == fingerprint &&
+          _mobileDeviceIds[userId] != null) {
+        return;
+      }
+      final registration = await client.registerDesktop(device: device);
+      if (registration.userId != userId) {
+        throw const AccountError(
+          'The mobile account changed during enrollment.',
+        );
+      }
+      if (epoch != _mobileAccountEpoch || _disposed) return;
+      _mobileAccountClient = client;
+      _mobileAccountUserId = userId;
+      _mobileAccountDeviceId = registration.deviceId;
+      _mobileDeviceIds[userId] = registration.deviceId;
+      _mobileAccountInfo = fingerprint;
+      _mobileAccountRevoked = false;
+      await _save();
+      notifyListeners();
+    } on AccountSignedOut {
+      _mobileAccountClient = null;
+      _mobileAccountUserId = null;
+      _mobileAccountDeviceId = null;
+      _mobileAccountInfo = null;
+    } on Object catch (error) {
+      debugPrint('Mobile account device not registered: $error');
+    } finally {
+      _mobileAccountSyncing = false;
+      if (epoch != _mobileAccountEpoch && !_disposed) {
+        unawaited(syncMobileAccountDevice());
+      }
+    }
+  }
+
+  /// Drops the cached Sub2API session after the channel signs out or changes
+  /// accounts. Per-account device IDs remain so the same Link key is reused.
+  void mobileAccountChanged() {
+    _mobileAccountEpoch++;
+    _mobileAccountClient = null;
+    _mobileAccountUserId = null;
+    _mobileAccountDeviceId = null;
+    _mobileAccountInfo = null;
+    _mobileAccountRevoked = false;
+  }
+
+  Future<Map<String, Object?>?> _mobilePairingForPhone(Uint8List key) async {
+    final deviceId = _mobileAccountDeviceId;
+    final client = _mobileAccountClient;
+    if (deviceId == null || client == null) return null;
+    try {
+      final phones = await client.phoneDevices();
+      final phoneId = phones
+          .where((phone) {
+            final encoded = phone['public_key'];
+            if (encoded is! String) return false;
+            try {
+              return listEquals(decodeKey(encoded), key);
+            } on Object {
+              return false;
+            }
+          })
+          .map((phone) => phone['id'])
+          .whereType<String>()
+          .firstOrNull;
+      if (phoneId == null) return null;
+      return (await client.pairings(deviceId)).where((pairing) {
+        return pairing['desktop_id'] == deviceId &&
+            pairing['phone_id'] == phoneId &&
+            pairing['status'] == 'pending';
+      }).firstOrNull;
+    } on Object catch (error) {
+      debugPrint('Mobile pairing request not read: $error');
+      return null;
+    }
   }
 
   // --- Settings ---------------------------------------------------------------
@@ -641,8 +785,10 @@ class LinkHost extends ChangeNotifier {
         (connection) => unawaited(_accept(connection)),
       );
       _info = await node.info();
+      unawaited(syncMobileAccountDevice());
       _watching = node.changes.listen((info) {
         _info = info;
+        unawaited(syncMobileAccountDevice());
         notifyListeners();
       });
       _status = LinkHostStatus.listening;
@@ -747,6 +893,9 @@ class LinkHost extends ChangeNotifier {
     _offer = null;
     _expiry?.cancel();
     _turnAway(pending);
+    if (pending.mobilePairingId case final pairingId?) {
+      unawaited(_decideMobilePairing(pairingId, approve: false));
+    }
     notifyListeners();
   }
 
@@ -755,11 +904,49 @@ class LinkHost extends ChangeNotifier {
   void approvePending() {
     final pending = _pending;
     if (pending == null || !pending.needsApproval) return;
+    if (pending.mobilePairingId case final pairingId?) {
+      unawaited(_approveMobilePairing(pending, pairingId));
+      return;
+    }
     pending.approved = true;
     if (pending._confirmed case final confirmed?) {
       confirmed.complete(_finishPairing(pending));
     }
     notifyListeners();
+  }
+
+  Future<void> _approveMobilePairing(
+    PendingPairing pending,
+    String pairingId,
+  ) async {
+    try {
+      await _decideMobilePairing(pairingId, approve: true);
+    } on Object catch (error) {
+      debugPrint('Mobile pairing approval not recorded: $error');
+      return;
+    }
+    if (_pending != pending) return;
+    pending.approved = true;
+    if (pending._confirmed case final confirmed?) {
+      confirmed.complete(_finishPairing(pending));
+    }
+    notifyListeners();
+  }
+
+  Future<void> _decideMobilePairing(
+    String pairingId, {
+    required bool approve,
+  }) async {
+    final client = _mobileAccountClient;
+    final deviceId = _mobileAccountDeviceId;
+    if (client == null || deviceId == null) {
+      throw const AccountError('The desktop is not registered to its account.');
+    }
+    await client.decidePairing(
+      deviceId: deviceId,
+      pairingId: pairingId,
+      approve: approve,
+    );
   }
 
   /// Tells a phone waiting for the user here that it was turned down,
@@ -891,6 +1078,29 @@ class LinkHost extends ChangeNotifier {
           _ => null,
         };
         if (token == null && params['request'] == true) {
+          final accountPairing = await _mobilePairingForPhone(key);
+          if (accountPairing case {'id': final String pairingId}) {
+            if (_pending != null) {
+              throw const LinkRemoteException(
+                LinkErrors.busy,
+                'Another phone is pairing',
+              );
+            }
+            _pending = PendingPairing._(
+              connection,
+              name,
+              system,
+              safetyCode(_identity.publicKey, key),
+              needsApproval: true,
+              mobilePairingId: pairingId,
+            );
+            notifyListeners();
+            return {
+              'device': _deviceInfo().toJson(),
+              'pairing': true,
+              'approval': true,
+            };
+          }
           // Found nearby: no secret, so the user here allows it.
           if (offer == null || offer.expiredAt(DateTime.now())) {
             throw const LinkRemoteException(

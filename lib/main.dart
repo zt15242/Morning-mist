@@ -2,8 +2,7 @@ import 'dart:async';
 import 'dart:convert' show jsonEncode;
 import 'dart:ui' show AppExitResponse;
 
-import 'package:flutter/foundation.dart'
-    show kIsWeb, visibleForTesting;
+import 'package:flutter/foundation.dart' show kIsWeb, visibleForTesting;
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:path/path.dart' as p;
@@ -97,6 +96,7 @@ import 'remote/ssh_host.dart';
 import 'search/claude_conversation_search.dart';
 import 'search/conversation_search.dart';
 import 'channel/account/account_send.dart';
+import 'channel/account/account_api.dart' show AccountSignedOut;
 import 'channel/account/channel_account.dart';
 import 'channel/channel_gate.dart';
 import 'channel/channel_setup.dart';
@@ -278,6 +278,18 @@ Future<void> main(List<String> arguments) async {
           workspace: workspace,
           customizations: customizations,
           bots: bots,
+          mobileAccountRequest:
+              (method, path, {mobileAccountToken, headers = const {}, json}) {
+                final account = ChannelAccount.current;
+                if (account == null) throw const AccountSignedOut();
+                return account.mobileAccountRequest(
+                  method,
+                  path,
+                  mobileAccountToken: mobileAccountToken,
+                  headers: headers,
+                  json: json,
+                );
+              },
           quota: LinkQuota(
             providers: ModelProviders.current,
             codex: codexService,
@@ -294,6 +306,26 @@ Future<void> main(List<String> arguments) async {
     });
   }
   unawaited(link?.load());
+  final mobileAccountGate = ChannelGate.current;
+  if (link != null && mobileAccountGate != null) {
+    String? lastMobileAccount;
+    void syncMobileAccount() {
+      final account = ChannelAccount.current;
+      final identity = account?.signedIn == true
+          ? '${account!.site.url}|${account.profile?.email ?? account.profile?.name ?? ''}'
+          : null;
+      if (identity != lastMobileAccount) {
+        lastMobileAccount = identity;
+        link.mobileAccountChanged();
+      }
+      if (identity != null) unawaited(link.syncMobileAccountDevice());
+    }
+
+    mobileAccountGate.addListener(() {
+      syncMobileAccount();
+    });
+    syncMobileAccount();
+  }
   // The first frame is in the kept theme, restored from storage as VS Code
   // does before the workbench shows; its file is read after. The setting
   // is settings.json's `workbench.colorTheme`, the theme's colors the

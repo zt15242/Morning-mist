@@ -111,6 +111,56 @@ class AccountGroup {
   final String? platform;
 }
 
+/// A payment method the account site currently accepts for recharge.
+@immutable
+class AccountRechargeMethod {
+  const AccountRechargeMethod({
+    required this.id,
+    required this.name,
+    this.minAmount,
+    this.maxAmount,
+  });
+
+  final String id;
+  final String name;
+  final double? minAmount;
+  final double? maxAmount;
+}
+
+/// Current recharge limits and methods from the account site.
+@immutable
+class AccountRechargeOptions {
+  const AccountRechargeOptions({
+    required this.methods,
+    this.minAmount,
+    this.maxAmount,
+  });
+
+  final List<AccountRechargeMethod> methods;
+  final double? minAmount;
+  final double? maxAmount;
+}
+
+/// An order awaiting the account site's payment flow.
+@immutable
+class AccountRechargeOrder {
+  const AccountRechargeOrder({
+    required this.id,
+    required this.amount,
+    this.qrCode,
+    this.payUrl,
+    this.resumeToken,
+    this.outTradeNo,
+  });
+
+  final String id;
+  final double amount;
+  final String? qrCode;
+  final String? payUrl;
+  final String? resumeToken;
+  final String? outTradeNo;
+}
+
 /// The account site said the user is signed out (their session ended,
 /// revoked, or never was): they sign in again.
 class AccountSignedOut implements Exception {
