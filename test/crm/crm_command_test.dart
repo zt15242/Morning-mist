@@ -6,7 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 
 void main() {
-  test('Salesforce CLI uses an isolated alias and passes the access token on stdin', () async {
+  test('Salesforce CLI uses an isolated alias and sets the token only for non-interactive authorization', () async {
     final folder = await Directory.systemTemp.createTemp('crm-command-test-');
     addTearDown(() => folder.delete(recursive: true));
     final cli = File(p.join(folder.path, 'fake-sf'));
@@ -17,30 +17,50 @@ case "$1 $2 $3" in
   "org login access-token")
     test "$5" = "https://sandbox.example"
     test "$7" = "morning-mist-connector"
-    test "$8" = "--json"
-    test -z "${SF_ACCESS_TOKEN+x}"
+    test "$8 $9" = "--no-prompt --json"
+    test "$SF_ACCESS_TOKEN" = "fixture-token"
     test -z "${SFDX_ACCESS_TOKEN+x}"
-    read -r token
-    test "$token" = "fixture-token"
     printf '%s\n' '{"status":0}'
     ;;
   "data query --query")
+    test -z "${SF_ACCESS_TOKEN+x}"
     test "$4" = "SELECT Name FROM Account LIMIT 10"
     test "$5 $6" = "--target-org morning-mist-connector"
     printf '%s\n' '{"status":0,"result":{"records":[{"Name":"Example"}]}}'
+    ;;
+  "sobject describe --sobject")
+    printf '%s\n' '{"name":"InvalidSessionId","message":"Expired fixture-token","stack":"hidden-stack"}'
+    exit 2
     ;;
   *) exit 1 ;;
 esac
 ''');
     expect((await Process.run('chmod', ['700', cli.path])).exitCode, 0);
+    final connector = CrmConnector({
+      'name': 'Salesforce Sandbox',
+      'product': CrmProduct.salesforce.name,
+      'baseUrl': 'https://sandbox.example/',
+      'accessToken': 'fixture-token',
+    });
     final result = await crmCliRead(
-      CrmConnector({
-        'product': CrmProduct.salesforce.name,
-        'baseUrl': 'https://sandbox.example/',
-        'accessToken': 'fixture-token',
-      }),
+      connector,
       query: 'SELECT Name FROM Account LIMIT 10',
       executableOverride: cli.path,
+    );
+    await expectLater(
+      crmCliRead(connector, object: 'Account', executableOverride: cli.path),
+      throwsA(
+        isA<StateError>().having(
+          (error) => error.message,
+          'diagnostic',
+          allOf(
+            contains('sobject describe failed (exit 2)'),
+            contains('InvalidSessionId: Expired [redacted]'),
+            isNot(contains('fixture-token')),
+            isNot(contains('hidden-stack')),
+          ),
+        ),
+      ),
     );
     expect(result, {
       'data': {

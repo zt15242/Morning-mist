@@ -72,7 +72,7 @@ Future<Object?> crmCliRead(
   try {
     Future<String> run(
       List<String> args, {
-      String? stdin,
+      String? salesforceToken,
       bool optional = false,
       String? cwd,
       bool showOutputOnError = false,
@@ -84,7 +84,7 @@ Future<Object?> crmCliRead(
           executable,
           runtime?.arguments(args) ?? args,
           workingDirectory: cwd ?? directory.path,
-          environment: env,
+          environment: {...env, 'SF_ACCESS_TOKEN': ?salesforceToken},
           includeParentEnvironment: false,
         );
       } on ProcessException catch (error) {
@@ -100,7 +100,6 @@ Future<Object?> crmCliRead(
       final errors = process.stderr
           .transform(const Utf8Decoder(allowMalformed: true))
           .join();
-      if (stdin != null) process.stdin.writeln(stdin);
       await process.stdin.close();
       final exit = await process.exitCode.timeout(
         const Duration(seconds: 45),
@@ -113,10 +112,18 @@ Future<Object?> crmCliRead(
       final text = await output;
       if (exit != 0) {
         if (optional) return '';
+        final step = salesforceToken != null
+            ? 'org login access-token'
+            : args.take(2).join(' ');
+        final details = sf
+            ? _sfErrorDetails(text, errorText)
+            : showOutputOnError
+            ? '$text\n$errorText'
+            : '';
+        final safe = _redactCliOutput(details, connector).trim();
         throw StateError(
-          '$command CLI ${stdin != null ? 'authorization' : args.take(2).join(' ')} '
-          'failed (exit $exit).'
-          '${showOutputOnError ? '\n${_redactCliOutput('$text\n$errorText', connector)}' : ' Check the selected connector’s session and permissions.'}',
+          '$command CLI $step failed (exit $exit) for ${connector.name}.'
+          '${safe.isEmpty ? '' : '\n$safe'}',
         );
       }
       return text;
@@ -323,7 +330,14 @@ Future<Object?> crmCliRead(
         };
       }
       if (query != null) {
-        return jsonDecode(await run(['query', '--sql', query, '--json']));
+        return jsonDecode(
+          await run([
+            'query',
+            '--sql',
+            query,
+            '--json',
+          ], showOutputOnError: true),
+        );
       }
       if (fieldDeployment case final deployment?) {
         if (!p.isAbsolute(deployment.workspace)) {
@@ -425,8 +439,9 @@ Future<Object?> crmCliRead(
       instance.origin,
       '--alias',
       alias,
+      '--no-prompt',
       '--json',
-    ], stdin: connector['accessToken']);
+    ], salesforceToken: connector['accessToken']);
     final args = switch ((query, object)) {
       (final String sql, _) => ['data', 'query', '--query', sql],
       (_, final String name) => ['sobject', 'describe', '--sobject', name],
@@ -524,8 +539,29 @@ Future<List<String>> _copyRetrievedSource(
 }
 
 String _redactCliOutput(String value, CrmConnector connector) {
-  for (final secret in [connector['accessToken'], connector['refreshToken']]) {
+  for (final secret in [
+    connector['accessToken'],
+    connector['refreshToken'],
+    connector['clientSecret'],
+  ]) {
     if (secret.isNotEmpty) value = value.replaceAll(secret, '[redacted]');
   }
   return String.fromCharCodes(value.runes.take(30000));
+}
+
+String _sfErrorDetails(String stdout, String stderr) {
+  for (final output in [stdout, stderr]) {
+    try {
+      final decoded = jsonDecode(output);
+      if (decoded is Map) {
+        if (decoded['message'] is! String) continue;
+        final name = decoded['name'];
+        return '${name is String ? '$name: ' : ''}${decoded['message']}';
+      }
+    } on FormatException {
+      // Some CLI versions print plain-text errors.
+    }
+  }
+  final detail = stderr.trim();
+  return detail.startsWith('{') || detail.startsWith('[') ? '' : detail;
 }
