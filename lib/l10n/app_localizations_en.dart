@@ -7164,6 +7164,65 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get agyCli => 'Antigravity ACP';
+
+  @override
+  String get agyProtocolDescription =>
+      'BaoCode drives the Antigravity CLI on this machine over ACP, the Agent Client Protocol: not through the local proxy.';
+
+  @override
+  String get agyCliDescription =>
+      'Google\'s own Antigravity CLI, which BaoCode installs and keeps up to date. BaoCode talks to it only over its official ACP, entirely within Google\'s ACP policy: no risk of an account ban.';
+
+  @override
+  String agyVersion(String version) {
+    return 'Version $version';
+  }
+
+  @override
+  String get agyNotInstalled => 'Not installed';
+
+  @override
+  String agyUpdateAvailable(String version) {
+    return 'Version $version is out';
+  }
+
+  @override
+  String get agyInstall => 'Install';
+
+  @override
+  String get agyUpdate => 'Update';
+
+  @override
+  String agyInstalling(int percent) {
+    return 'Installing… $percent%';
+  }
+
+  @override
+  String get agyAccount => 'Google Account';
+
+  @override
+  String get agyAccountDescription =>
+      'Signing in opens the browser. The sign-in is the terminal\'s agy\'s too: signing out signs it out as well.';
+
+  @override
+  String get agySignIn => 'Sign In';
+
+  @override
+  String get agySignOut => 'Sign Out';
+
+  @override
+  String get agySigningIn => 'Waiting for the browser…';
+
+  @override
+  String agySignedIn(int count) {
+    return 'Signed in: $count models';
+  }
+
+  @override
+  String get agyNotSignedIn => 'Not signed in';
+
+  @override
   String get modelsTest => 'Test Connection';
 
   @override
@@ -9306,9 +9365,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Not a relay address; one looks like https://relay.example.com';
 
   @override
-  String get mobileRelayPinned => 'Relay Used';
-
-  @override
   String get mobileRelayCustom => 'Custom';
 
   @override
@@ -9317,6 +9373,24 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get mobileRelayCustomDescription =>
       'The address of a relay you run yourself (baocode-relay).';
+
+  @override
+  String get mobileRelayInUse => 'In use';
+
+  @override
+  String get mobileRelayMoveUp => 'Move Up';
+
+  @override
+  String get mobileRelayMoveDown => 'Move Down';
+
+  @override
+  String get mobileRelayRemove => 'Remove';
+
+  @override
+  String get mobileRelayAdd => 'Add Relay';
+
+  @override
+  String get mobileRelayAddPick => 'Choose…';
 
   @override
   String get mobileRelayMode => 'How';
@@ -9329,11 +9403,11 @@ class AppLocalizationsEn extends AppLocalizations {
       'BaoCode\'s relays, the nearest that answers.';
 
   @override
-  String get mobileRelayModePinned => 'Pick One';
+  String get mobileRelayModePinned => 'Your List';
 
   @override
   String get mobileRelayModePinnedDescription =>
-      'Only the one picked: one of BaoCode\'s, or a custom address.';
+      'The relays you list, in order: the next when one cannot be reached, and back to an earlier one once it can. BaoCode\'s, or custom addresses.';
 
   @override
   String get mobileRelayModeDirect => 'Direct Only';

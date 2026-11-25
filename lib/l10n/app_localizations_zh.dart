@@ -6730,6 +6730,65 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get agyCli => 'Antigravity ACP';
+
+  @override
+  String get agyProtocolDescription =>
+      'BaoCode 通过 ACP（Agent Client Protocol）驱动本机的 Antigravity CLI，不经本地代理。';
+
+  @override
+  String get agyCliDescription =>
+      'Google 官方的 Antigravity CLI，由 BaoCode 安装并保持最新。BaoCode 只通过官方 ACP 和它通信，完全符合官方 ACP 策略，不会导致封号。';
+
+  @override
+  String agyVersion(String version) {
+    return '版本 $version';
+  }
+
+  @override
+  String get agyNotInstalled => '未安装';
+
+  @override
+  String agyUpdateAvailable(String version) {
+    return '有新版本 $version';
+  }
+
+  @override
+  String get agyInstall => '安装';
+
+  @override
+  String get agyUpdate => '更新';
+
+  @override
+  String agyInstalling(int percent) {
+    return '正在安装… $percent%';
+  }
+
+  @override
+  String get agyAccount => 'Google 账号';
+
+  @override
+  String get agyAccountDescription =>
+      '登录会打开浏览器。登录状态和终端里的 agy 共用：退出登录时终端那边也会退出。';
+
+  @override
+  String get agySignIn => '登录';
+
+  @override
+  String get agySignOut => '退出登录';
+
+  @override
+  String get agySigningIn => '等待浏览器完成登录…';
+
+  @override
+  String agySignedIn(int count) {
+    return '已登录：$count 个模型';
+  }
+
+  @override
+  String get agyNotSignedIn => '未登录';
+
+  @override
   String get modelsTest => '测试连接';
 
   @override
@@ -8789,9 +8848,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get mobileRelayInvalid => '不是中继地址，应形如 https://relay.example.com';
 
   @override
-  String get mobileRelayPinned => '指定的中继';
-
-  @override
   String get mobileRelayCustom => '自定义';
 
   @override
@@ -8799,6 +8855,24 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get mobileRelayCustomDescription => '你自己部署的中继（baocode-relay）的地址。';
+
+  @override
+  String get mobileRelayInUse => '正在使用';
+
+  @override
+  String get mobileRelayMoveUp => '上移';
+
+  @override
+  String get mobileRelayMoveDown => '下移';
+
+  @override
+  String get mobileRelayRemove => '移除';
+
+  @override
+  String get mobileRelayAdd => '添加中继';
+
+  @override
+  String get mobileRelayAddPick => '选择…';
 
   @override
   String get mobileRelayMode => '方式';
@@ -8810,11 +8884,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get mobileRelayModeAutoDescription => '使用 BaoCode 的中继，自动选最近的一台。';
 
   @override
-  String get mobileRelayModePinned => '手动指定';
+  String get mobileRelayModePinned => '按顺序';
 
   @override
   String get mobileRelayModePinnedDescription =>
-      '只用你指定的一台：BaoCode 的某一台，或自定义地址。';
+      '用你列出的中继，从上往下：一台连不上时换下一台，前面的恢复后再换回去。可以是 BaoCode 的，也可以是自定义地址。';
 
   @override
   String get mobileRelayModeDirect => '仅直连';

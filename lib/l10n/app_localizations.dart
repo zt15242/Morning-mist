@@ -11535,6 +11535,102 @@ abstract class AppLocalizations {
   /// **'The key could not be kept: {error}'**
   String modelsApiKeyError(String error);
 
+  /// No description provided for @agyCli.
+  ///
+  /// In en, this message translates to:
+  /// **'Antigravity ACP'**
+  String get agyCli;
+
+  /// No description provided for @agyProtocolDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'BaoCode drives the Antigravity CLI on this machine over ACP, the Agent Client Protocol: not through the local proxy.'**
+  String get agyProtocolDescription;
+
+  /// No description provided for @agyCliDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Google\'s own Antigravity CLI, which BaoCode installs and keeps up to date. BaoCode talks to it only over its official ACP, entirely within Google\'s ACP policy: no risk of an account ban.'**
+  String get agyCliDescription;
+
+  /// No description provided for @agyVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'Version {version}'**
+  String agyVersion(String version);
+
+  /// No description provided for @agyNotInstalled.
+  ///
+  /// In en, this message translates to:
+  /// **'Not installed'**
+  String get agyNotInstalled;
+
+  /// No description provided for @agyUpdateAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Version {version} is out'**
+  String agyUpdateAvailable(String version);
+
+  /// No description provided for @agyInstall.
+  ///
+  /// In en, this message translates to:
+  /// **'Install'**
+  String get agyInstall;
+
+  /// No description provided for @agyUpdate.
+  ///
+  /// In en, this message translates to:
+  /// **'Update'**
+  String get agyUpdate;
+
+  /// No description provided for @agyInstalling.
+  ///
+  /// In en, this message translates to:
+  /// **'Installing… {percent}%'**
+  String agyInstalling(int percent);
+
+  /// No description provided for @agyAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Google Account'**
+  String get agyAccount;
+
+  /// No description provided for @agyAccountDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Signing in opens the browser. The sign-in is the terminal\'s agy\'s too: signing out signs it out as well.'**
+  String get agyAccountDescription;
+
+  /// No description provided for @agySignIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign In'**
+  String get agySignIn;
+
+  /// No description provided for @agySignOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign Out'**
+  String get agySignOut;
+
+  /// No description provided for @agySigningIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for the browser…'**
+  String get agySigningIn;
+
+  /// No description provided for @agySignedIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Signed in: {count} models'**
+  String agySignedIn(int count);
+
+  /// No description provided for @agyNotSignedIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Not signed in'**
+  String get agyNotSignedIn;
+
   /// No description provided for @modelsTest.
   ///
   /// In en, this message translates to:
@@ -15003,12 +15099,6 @@ abstract class AppLocalizations {
   /// **'Not a relay address; one looks like https://relay.example.com'**
   String get mobileRelayInvalid;
 
-  /// No description provided for @mobileRelayPinned.
-  ///
-  /// In en, this message translates to:
-  /// **'Relay Used'**
-  String get mobileRelayPinned;
-
   /// No description provided for @mobileRelayCustom.
   ///
   /// In en, this message translates to:
@@ -15026,6 +15116,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The address of a relay you run yourself (baocode-relay).'**
   String get mobileRelayCustomDescription;
+
+  /// No description provided for @mobileRelayInUse.
+  ///
+  /// In en, this message translates to:
+  /// **'In use'**
+  String get mobileRelayInUse;
+
+  /// No description provided for @mobileRelayMoveUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Move Up'**
+  String get mobileRelayMoveUp;
+
+  /// No description provided for @mobileRelayMoveDown.
+  ///
+  /// In en, this message translates to:
+  /// **'Move Down'**
+  String get mobileRelayMoveDown;
+
+  /// No description provided for @mobileRelayRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get mobileRelayRemove;
+
+  /// No description provided for @mobileRelayAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Relay'**
+  String get mobileRelayAdd;
+
+  /// No description provided for @mobileRelayAddPick.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose…'**
+  String get mobileRelayAddPick;
 
   /// No description provided for @mobileRelayMode.
   ///
@@ -15048,13 +15174,13 @@ abstract class AppLocalizations {
   /// No description provided for @mobileRelayModePinned.
   ///
   /// In en, this message translates to:
-  /// **'Pick One'**
+  /// **'Your List'**
   String get mobileRelayModePinned;
 
   /// No description provided for @mobileRelayModePinnedDescription.
   ///
   /// In en, this message translates to:
-  /// **'Only the one picked: one of BaoCode\'s, or a custom address.'**
+  /// **'The relays you list, in order: the next when one cannot be reached, and back to an earlier one once it can. BaoCode\'s, or custom addresses.'**
   String get mobileRelayModePinnedDescription;
 
   /// No description provided for @mobileRelayModeDirect.
