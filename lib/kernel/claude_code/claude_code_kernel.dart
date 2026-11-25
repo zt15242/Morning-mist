@@ -6,6 +6,7 @@ import 'package:bao_remote/claude.dart' show ClaudeHistoryPage;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import '../../crm/crm_cli_routing.dart';
 import '../../chat/chat_models.dart';
 import '../../chat/composer/paste_store.dart';
 import '../../chat/composer/remote_drops.dart';
@@ -716,7 +717,7 @@ class ClaudeCodeKernel
           // of the CLI's, each a request of its own.
           'promptSuggestions': false,
           if (sdkServers.isNotEmpty) 'sdkMcpServers': sdkServers,
-          if (_editWatch != null) 'hooks': _editHooks,
+          'hooks': _toolHooks,
         }),
       );
       if (_mode != _cliMode) {
@@ -981,6 +982,7 @@ class ClaudeCodeKernel
           id: sent.id,
           text: sent.text,
           mentions: sent.mentions,
+          crmConnectorIds: sent.crmConnectorIds,
           images: sent.images,
           now: sent.now,
           notes: [...sent.notes, ClaudeTranslator.planStartedNote(plan.path)],
@@ -1359,6 +1361,7 @@ class ClaudeCodeKernel
             id: _newSessionId(),
             text: turn.text,
             mentions: turn.mentions,
+            crmConnectorIds: turn.crmConnectorIds,
             images: turn.images,
             notes: turn.notes,
             now: id == now,
@@ -1721,6 +1724,13 @@ class ClaudeCodeKernel
     final tool = request['tool_name'] as String? ?? 'Tool';
     final input = (request['input'] as Map?)?.cast<String, Object?>() ?? {};
     final suggestions = request['permission_suggestions'] as List? ?? const [];
+    if (tool == 'Bash' && _blocksCrmTerminal(input['command'])) {
+      _control?.respond(requestId, {
+        'behavior': 'deny',
+        'message': _crmCliRoutingMessage,
+      });
+      return;
+    }
     // The plan is put to the user without waiting on them: its card
     // awaits, the turn ends, and their next message starts it (see
     // startBuilding) or says what should change. The CLI stays in Plan.
@@ -1836,7 +1846,8 @@ class ClaudeCodeKernel
     for (final MapEntry(key: id, value: permission) in [
       ..._permissions.entries,
     ]) {
-      if (permission.sdk case final sdk?) {
+      if (permission.sdk case final sdk?
+          when !permission.requireExplicitApproval) {
         _permissions.remove(id);
         emit(InteractionResolved(nextSeq, id));
         if (!sdk.isCompleted) sdk.complete(ApprovalDecision.allowOnce);
@@ -2099,39 +2110,67 @@ class ClaudeCodeKernel
 
   /// The hooks it has the CLI call back, around each edit of the agent's or
   /// a subagent's, for an [EditWatch].
+  static const _crmCliGuard = 'baocode-crm-cli-guard';
+  static const _crmCliRoutingMessage =
+      'This turn is bound to a CRM connector. A terminal CRM CLI uses the '
+      'workspace login. Use a connector tool. If it lacks the requested '
+      'operation, report that without running a terminal CRM command.';
+
+  bool _blocksCrmTerminal(Object? input) =>
+      (_sent[_turn]?.crmConnectorIds.isNotEmpty ?? false) &&
+      input is String &&
+      usesUnboundCrmCli(input);
+
   static const _beforeEdit = 'baocode-before-edit';
   static const _afterEdit = 'baocode-after-edit';
   static const _editTools = 'Edit|Write|MultiEdit|NotebookEdit';
 
-  static final Map<String, Object?> _editHooks = {
+  Map<String, Object?> get _toolHooks => {
     'PreToolUse': [
       {
-        'matcher': _editTools,
-        'hookCallbackIds': [_beforeEdit],
+        'matcher': 'Bash',
+        'hookCallbackIds': [_crmCliGuard],
       },
-    ],
-    // Done, failed, or not let do.
-    for (final event in const [
-      'PostToolUse',
-      'PostToolUseFailure',
-      'PermissionDenied',
-    ])
-      event: [
+      if (_editWatch != null)
         {
           'matcher': _editTools,
-          'hookCallbackIds': [_afterEdit],
+          'hookCallbackIds': [_beforeEdit],
         },
-      ],
+    ],
+    // Done, failed, or not let do.
+    if (_editWatch != null)
+      for (final event in const [
+        'PostToolUse',
+        'PostToolUseFailure',
+        'PermissionDenied',
+      ])
+        event: [
+          {
+            'matcher': _editTools,
+            'hookCallbackIds': [_afterEdit],
+          },
+        ],
   };
 
   /// How long an edit waits on the watch at most.
   static const _editWait = Duration(seconds: 10);
 
-  /// One of [_editHooks] called back: the watch told of the edit, and the
+  /// One of [_toolHooks] called back: the watch told of the edit, and the
   /// CLI answered once it is done with it (the edit waits on that).
   Future<void> _hookCallback(String id, Map<String, Object?> request) async {
     final input = (request['input'] as Map?)?.cast<String, Object?>();
     final tool = (input?['tool_input'] as Map?)?.cast<String, Object?>();
+    if (request['callback_id'] == _crmCliGuard) {
+      _control?.respond(id, {
+        if (_blocksCrmTerminal(tool?['command']))
+          'hookSpecificOutput': {
+            'hookEventName': 'PreToolUse',
+            'permissionDecision': 'deny',
+            'permissionDecisionReason': _crmCliRoutingMessage,
+          },
+      });
+      return;
+    }
     final path = tool?['file_path'] ?? tool?['notebook_path'];
     final watch = _editWatch;
     // A plan is not a change to review.
@@ -2166,6 +2205,7 @@ class ClaudeCodeKernel
       ClaudeSdkCall(
         cwd: _cwd,
         sessionId: _sessionId,
+        crmConnectorIds: _sent[_turn]?.crmConnectorIds ?? const [],
         cancelled: _sdkCallsCancelled.future,
         ask: _sdkAsk,
       ),
@@ -2180,16 +2220,24 @@ class ClaudeCodeKernel
   /// ends; null where no one is there to ask. In full access not asked:
   /// allowed, as the CLI's own actions are.
   Future<ApprovalDecision?> _sdkAsk(ApprovalRequest request) {
-    if (_approval == 'bypassPermissions') {
+    if (_approval == 'bypassPermissions' && !request.requireExplicitApproval) {
       return Future.value(ApprovalDecision.allowOnce);
     }
     // No one there (a bot's), or Don't ask: not allowed.
-    if ((_workspace?.approvesAll ?? false) || _approval == 'dontAsk') {
+    if ((_workspace?.approvesAll ?? false) ||
+        _approval == 'dontAsk' ||
+        (_work == 'plan' && request.requireExplicitApproval)) {
       return Future.value();
     }
     final id = 'baocode-${++_sdkAsks}';
     final answered = Completer<ApprovalDecision?>();
-    _permissions[id] = _Permission(const {}, const [], const [], sdk: answered);
+    _permissions[id] = _Permission(
+      const {},
+      const [],
+      const [],
+      sdk: answered,
+      requireExplicitApproval: request.requireExplicitApproval,
+    );
     emit(
       InteractionRequested(
         nextSeq,
@@ -4041,6 +4089,7 @@ class _Permission {
     this.elicitation,
     this.sdk,
     this.request,
+    this.requireExplicitApproval = false,
   });
 
   /// For the CLI's can_use_tool: the request as it came, to answer it
@@ -4050,6 +4099,7 @@ class _Permission {
   /// For one of the app's own tools asking (ClaudeSdkCall.ask): answered
   /// here, not to the CLI.
   final Completer<ApprovalDecision?>? sdk;
+  final bool requireExplicitApproval;
 
   /// For an MCP server's elicitation: its form's fields, or the link it
   /// asks to open.

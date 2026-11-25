@@ -95,6 +95,9 @@ import 'remote/remote_claude.dart';
 import 'remote/ssh_host.dart';
 import 'search/claude_conversation_search.dart';
 import 'search/conversation_search.dart';
+import 'chat/chat_session.dart';
+import 'crm/crm_chat_tool.dart';
+import 'crm/crm_connectors.dart';
 import 'channel/account/account_send.dart';
 import 'channel/account/account_api.dart' show AccountSignedOut;
 import 'channel/account/channel_account.dart';
@@ -192,8 +195,15 @@ Future<void> main(List<String> arguments) async {
   // The user's settings files ([SettingsFiles.instance]): read before the
   // first frame, which is in their language and theme, and followed as
   // they change on disk.
+  if (!kIsWeb) {
+    CrmChatTool.register();
+    unawaited(
+      CrmConnectors().load().then<void>((_) {}, onError: (Object _) {}),
+    );
+  }
   final files = kIsWeb ? null : SettingsFiles.instance;
   await files?.load();
+  ChatSession.crmBindingStorage = files?.storage;
   if (files != null) keepLanguageModes(files.storage);
   files?.watch();
   if (files != null) {

@@ -33,6 +33,7 @@ import 'pages/appearance_page.dart';
 import 'pages/browser_page.dart';
 import 'pages/builtin_core_page.dart';
 import 'pages/channel_account_page.dart';
+import 'pages/crm_connectors_page.dart';
 import 'pages/customize_page.dart';
 import 'pages/data_dir_page.dart';
 import 'pages/general_page.dart';
@@ -208,6 +209,8 @@ class AppSettings {
         return NotificationsSettingsPage(settings: files?.settings);
       case SettingsSection.stash:
         return StashSettingsPage(settings: files?.settings);
+      case SettingsSection.crmConnectors:
+        return const CrmConnectorsPage();
       case SettingsSection.accounts:
         return AccountsSettingsPage(accounts: ForgeAccounts.current);
       case SettingsSection.customize:

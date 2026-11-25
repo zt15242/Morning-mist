@@ -13861,4 +13861,145 @@ class AppLocalizationsZh extends AppLocalizations {
   String remoteBrowserReplace(String name) {
     return '“$name”已存在，要替换它吗？';
   }
+
+  @override
+  String get crmConnectors => 'CRM 连接器';
+
+  @override
+  String get crmDescription => '配置并授权 CRM 环境连接。';
+
+  @override
+  String get crmDesktopOnly => '请在桌面应用中使用 CRM 连接器。';
+
+  @override
+  String get crmConnections => '连接';
+
+  @override
+  String get crmEmpty => '添加一个 CRM 环境以开始使用。';
+
+  @override
+  String get crmAdd => '添加连接器';
+
+  @override
+  String get crmEdit => '编辑';
+
+  @override
+  String crmDeleteQuestion(String name) {
+    return '删除 $name 及其已保存的凭据？';
+  }
+
+  @override
+  String get crmWorking => '处理中…';
+
+  @override
+  String get crmOperationFailed => '操作失败。请检查连接配置后重试。';
+
+  @override
+  String crmHttpError(int status) {
+    return '服务器返回 HTTP $status。';
+  }
+
+  @override
+  String crmReachable(int milliseconds) {
+    return '端点可达，耗时 $milliseconds 毫秒。';
+  }
+
+  @override
+  String get crmConnected => '已授权';
+
+  @override
+  String get crmDisconnected => '未授权';
+
+  @override
+  String get crmExpired => '授权已过期';
+
+  @override
+  String get crmConnect => '授权';
+
+  @override
+  String get crmRenew => '续期授权';
+
+  @override
+  String get crmTest => '测试连通性';
+
+  @override
+  String get crmDisconnect => '退出授权';
+
+  @override
+  String get crmFx => '纷享销客';
+
+  @override
+  String get crmCustom => '自定义 CRM';
+
+  @override
+  String get crmName => '连接器名称';
+
+  @override
+  String get crmProduct => 'CRM 产品';
+
+  @override
+  String get crmAuthMethod => '授权方式';
+
+  @override
+  String get crmBrowserAuth => '浏览器 OAuth';
+
+  @override
+  String get crmClientAuth => '客户端凭据';
+
+  @override
+  String get crmBaseUrl => 'CRM 环境地址';
+
+  @override
+  String get crmAuthorizeUrl => '授权地址';
+
+  @override
+  String get crmTokenUrl => '令牌地址';
+
+  @override
+  String get crmPermanentCode => '企业永久授权码';
+
+  @override
+  String get crmRedirectUri => 'OAuth 回调地址';
+
+  @override
+  String get crmScope => 'OAuth 权限范围';
+
+  @override
+  String get crmRequired => '必填';
+
+  @override
+  String get crmHttpsRequired => '请输入 HTTPS 地址。';
+
+  @override
+  String get crmLoopbackRequired => '请输入带端口的 HTTP 本机回调地址。';
+
+  @override
+  String get crmCheckPath => '连接测试用的只读 API 路径（可选）';
+
+  @override
+  String get crmPathRequired => '请输入此 CRM 环境下以 / 开头的路径。';
+
+  @override
+  String get crmCustomOAuth => '使用自定义 OAuth 应用';
+
+  @override
+  String get crmNeoCliUnavailable => '请安装 NeoCRM CLI（neo）后再授权此连接器。';
+
+  @override
+  String get crmNeoCliDefault => '使用已安装的 NeoCRM CLI 在浏览器中授权。';
+
+  @override
+  String get crmLoadFailed => '无法读取本地保存的 CRM 连接器。';
+
+  @override
+  String get crmRetryLoad => '重试';
+
+  @override
+  String get crmMentionPrefix => '连接器-';
+
+  @override
+  String get crmUnavailableSelection => 'CRM 连接器不可用';
+
+  @override
+  String get crmClearSelection => '清除 CRM 连接器选择';
 }

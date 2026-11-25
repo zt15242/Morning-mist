@@ -1411,6 +1411,7 @@ class ChatComposerState extends State<ChatComposer>
   ComposerMessage _buildMessage() {
     final text = StringBuffer();
     final mentions = <String>[];
+    final crmConnectorIds = <String>{};
     final code = <String, AppendedText>{};
     for (final piece in composerPieces(_controller.text)) {
       switch (piece) {
@@ -1433,6 +1434,9 @@ class ChatComposerState extends State<ChatComposer>
         case ComposerEmbed(type: ComposerTokenEmbed.type, :final data):
           text.write(ComposerTokenEmbed.plainText(data));
           final token = ComposerTokenEmbed.decode(data);
+          if (token.kind == SuggestionKind.crmConnector) {
+            crmConnectorIds.add(token.value);
+          }
           if ((token.kind == SuggestionKind.file ||
                   token.kind == SuggestionKind.folder) &&
               !mentions.contains(token.value)) {
@@ -1444,6 +1448,7 @@ class ChatComposerState extends State<ChatComposer>
       // The lines it refers to after it.
       text: text.toString().trim() + codeAppendix(code.values),
       mentions: mentions,
+      crmConnectorIds: crmConnectorIds.toList(),
       images: [..._images],
     );
   }

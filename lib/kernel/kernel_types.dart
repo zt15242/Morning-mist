@@ -765,9 +765,11 @@ class ApprovalRequest extends InteractionRequest {
     this.reason,
     this.preview,
     this.alwaysAllowLabel,
+    this.requireExplicitApproval = false,
   });
 
   final String toolName;
+  final bool requireExplicitApproval;
 
   /// Why it asks, when the kernel says.
   final String? reason;
@@ -815,6 +817,7 @@ class KernelTurn {
     required this.id,
     required this.text,
     this.mentions = const [],
+    this.crmConnectorIds = const [],
     this.images = const [],
     this.now = false,
     this.notes = const [],
@@ -824,6 +827,7 @@ class KernelTurn {
   final String id;
   final String text;
   final List<String> mentions;
+  final List<String> crmConnectorIds;
 
   /// Told the model after [text], not shown: what the client adds of its
   /// own (e.g. the file open in the editor), as system reminders.

@@ -14681,4 +14681,153 @@ class AppLocalizationsEn extends AppLocalizations {
   String remoteBrowserReplace(String name) {
     return '“$name” already exists. Replace it?';
   }
+
+  @override
+  String get crmConnectors => 'CRM Connectors';
+
+  @override
+  String get crmDescription =>
+      'Configure and authorize connections to CRM environments.';
+
+  @override
+  String get crmDesktopOnly =>
+      'CRM connectors are available in the desktop app.';
+
+  @override
+  String get crmConnections => 'Connections';
+
+  @override
+  String get crmEmpty => 'Add a CRM environment to get started.';
+
+  @override
+  String get crmAdd => 'Add connector';
+
+  @override
+  String get crmEdit => 'Edit';
+
+  @override
+  String crmDeleteQuestion(String name) {
+    return 'Delete $name and its saved credentials?';
+  }
+
+  @override
+  String get crmWorking => 'Working…';
+
+  @override
+  String get crmOperationFailed =>
+      'The operation failed. Check the connection settings and try again.';
+
+  @override
+  String crmHttpError(int status) {
+    return 'The server returned HTTP $status.';
+  }
+
+  @override
+  String crmReachable(int milliseconds) {
+    return 'Endpoint reachable in $milliseconds ms.';
+  }
+
+  @override
+  String get crmConnected => 'Authorized';
+
+  @override
+  String get crmDisconnected => 'Not authorized';
+
+  @override
+  String get crmExpired => 'Authorization expired';
+
+  @override
+  String get crmConnect => 'Authorize';
+
+  @override
+  String get crmRenew => 'Renew authorization';
+
+  @override
+  String get crmTest => 'Test connectivity';
+
+  @override
+  String get crmDisconnect => 'Sign out';
+
+  @override
+  String get crmFx => 'FxiaoKe';
+
+  @override
+  String get crmCustom => 'Custom CRM';
+
+  @override
+  String get crmName => 'Connector name';
+
+  @override
+  String get crmProduct => 'CRM product';
+
+  @override
+  String get crmAuthMethod => 'Authorization method';
+
+  @override
+  String get crmBrowserAuth => 'Browser OAuth';
+
+  @override
+  String get crmClientAuth => 'Client credentials';
+
+  @override
+  String get crmBaseUrl => 'CRM environment URL';
+
+  @override
+  String get crmAuthorizeUrl => 'Authorization URL';
+
+  @override
+  String get crmTokenUrl => 'Token URL';
+
+  @override
+  String get crmPermanentCode => 'Enterprise permanent code';
+
+  @override
+  String get crmRedirectUri => 'OAuth callback URL';
+
+  @override
+  String get crmScope => 'OAuth scope';
+
+  @override
+  String get crmRequired => 'Required';
+
+  @override
+  String get crmHttpsRequired => 'Enter an HTTPS URL.';
+
+  @override
+  String get crmLoopbackRequired =>
+      'Enter an HTTP localhost callback with a port.';
+
+  @override
+  String get crmCheckPath =>
+      'Read-only API path for connection test (optional)';
+
+  @override
+  String get crmPathRequired =>
+      'Enter a path beginning with / on the CRM environment.';
+
+  @override
+  String get crmCustomOAuth => 'Use a custom OAuth app';
+
+  @override
+  String get crmNeoCliUnavailable =>
+      'Install the NeoCRM CLI (neo) to authorize this connector.';
+
+  @override
+  String get crmNeoCliDefault =>
+      'Authorize in your browser through the installed NeoCRM CLI.';
+
+  @override
+  String get crmLoadFailed => 'Could not read saved CRM connectors.';
+
+  @override
+  String get crmRetryLoad => 'Retry';
+
+  @override
+  String get crmMentionPrefix => 'Connector-';
+
+  @override
+  String get crmUnavailableSelection => 'CRM connector unavailable';
+
+  @override
+  String get crmClearSelection => 'Clear CRM selection';
 }

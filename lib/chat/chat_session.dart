@@ -12,6 +12,7 @@ import '../kernel/prompt_suggestions.dart';
 import '../kernel/transcript.dart';
 import '../platform/native_path.dart';
 import '../remote/remote_location.dart';
+import '../settings/user_settings.dart' show GlobalStorage;
 import 'chat_feed.dart';
 import 'chat_models.dart';
 import 'composer/composer_draft.dart';
@@ -33,11 +34,13 @@ class ComposerMessage {
   const ComposerMessage({
     required this.text,
     this.mentions = const [],
+    this.crmConnectorIds = const [],
     this.images = const [],
   });
 
   final String text;
   final List<String> mentions;
+  final List<String> crmConnectorIds;
   final List<ImageAttachment> images;
 
   bool get isEmpty => text.trim().isEmpty && mentions.isEmpty && images.isEmpty;
@@ -177,6 +180,42 @@ class ChatSession extends ChangeNotifier implements ChatFeed {
   /// conversation shows.
   final ComposerDraft draft = ComposerDraft();
 
+  static GlobalStorage? crmBindingStorage;
+  List<String>? _selectedCrmConnectors;
+  bool _crmBindingPending = false;
+
+  String? get _crmBindingKey =>
+      sessionId == null ? null : 'crm.chat.connectors.$sessionId';
+
+  List<String> get crmConnectorIds {
+    if (_selectedCrmConnectors case final selected?) return selected;
+    final key = _crmBindingKey;
+    final stored = key == null ? null : crmBindingStorage?.get<List>(key);
+    return stored?.whereType<String>().toList(growable: false) ?? const [];
+  }
+
+  void _keepCrmBinding() {
+    final key = _crmBindingKey;
+    final storage = crmBindingStorage;
+    if (!_crmBindingPending || key == null || storage == null) return;
+    _crmBindingPending = false;
+    final selected = _selectedCrmConnectors!;
+    unawaited(
+      storage
+          .set(key, selected.isEmpty ? null : selected)
+          .catchError((Object _) {}),
+    );
+  }
+
+  void clearCrmConnectors() => _selectCrmConnectors(const []);
+
+  void _selectCrmConnectors(List<String> ids) {
+    _selectedCrmConnectors = List.unmodifiable(ids);
+    _crmBindingPending = true;
+    _keepCrmBinding();
+    notifyListeners();
+  }
+
   @override
   ({int index, ComposerDraft draft})? editing;
 
@@ -208,6 +247,7 @@ class ChatSession extends ChangeNotifier implements ChatFeed {
   }
 
   void _apply(KernelEvent event) {
+    _keepCrmBinding();
     if (event case SessionRenamed(:final title)) {
       _renamed = title;
       notifyListeners();
@@ -1205,6 +1245,10 @@ class ChatSession extends ChangeNotifier implements ChatFeed {
     List<String> notes = const [],
   }) {
     if (message.isEmpty || !canSend) return;
+    if (message.crmConnectorIds.isNotEmpty) {
+      _selectCrmConnectors(message.crmConnectorIds);
+    }
+    final connectors = from == null ? message.crmConnectorIds : crmConnectorIds;
     final turn = KernelTurn(
       id: newTurnId(),
       // Pastes too long to send, kept in files the agent reads; a remote
@@ -1214,10 +1258,21 @@ class ChatSession extends ChangeNotifier implements ChatFeed {
         _ => PasteStore.offload(message.text.trim()),
       },
       mentions: message.mentions,
+      crmConnectorIds: connectors,
       images: acceptsImages ? message.images : const [],
       now: now,
       notes: [
         ...notes,
+        if (connectors.isNotEmpty)
+          '<system-reminder>This conversation has ${connectors.length} selected CRM '
+              'connector(s), numbered from 1 in selection order. For NeoCRM use crm_neo '
+              'for native CLI commands; inspect subcommand --help when needed. '
+              'For Salesforce use crm_metadata or crm_records. '
+              'Report the actual command and files when the tool provides them. '
+              'Terminal CRM CLI commands use the workspace login, which may be a different tenant. '
+              'Use only the connector tools for this request. If there is no connector tool for an '
+              'operation, stop and report the missing capability. Do not use a terminal fallback '
+              'to check login status or to deploy.</system-reminder>',
         ..._placeNotes(from),
         if (editor != null) ..._editorNotes(editor()),
         if (from != null) ..._suggestionNotes(),

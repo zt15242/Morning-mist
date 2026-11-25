@@ -10,6 +10,7 @@ import 'package:flutter/services.dart';
 
 import '../base/mouse_navigation.dart';
 import '../channel/channel_setup.dart';
+import '../crm/crm_connectors.dart';
 import '../ide/ide_menu.dart';
 import '../kernel/kernel_types.dart';
 import '../keybindings/chat_keybindings.dart';
@@ -973,6 +974,7 @@ class _ChatScreenState extends State<ChatScreen>
     final question = ComposerMessage(
       text: text.substring(_asideCommand.length + 1).trim(),
       mentions: message.mentions,
+      crmConnectorIds: message.crmConnectorIds,
       images: message.images,
     );
     if (!question.isEmpty) handler(question);
@@ -992,6 +994,7 @@ class _ChatScreenState extends State<ChatScreen>
       ComposerMessage(
         text: text.substring(_forkCommand.length + 1).trim(),
         mentions: message.mentions,
+        crmConnectorIds: message.crmConnectorIds,
         images: message.images,
       ),
     );
@@ -1144,11 +1147,35 @@ class _ChatScreenState extends State<ChatScreen>
   /// the kernel's alone; null when neither looks.
   Future<List<Suggestion>> Function(String query)? _suggestFiles(String? root) {
     final kernel = _session.suggestFiles;
-    if (widget.fileMentions case final mentions?) {
-      return (query) => mentions.suggest(query, root: root, kernel: kernel);
-    }
-    if (kernel == null) return null;
-    return (query) async => [...(await kernel(query)).map(fileSuggestion)];
+    final mentions = widget.fileMentions;
+    final crm = !kIsWeb && _session.kernel.id == 'claude-code';
+    if (!crm && mentions == null && kernel == null) return null;
+    final prefix = context.l10n.crmMentionPrefix;
+    return (query) async {
+      final connectors = [
+        if (crm)
+          for (final connector in CrmConnectors.chatChoices)
+            if (fuzzyMatch('$prefix${connector.name}', query) != null)
+              Suggestion(
+                kind: SuggestionKind.crmConnector,
+                id: connector.id,
+                label: '$prefix${connector.name}',
+                detail: connector.host,
+                icon: Codicons.plug,
+              ),
+      ];
+      try {
+        return [
+          ...connectors,
+          if (mentions != null)
+            ...await mentions.suggest(query, root: root, kernel: kernel)
+          else if (kernel != null)
+            ...(await kernel(query)).map(fileSuggestion),
+        ];
+      } on Object {
+        return connectors;
+      }
+    };
   }
 
   @override
@@ -1688,6 +1715,27 @@ class _ChatScreenState extends State<ChatScreen>
           },
         ),
         _activityStrip(),
+        if (_session.crmConnectorIds.isNotEmpty)
+          Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: InputChip(
+              avatar: const Icon(Codicons.plug, size: 14),
+              label: Text(
+                [
+                  for (final id in _session.crmConnectorIds)
+                    CrmConnectors.chatChoices
+                            .where((entry) => entry.id == id)
+                            .firstOrNull
+                            ?.name ??
+                        context.l10n.crmUnavailableSelection,
+                ].join(' · '),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              deleteButtonTooltipMessage: context.l10n.crmClearSelection,
+              onDeleted: _session.clearCrmConnectors,
+            ),
+          ),
         ChatComposer(
           key: _composerKey,
           session: _session,

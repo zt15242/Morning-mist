@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 /// What a suggestion puts in: a file or folder, a /command, another
 /// conversation (see [Suggestion.session]), or a stash
 /// ([Suggestion.stash]).
-enum SuggestionKind { file, folder, command, session, stash }
+enum SuggestionKind { file, folder, command, session, stash, crmConnector }
 
 class Suggestion {
   const Suggestion({
@@ -65,7 +65,9 @@ class Suggestion {
   String get value => switch (kind) {
     SuggestionKind.file || SuggestionKind.folder =>
       path ?? (detail.isEmpty ? label : '$detail/$label'),
-    SuggestionKind.session || SuggestionKind.stash => id,
+    SuggestionKind.session ||
+    SuggestionKind.stash ||
+    SuggestionKind.crmConnector => id,
     _ => label,
   };
 }

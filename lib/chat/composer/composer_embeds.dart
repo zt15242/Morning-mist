@@ -219,6 +219,7 @@ class ComposerTokenEmbed {
     final token = decode(data);
     return switch (token.kind) {
       SuggestionKind.command => '/${token.value}',
+      SuggestionKind.crmConnector => '@${token.label}',
       SuggestionKind.session => sessionReferenceText(token.value, token.label),
       _ => fileReferenceText(
         token.value,
@@ -684,7 +685,7 @@ class ComposerTokenChip extends StatelessWidget {
               ),
               SuggestionKind.file => FileLabel(token.label, fontSize: 12),
               // Stashes have tags of their own ([ComposerStashChip]).
-              SuggestionKind.stash => Text(
+              SuggestionKind.stash || SuggestionKind.crmConnector => Text(
                 token.label,
                 style: TextStyle(color: AppColors.text, fontSize: 12),
               ),

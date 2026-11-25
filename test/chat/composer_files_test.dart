@@ -14,6 +14,8 @@ import 'package:baocode/chat/composer/composer_embeds.dart';
 import 'package:baocode/chat/composer/composer_files.dart';
 import 'package:baocode/chat/composer/file_drop.dart';
 import 'package:baocode/chat/widgets/user_message_bubble.dart';
+import 'package:baocode/crm/crm_connectors.dart';
+import 'package:baocode/models/secret_store.dart';
 import 'package:baocode/kernel/agent_kernel.dart';
 import 'package:baocode/kernel/mock/mock_kernels.dart';
 import 'package:baocode/theme/app_theme.dart';
@@ -155,6 +157,31 @@ Future<Uint8List> _png() async {
 final _macOS = TargetPlatformVariant.only(TargetPlatform.macOS);
 
 void main() {
+  testWidgets('@ inserts an authorized Salesforce connector as a chip', (
+    tester,
+  ) async {
+    final original = SecretStore.instance;
+    SecretStore.instance = MemorySecretStore();
+    addTearDown(() => SecretStore.instance = original);
+    await CrmConnectors().save([
+      CrmConnector({
+        'id': 'internal-crm-id',
+        'name': 'PAV sandbox',
+        'product': CrmProduct.salesforce.name,
+        'baseUrl': 'https://crm.example',
+        'accessToken': 'hidden-test-token',
+      }),
+    ]);
+    await _pump(tester);
+    _type(tester, '@PAV');
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Connector-PAV sandbox', findRichText: true));
+    await tester.pumpAndSettle();
+    expect(_content(tester), '{@Connector-PAV sandbox}');
+    expect(_controller(tester).text, isNot(contains('hidden-test-token')));
+    await CrmConnectors().save([]);
+  });
+
   group('a file in the text', () {
     test('reads back as it was written', () {
       for (final (path, directory, text) in [

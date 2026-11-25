@@ -23748,6 +23748,276 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'“{name}” already exists. Replace it?'**
   String remoteBrowserReplace(String name);
+
+  /// No description provided for @crmConnectors.
+  ///
+  /// In en, this message translates to:
+  /// **'CRM Connectors'**
+  String get crmConnectors;
+
+  /// No description provided for @crmDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Configure and authorize connections to CRM environments.'**
+  String get crmDescription;
+
+  /// No description provided for @crmDesktopOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'CRM connectors are available in the desktop app.'**
+  String get crmDesktopOnly;
+
+  /// No description provided for @crmConnections.
+  ///
+  /// In en, this message translates to:
+  /// **'Connections'**
+  String get crmConnections;
+
+  /// No description provided for @crmEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a CRM environment to get started.'**
+  String get crmEmpty;
+
+  /// No description provided for @crmAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add connector'**
+  String get crmAdd;
+
+  /// No description provided for @crmEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get crmEdit;
+
+  /// No description provided for @crmDeleteQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete {name} and its saved credentials?'**
+  String crmDeleteQuestion(String name);
+
+  /// No description provided for @crmWorking.
+  ///
+  /// In en, this message translates to:
+  /// **'Working…'**
+  String get crmWorking;
+
+  /// No description provided for @crmOperationFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The operation failed. Check the connection settings and try again.'**
+  String get crmOperationFailed;
+
+  /// No description provided for @crmHttpError.
+  ///
+  /// In en, this message translates to:
+  /// **'The server returned HTTP {status}.'**
+  String crmHttpError(int status);
+
+  /// No description provided for @crmReachable.
+  ///
+  /// In en, this message translates to:
+  /// **'Endpoint reachable in {milliseconds} ms.'**
+  String crmReachable(int milliseconds);
+
+  /// No description provided for @crmConnected.
+  ///
+  /// In en, this message translates to:
+  /// **'Authorized'**
+  String get crmConnected;
+
+  /// No description provided for @crmDisconnected.
+  ///
+  /// In en, this message translates to:
+  /// **'Not authorized'**
+  String get crmDisconnected;
+
+  /// No description provided for @crmExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'Authorization expired'**
+  String get crmExpired;
+
+  /// No description provided for @crmConnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Authorize'**
+  String get crmConnect;
+
+  /// No description provided for @crmRenew.
+  ///
+  /// In en, this message translates to:
+  /// **'Renew authorization'**
+  String get crmRenew;
+
+  /// No description provided for @crmTest.
+  ///
+  /// In en, this message translates to:
+  /// **'Test connectivity'**
+  String get crmTest;
+
+  /// No description provided for @crmDisconnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign out'**
+  String get crmDisconnect;
+
+  /// No description provided for @crmFx.
+  ///
+  /// In en, this message translates to:
+  /// **'FxiaoKe'**
+  String get crmFx;
+
+  /// No description provided for @crmCustom.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom CRM'**
+  String get crmCustom;
+
+  /// No description provided for @crmName.
+  ///
+  /// In en, this message translates to:
+  /// **'Connector name'**
+  String get crmName;
+
+  /// No description provided for @crmProduct.
+  ///
+  /// In en, this message translates to:
+  /// **'CRM product'**
+  String get crmProduct;
+
+  /// No description provided for @crmAuthMethod.
+  ///
+  /// In en, this message translates to:
+  /// **'Authorization method'**
+  String get crmAuthMethod;
+
+  /// No description provided for @crmBrowserAuth.
+  ///
+  /// In en, this message translates to:
+  /// **'Browser OAuth'**
+  String get crmBrowserAuth;
+
+  /// No description provided for @crmClientAuth.
+  ///
+  /// In en, this message translates to:
+  /// **'Client credentials'**
+  String get crmClientAuth;
+
+  /// No description provided for @crmBaseUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'CRM environment URL'**
+  String get crmBaseUrl;
+
+  /// No description provided for @crmAuthorizeUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'Authorization URL'**
+  String get crmAuthorizeUrl;
+
+  /// No description provided for @crmTokenUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'Token URL'**
+  String get crmTokenUrl;
+
+  /// No description provided for @crmPermanentCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Enterprise permanent code'**
+  String get crmPermanentCode;
+
+  /// No description provided for @crmRedirectUri.
+  ///
+  /// In en, this message translates to:
+  /// **'OAuth callback URL'**
+  String get crmRedirectUri;
+
+  /// No description provided for @crmScope.
+  ///
+  /// In en, this message translates to:
+  /// **'OAuth scope'**
+  String get crmScope;
+
+  /// No description provided for @crmRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Required'**
+  String get crmRequired;
+
+  /// No description provided for @crmHttpsRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter an HTTPS URL.'**
+  String get crmHttpsRequired;
+
+  /// No description provided for @crmLoopbackRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter an HTTP localhost callback with a port.'**
+  String get crmLoopbackRequired;
+
+  /// No description provided for @crmCheckPath.
+  ///
+  /// In en, this message translates to:
+  /// **'Read-only API path for connection test (optional)'**
+  String get crmCheckPath;
+
+  /// No description provided for @crmPathRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a path beginning with / on the CRM environment.'**
+  String get crmPathRequired;
+
+  /// No description provided for @crmCustomOAuth.
+  ///
+  /// In en, this message translates to:
+  /// **'Use a custom OAuth app'**
+  String get crmCustomOAuth;
+
+  /// No description provided for @crmNeoCliUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Install the NeoCRM CLI (neo) to authorize this connector.'**
+  String get crmNeoCliUnavailable;
+
+  /// No description provided for @crmNeoCliDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Authorize in your browser through the installed NeoCRM CLI.'**
+  String get crmNeoCliDefault;
+
+  /// No description provided for @crmLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not read saved CRM connectors.'**
+  String get crmLoadFailed;
+
+  /// No description provided for @crmRetryLoad.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get crmRetryLoad;
+
+  /// No description provided for @crmMentionPrefix.
+  ///
+  /// In en, this message translates to:
+  /// **'Connector-'**
+  String get crmMentionPrefix;
+
+  /// No description provided for @crmUnavailableSelection.
+  ///
+  /// In en, this message translates to:
+  /// **'CRM connector unavailable'**
+  String get crmUnavailableSelection;
+
+  /// No description provided for @crmClearSelection.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear CRM selection'**
+  String get crmClearSelection;
 }
 
 class _AppLocalizationsDelegate
