@@ -294,7 +294,7 @@ class WindowsShellCommand implements ShellCommandInstaller {
        _run = run ?? _runProcess,
        executable = executable ?? Platform.resolvedExecutable {
     this.binDirectory = binDirectory ?? _defaultBinDirectory(_environment);
-    _readPaths = readPaths ?? _readRegistryPaths;
+    _readPaths = readPaths ?? readRegistryPaths;
     _writeUserPath = writeUserPath ?? _writeRegistryUserPath;
   }
 
@@ -464,7 +464,7 @@ class WindowsShellCommand implements ShellCommandInstaller {
     return normal(a) == normal(b);
   }
 
-  Future<WindowsPaths> _readRegistryPaths() async {
+  Future<WindowsPaths> readRegistryPaths() async {
     final result = await _powershell(r'''
 $ErrorActionPreference = 'Stop'
 [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding $false

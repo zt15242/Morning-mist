@@ -23,6 +23,7 @@ class _CrmConnectorsPageState extends State<CrmConnectorsPage> {
   List<CrmConnector>? _connections;
   bool _busy = false;
   String? _message;
+  Map<String, String> _cliStatuses = const {};
 
   @override
   void initState() {
@@ -60,6 +61,26 @@ class _CrmConnectorsPageState extends State<CrmConnectorsPage> {
       if (mounted) setState(() => _busy = false);
     }
   }
+
+  Future<void> _checkClis() => _run(() async {
+    final l10n = context.l10n;
+    final entries = await Future.wait([
+      for (final product in CrmProduct.values)
+        if (product.cliCommand case final command?)
+          () async {
+            try {
+              final version = await _store.cliVersion(product);
+              return MapEntry(command, version ?? l10n.crmCliNotFound);
+            } on Object catch (error) {
+              return MapEntry(
+                command,
+                l10n.crmCliStartFailed(error.toString()),
+              );
+            }
+          }(),
+    ]);
+    if (mounted) setState(() => _cliStatuses = Map.fromEntries(entries));
+  });
 
   Future<void> _save(List<CrmConnector> items) async {
     await _store.save(items);
@@ -135,6 +156,21 @@ class _CrmConnectorsPageState extends State<CrmConnectorsPage> {
                 _row(context, item, disabled),
             ],
           ),
+        if (!kIsWeb)
+          SettingsCard(
+            children: [
+              SettingsRow(
+                label: l10n.crmLocalCli,
+                trailing: IdeButton(
+                  secondary: true,
+                  label: l10n.crmCheckCli,
+                  onPressed: disabled ? null : () => unawaited(_checkClis()),
+                ),
+              ),
+              for (final entry in _cliStatuses.entries)
+                SettingsRow(label: entry.key, description: entry.value),
+            ],
+          ),
         if (_busy && items == null) const LinearProgressIndicator(),
       ],
     );
@@ -143,6 +179,13 @@ class _CrmConnectorsPageState extends State<CrmConnectorsPage> {
   Widget _row(BuildContext context, CrmConnector connector, bool disabled) {
     final l10n = context.l10n;
     final stored = connector['accessToken'].isNotEmpty;
+    final fx = connector.product == CrmProduct.fxiaoke;
+    final hasAppCredentials = [
+      'tokenUrl',
+      'clientId',
+      'clientSecret',
+      'permanentCode',
+    ].every((key) => connector[key].isNotEmpty);
     final expiry = DateTime.tryParse(connector['expiresAt'])?.toLocal();
     final expired = expiry?.isBefore(DateTime.now()) ?? false;
     final status = !stored
@@ -156,26 +199,50 @@ class _CrmConnectorsPageState extends State<CrmConnectorsPage> {
     return SettingsRow(
       label: connector.name,
       description:
-          '${_product(context, connector.product)} · ${connector['baseUrl']}\n$status$deadline',
+          '${_product(context, connector.product)} · ${connector['baseUrl']}\n'
+          '${connector.hasSharecrmSession ? l10n.crmSharecrmConnected : "$status$deadline"}',
       below: [
         Wrap(
           spacing: 8,
           runSpacing: 8,
           children: [
-            IdeButton(
-              label: stored ? l10n.crmRenew : l10n.crmConnect,
-              onPressed: disabled
-                  ? null
-                  : () => unawaited(
-                      _run(() async {
-                        final item = await _store.connect(
-                          connector,
-                          refresh: stored,
-                        );
-                        await _put(item);
-                      }),
-                    ),
-            ),
+            if (fx)
+              IdeButton(
+                label: l10n.crmSharecrmAuthorize,
+                onPressed: disabled
+                    ? null
+                    : () => unawaited(
+                        _run(() async {
+                          final item = await _store.authorizeSharecrm(
+                            connector,
+                            (code) {
+                              if (mounted) {
+                                setState(
+                                  () => _message = l10n.crmSharecrmCode(code),
+                                );
+                              }
+                            },
+                          );
+                          await _put(item);
+                          if (mounted) setState(() => _message = null);
+                        }),
+                      ),
+              ),
+            if (!fx || hasAppCredentials)
+              IdeButton(
+                label: stored ? l10n.crmRenew : l10n.crmConnect,
+                onPressed: disabled
+                    ? null
+                    : () => unawaited(
+                        _run(() async {
+                          final item = await _store.connect(
+                            connector,
+                            refresh: stored,
+                          );
+                          await _put(item);
+                        }),
+                      ),
+              ),
             IdeButton(
               secondary: true,
               label: l10n.crmTest,
@@ -195,14 +262,22 @@ class _CrmConnectorsPageState extends State<CrmConnectorsPage> {
               label: l10n.crmEdit,
               onPressed: disabled ? null : () => unawaited(_edit(connector)),
             ),
-            if (stored)
+            if (stored || connector.hasSharecrmSession)
               IdeButton(
                 secondary: true,
                 label: l10n.crmDisconnect,
                 onPressed: disabled
                     ? null
                     : () => unawaited(
-                        _run(() => _put(connector.withSession(const {}))),
+                        _run(
+                          () => _put(
+                            CrmConnector({
+                              ...connector.withSession(const {}).fields,
+                              'sharecrmUser': '',
+                              'sharecrmApp': '',
+                            }),
+                          ),
+                        ),
                       ),
               ),
             IdeButton(
@@ -404,6 +479,8 @@ class _ConnectorEditorState extends State<_ConnectorEditor> {
                     entry.value.text = switch (entry.key) {
                       'baseUrl' when value == CrmProduct.neocrm =>
                         neoSandboxUrl,
+                      'baseUrl' when value == CrmProduct.fxiaoke =>
+                        'https://open.fxiaoke.com',
                       'redirectUri' => 'http://localhost:1028',
                       _ => '',
                     };
@@ -449,16 +526,26 @@ class _ConnectorEditorState extends State<_ConnectorEditor> {
                     url: true,
                     required: !neo,
                   ),
-                field('tokenUrl', l10n.crmTokenUrl, url: true, required: !neo),
-                field('clientId', fx ? 'App ID' : 'Client ID'),
+                field(
+                  'tokenUrl',
+                  l10n.crmTokenUrl,
+                  url: true,
+                  required: !neo && !fx,
+                ),
+                field('clientId', fx ? 'App ID' : 'Client ID', required: !fx),
                 field(
                   'clientSecret',
                   fx ? 'App Secret' : 'Client Secret',
                   secret: true,
-                  required: !browser,
+                  required: !browser && !fx,
                 ),
                 if (fx)
-                  field('permanentCode', l10n.crmPermanentCode, secret: true),
+                  field(
+                    'permanentCode',
+                    l10n.crmPermanentCode,
+                    secret: true,
+                    required: false,
+                  ),
                 if (browser)
                   field('redirectUri', l10n.crmRedirectUri, redirect: true),
                 if (!fx) ...[

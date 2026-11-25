@@ -14002,4 +14002,29 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get crmClearSelection => '清除 CRM 连接器选择';
+
+  @override
+  String get crmLocalCli => '本机 CLI';
+
+  @override
+  String get crmCheckCli => '检测本机 CLI';
+
+  @override
+  String get crmCliNotFound => '未找到可执行文件';
+
+  @override
+  String crmCliStartFailed(String error) {
+    return 'CLI 启动失败：$error';
+  }
+
+  @override
+  String get crmSharecrmAuthorize => '使用 sharecrm 授权';
+
+  @override
+  String get crmSharecrmConnected => '已授权 sharecrm';
+
+  @override
+  String crmSharecrmCode(String code) {
+    return '请在浏览器输入设备验证码 $code，完成 sharecrm 授权。';
+  }
 }

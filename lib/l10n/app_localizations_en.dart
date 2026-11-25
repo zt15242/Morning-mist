@@ -14830,4 +14830,29 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get crmClearSelection => 'Clear CRM selection';
+
+  @override
+  String get crmLocalCli => 'Local CLI tools';
+
+  @override
+  String get crmCheckCli => 'Check CLI tools';
+
+  @override
+  String get crmCliNotFound => 'Executable not found';
+
+  @override
+  String crmCliStartFailed(String error) {
+    return 'Could not run the CLI: $error';
+  }
+
+  @override
+  String get crmSharecrmAuthorize => 'Authorize with sharecrm';
+
+  @override
+  String get crmSharecrmConnected => 'sharecrm authorized';
+
+  @override
+  String crmSharecrmCode(String code) {
+    return 'Enter the device code $code in the browser to finish sharecrm authorization.';
+  }
 }

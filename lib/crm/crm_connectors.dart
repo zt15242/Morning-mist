@@ -8,7 +8,20 @@ import 'crm_login_stub.dart'
     if (dart.library.io) 'crm_login_io.dart'
     as platform;
 
-enum CrmProduct { neocrm, salesforce, fxiaoke, custom }
+import 'sharecrm_cli_stub.dart'
+    if (dart.library.io) 'sharecrm_cli_io.dart'
+    as sharecrm;
+
+enum CrmProduct {
+  neocrm('neo'),
+  salesforce('sf'),
+  fxiaoke('sharecrm'),
+  custom(null);
+
+  const CrmProduct(this.cliCommand);
+
+  final String? cliCommand;
+}
 
 enum CrmAuth { browser, clientCredentials, neoCli }
 
@@ -21,9 +34,14 @@ class CrmConnector {
   CrmProduct get product => CrmProduct.values.byName(this['product']);
   bool get supportsChat =>
       product == CrmProduct.salesforce ||
+      (product == CrmProduct.fxiaoke && hasSharecrmSession) ||
       (product == CrmProduct.neocrm && this['auth'] == CrmAuth.neoCli.name);
 
+  bool get hasSharecrmSession =>
+      this['sharecrmUser'].isNotEmpty && this['sharecrmApp'].isNotEmpty;
+
   bool get authorized {
+    if (product == CrmProduct.fxiaoke && hasSharecrmSession) return true;
     final expiry = DateTime.tryParse(this['expiresAt']);
     return this['accessToken'].isNotEmpty &&
         (expiry == null || expiry.isAfter(DateTime.now()));
@@ -65,7 +83,9 @@ class CrmConnectors {
             id: item.id,
             name: item.name,
             host: httpsUrl(item['baseUrl'])?.host ?? '',
-            expires: DateTime.tryParse(item['expiresAt']),
+            expires: item.hasSharecrmSession
+                ? null
+                : DateTime.tryParse(item['expiresAt']),
           ),
     ];
   }
@@ -201,6 +221,28 @@ class CrmConnectors {
         // The new index is already committed.
       }
     }
+  }
+
+  Future<CrmConnector> authorizeSharecrm(
+    CrmConnector connector,
+    void Function(String) showCode,
+  ) async {
+    final session = await sharecrm.sharecrmCommand(
+      connector,
+      const [],
+      showCode: showCode,
+    );
+    return CrmConnector({
+      ...connector.fields,
+      ...session.cast<String, String>(),
+    });
+  }
+
+  Future<String?> cliVersion(CrmProduct product) {
+    final command = product.cliCommand;
+    return command == null
+        ? Future.value(null)
+        : platform.crmCliVersion(command);
   }
 
   static Uri? httpsUrl(String value) {

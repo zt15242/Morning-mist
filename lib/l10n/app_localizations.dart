@@ -24018,6 +24018,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Clear CRM selection'**
   String get crmClearSelection;
+
+  /// No description provided for @crmLocalCli.
+  ///
+  /// In en, this message translates to:
+  /// **'Local CLI tools'**
+  String get crmLocalCli;
+
+  /// No description provided for @crmCheckCli.
+  ///
+  /// In en, this message translates to:
+  /// **'Check CLI tools'**
+  String get crmCheckCli;
+
+  /// No description provided for @crmCliNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Executable not found'**
+  String get crmCliNotFound;
+
+  /// No description provided for @crmCliStartFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not run the CLI: {error}'**
+  String crmCliStartFailed(String error);
+
+  /// No description provided for @crmSharecrmAuthorize.
+  ///
+  /// In en, this message translates to:
+  /// **'Authorize with sharecrm'**
+  String get crmSharecrmAuthorize;
+
+  /// No description provided for @crmSharecrmConnected.
+  ///
+  /// In en, this message translates to:
+  /// **'sharecrm authorized'**
+  String get crmSharecrmConnected;
+
+  /// No description provided for @crmSharecrmCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the device code {code} in the browser to finish sharecrm authorization.'**
+  String crmSharecrmCode(String code);
 }
 
 class _AppLocalizationsDelegate

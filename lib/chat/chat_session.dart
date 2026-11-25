@@ -1267,7 +1267,7 @@ class ChatSession extends ChangeNotifier implements ChatFeed {
           '<system-reminder>This conversation has ${connectors.length} selected CRM '
               'connector(s), numbered from 1 in selection order. For NeoCRM use crm_neo '
               'for native CLI commands; inspect subcommand --help when needed. '
-              'For Salesforce use crm_metadata or crm_records. '
+              'For Salesforce use crm_metadata or crm_records. For FxiaoKe use crm_sharecrm. '
               'Report the actual command and files when the tool provides them. '
               'Terminal CRM CLI commands use the workspace login, which may be a different tenant. '
               'Use only the connector tools for this request. If there is no connector tool for an '

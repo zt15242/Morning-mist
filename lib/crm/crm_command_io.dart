@@ -5,7 +5,7 @@ import 'package:path/path.dart' as p;
 
 import '../models/codex/codex_oauth.dart' show codexState;
 import 'crm_connectors.dart';
-import 'neo_cli_runtime_io.dart';
+import 'crm_cli_runtime_io.dart';
 
 Future<Object?> crmCliRead(
   CrmConnector connector, {
@@ -38,24 +38,29 @@ Future<Object?> crmCliRead(
   final sf = connector.product == CrmProduct.salesforce;
   if (!sf && connector.auth != CrmAuth.neoCli) return null;
   final command = sf ? 'sf' : 'neo';
-  final home =
-      Platform.environment[Platform.isWindows ? 'USERPROFILE' : 'HOME'];
-  final local = home == null ? null : p.join(home, '.local', 'bin', command);
-  final executable =
-      executableOverride ??
-      (sf
-          ? (local != null && await File(local).exists() ? local : command)
-          : await neoCliExecutable(home));
+  final runtime = executableOverride == null
+      ? await crmCliRuntime(command)
+      : null;
+  final executable = executableOverride ?? runtime?.executable;
+  if (executable == null) {
+    throw StateError(
+      '$command CLI not found in the login shell PATH or common install locations.',
+    );
+  }
   final directory = await Directory.systemTemp.createTemp(
     'morning-mist-crm-read-',
   );
   final env = {
     for (final entry in Platform.environment.entries)
       if (!const {
-        'SF_ACCESS_TOKEN',
-        'SFDX_ACCESS_TOKEN',
-      }.contains(entry.key.toUpperCase()))
+            'SF_ACCESS_TOKEN',
+            'SFDX_ACCESS_TOKEN',
+            'HOME',
+            'USERPROFILE',
+          }.contains(entry.key.toUpperCase()) &&
+          (runtime == null || entry.key.toUpperCase() != 'PATH'))
         entry.key: entry.value,
+    if (runtime != null) 'PATH': runtime.path,
     'HOME': directory.path,
     'USERPROFILE': directory.path,
     'NEO_TELEMETRY': 'false',
@@ -77,14 +82,16 @@ Future<Object?> crmCliRead(
       try {
         process = await Process.start(
           executable,
-          args,
+          runtime?.arguments(args) ?? args,
           workingDirectory: cwd ?? directory.path,
           environment: env,
           includeParentEnvironment: false,
         );
-      } on ProcessException {
+      } on ProcessException catch (error) {
         if (optional) return '';
-        throw StateError('Install the $command CLI to use this connector.');
+        throw StateError(
+          'Could not start $command CLI at $executable (OS error ${error.errorCode}): ${error.message}',
+        );
       }
       cancelled?.then((_) => process.kill());
       final output = process.stdout

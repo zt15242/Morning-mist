@@ -8,7 +8,7 @@ import '../models/codex/codex_oauth.dart';
 import '../models/codex/loopback_login_io.dart';
 import '../workspace/editor_launcher.dart';
 import 'crm_connectors.dart';
-import 'neo_cli_runtime_io.dart';
+import 'crm_cli_runtime_io.dart';
 
 Future<Map<String, String>> crmBrowserCode(
   CrmConnector connector, {
@@ -87,10 +87,10 @@ Future<Map<String, String>> crmBrowserCode(
 }
 
 Future<Map<String, String>> crmNeoCliSession(CrmConnector connector) async {
-  final home =
-      Platform.environment[Platform.isWindows ? 'USERPROFILE' : 'HOME'];
-  if (home == null) throw const CrmNeoCliUnavailable();
-  final executable = await neoCliExecutable(home);
+  final runtime = await crmCliRuntime('neo');
+  final executable = runtime.executable;
+  final home = runtime.home;
+  if (executable == null || home.isEmpty) throw const CrmNeoCliUnavailable();
   final project = await Directory.systemTemp.createTemp('morning-mist-crm-');
   File? auth;
   try {
@@ -99,11 +99,18 @@ Future<Map<String, String>> crmNeoCliSession(CrmConnector connector) async {
       try {
         process = await Process.start(
           executable,
-          args,
+          runtime.arguments(args),
           workingDirectory: project.path,
+          environment: {
+            'PATH': runtime.path,
+            if (Platform.isWindows) 'USERPROFILE': home else 'HOME': home,
+            'NEO_TELEMETRY': 'false',
+          },
         );
-      } on ProcessException {
-        throw const CrmNeoCliUnavailable();
+      } on ProcessException catch (error) {
+        throw StateError(
+          'Could not start neo at $executable (OS error ${error.errorCode}).',
+        );
       }
       unawaited(process.stdout.drain<void>());
       unawaited(process.stderr.drain<void>());
@@ -175,4 +182,38 @@ Future<Map<String, String>> crmNeoCliSession(CrmConnector connector) async {
     if (auth != null && await auth.exists()) await auth.delete();
     await project.delete(recursive: true);
   }
+}
+
+Future<String?> crmCliVersion(String command) async {
+  final runtime = await crmCliRuntime(command);
+  final executable = runtime.executable;
+  if (executable == null) return null;
+  final process = await Process.start(
+    executable,
+    runtime.arguments(['--version']),
+    environment: {
+      'PATH': runtime.path,
+      'NEO_TELEMETRY': 'false',
+      'SF_DISABLE_TELEMETRY': 'true',
+      'SF_DISABLE_AUTOUPDATE': 'true',
+    },
+  );
+  final output = process.stdout
+      .transform(const Utf8Decoder(allowMalformed: true))
+      .join();
+  final errors = process.stderr.drain<void>();
+  await process.stdin.close();
+  final status = await process.exitCode.timeout(
+    const Duration(seconds: 8),
+    onTimeout: () {
+      process.kill();
+      return -1;
+    },
+  );
+  await errors;
+  final version = (await output).trim();
+  if (status != 0 || version.isEmpty) {
+    throw StateError('$command --version failed (exit $status).');
+  }
+  return version.split('\n').first;
 }

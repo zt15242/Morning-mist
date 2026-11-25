@@ -8,6 +8,10 @@ import 'crm_command_stub.dart'
     if (dart.library.io) 'crm_command_io.dart'
     as platform;
 
+import 'sharecrm_cli_stub.dart'
+    if (dart.library.io) 'sharecrm_cli_io.dart'
+    as sharecrm;
+
 abstract final class CrmChatTool {
   static void register() {
     ClaudeSdkTools.register(
@@ -169,6 +173,36 @@ abstract final class CrmChatTool {
         ),
       ),
     );
+    ClaudeSdkTools.register(
+      ClaudeSdkTool(
+        name: 'crm_sharecrm',
+        description:
+            'Read FxiaoKe through the sharecrm CLI and the selected connector. '
+            'Pass separate arguments for data describe get, data record query-by-sql, '
+            'data record query-by-fields, data record query-aggregate-by-sql, or data record get-by-id. '
+            'Append --help to inspect options, or pass -d followed by one JSON object, e.g. {"apiName":"AccountObj"} for describe. '
+            'Use describe get to verify field names before querying.',
+        inputSchema: const {
+          'type': 'object',
+          'properties': {
+            'connection': {'type': 'integer', 'minimum': 1},
+            'args': {
+              'type': 'array',
+              'minItems': 3,
+              'maxItems': 32,
+              'items': {'type': 'string'},
+            },
+          },
+          'required': ['args'],
+        },
+        run: (input, call) => read(
+          input,
+          connectorIds: call.crmConnectorIds,
+          cancelled: call.cancelled,
+          sharecrmRead: true,
+        ),
+      ),
+    );
   }
 
   static const _neoResources = {
@@ -186,6 +220,7 @@ abstract final class CrmChatTool {
     CrmConnectors? store,
     Future<void>? cancelled,
     bool records = false,
+    bool sharecrmRead = false,
     String? retrieveInto,
     String? deployFrom,
     String? neoWorkspace,
@@ -206,6 +241,28 @@ abstract final class CrmChatTool {
       throw StateError(
         'The selected CRM connector is unavailable. Reauthorize it in settings.',
       );
+    }
+    if (sharecrmRead) {
+      final args = input['args'];
+      if (connector.product != CrmProduct.fxiaoke ||
+          args is! List ||
+          args.length < 3 ||
+          args.length > 32 ||
+          args.any((arg) => arg is! String || arg.contains('\u0000'))) {
+        throw ArgumentError(
+          'Select an authorized FxiaoKe connector and pass sharecrm arguments separately.',
+        );
+      }
+      return jsonEncode(
+        await sharecrm.sharecrmCommand(
+          connector,
+          args.cast<String>(),
+          cancelled: cancelled,
+        ),
+      );
+    }
+    if (connector.product == CrmProduct.fxiaoke) {
+      throw StateError('Use crm_sharecrm for this FxiaoKe connector.');
     }
     final base = CrmConnectors.httpsUrl(connector['baseUrl']);
     if (base == null) throw StateError('Invalid CRM instance URL.');

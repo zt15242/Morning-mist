@@ -3993,5 +3993,12 @@
   "crmRetryLoad": "重试",
   "crmMentionPrefix": "连接器-",
   "crmUnavailableSelection": "CRM 连接器不可用",
-  "crmClearSelection": "清除 CRM 连接器选择"
+  "crmClearSelection": "清除 CRM 连接器选择",
+  "crmLocalCli": "本机 CLI",
+  "crmCheckCli": "检测本机 CLI",
+  "crmCliNotFound": "未找到可执行文件",
+  "crmCliStartFailed": "CLI 启动失败：{error}",
+  "crmSharecrmAuthorize": "使用 sharecrm 授权",
+  "crmSharecrmConnected": "已授权 sharecrm",
+  "crmSharecrmCode": "请在浏览器输入设备验证码 {code}，完成 sharecrm 授权。"
 }

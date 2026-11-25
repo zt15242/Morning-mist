@@ -9268,5 +9268,14 @@
   "crmRetryLoad": "Retry",
   "crmMentionPrefix": "Connector-",
   "crmUnavailableSelection": "CRM connector unavailable",
-  "crmClearSelection": "Clear CRM selection"
+  "crmClearSelection": "Clear CRM selection",
+  "crmLocalCli": "Local CLI tools",
+  "crmCheckCli": "Check CLI tools",
+  "crmCliNotFound": "Executable not found",
+  "crmCliStartFailed": "Could not run the CLI: {error}",
+  "@crmCliStartFailed": {"placeholders": {"error": {"type": "String"}}},
+  "crmSharecrmAuthorize": "Authorize with sharecrm",
+  "crmSharecrmConnected": "sharecrm authorized",
+  "crmSharecrmCode": "Enter the device code {code} in the browser to finish sharecrm authorization.",
+  "@crmSharecrmCode": {"placeholders": {"code": {"type": "String"}}}
 }

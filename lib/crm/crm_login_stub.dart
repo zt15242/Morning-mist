@@ -7,3 +7,5 @@ Future<Map<String, String>> crmBrowserCode(CrmConnector connector) async =>
 
 Future<Map<String, String>> crmNeoCliSession(CrmConnector connector) async =>
     throw const CrmNeoCliUnavailable();
+
+Future<String?> crmCliVersion(String command) async => null;
