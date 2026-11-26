@@ -270,6 +270,7 @@ extension on IdePanelTab {
     IdePanelTab.references => 'workbench.panel.referenceSearch',
     IdePanelTab.debugConsole => 'workbench.panel.repl',
     IdePanelTab.terminal => 'terminal',
+    IdePanelTab.output => 'workbench.panel.output',
   };
 
   /// Upstream's id of its view (`focusedView`).
@@ -278,5 +279,6 @@ extension on IdePanelTab {
     IdePanelTab.references => 'workbench.panel.referenceSearch',
     IdePanelTab.debugConsole => 'workbench.panel.repl',
     IdePanelTab.terminal => 'terminal',
+    IdePanelTab.output => 'workbench.panel.output',
   };
 }

@@ -44,6 +44,7 @@ import 'customize/customization_store.dart';
 import 'customize/customizations.dart';
 import 'customize/customize_view.dart';
 import 'extensions/theme_extensions.dart';
+import 'extensions/workbench/workspace_extensions.dart';
 import 'ide/editor_minimap_setting.dart';
 import 'ide/editor_word_wrap.dart';
 import 'ide/git/git_model.dart' show ideWorktreeOf;
@@ -190,6 +191,7 @@ class Workbench extends StatefulWidget {
     this.ideEditorBuilder,
     this.languagesFor,
     this.themeExtensions,
+    this.extensionsApp,
     this.gitFor,
     this.repositoriesIn,
     this.terminalBackend,
@@ -226,6 +228,7 @@ class Workbench extends StatefulWidget {
   /// The installed theme extensions, which the IDE's Extensions view lists
   /// and installs; no Extensions view when null.
   final ThemeExtensions? themeExtensions;
+  final ExtensionsApp? extensionsApp;
 
   /// The Git repository of the project at a root, when the IDE opens it;
   /// none when null.
@@ -2983,6 +2986,9 @@ class _WorkbenchState extends State<Workbench> implements WindowDelegate {
             key: _ideKeys.putIfAbsent(path, GlobalKey.new),
             workspace: space,
             themeExtensions: widget.themeExtensions,
+            extensionsApp: RemoteLocation.isRemote(path)
+                ? null
+                : widget.extensionsApp,
             project: path == _noFolder
                 ? Project.at(space.root)
                 : _workspace.projectAt(path),

@@ -1,6 +1,9 @@
-// Dropping theme extensions on the workbench: a `.vsix` shows what it is
-// (its manifest, whether it works with this VS Code and platform, what of
-// it applies) and installs once confirmed.
+// Dropping extensions on the workbench: a `.vsix` shows what it is (its
+// manifest, whether it works with this VS Code and platform, its
+// capability) and installs once confirmed; a folder with an extension's
+// `package.json` is offered to run as a development extension (the
+// workbench restarts the extension host with it in
+// `extensionDevelopmentLocationURI`).
 //
 // The workbench's drop handling (lib/ide/ide_workbench.dart) calls
 // [handleExtensionDrop] with the dropped paths first; it returns whether
@@ -15,6 +18,7 @@ import 'package:flutter/services.dart';
 import 'package:path/path.dart' as p;
 
 import '../../ide/ide_button.dart';
+import '../../ide/ide_dialog.dart';
 import '../../ide/ide_hover.dart';
 import '../../l10n/l10n.dart';
 import '../../theme/codicons.dart';
@@ -25,34 +29,60 @@ import '../vsix/target_platform.dart';
 import '../vsix/vsix_reader.dart';
 import 'extension_widgets.dart';
 
-/// Whether [path] is a .vsix dropped (what the workbench takes rather
-/// than opens).
-bool isVsixDrop(String path) => path.toLowerCase().endsWith('.vsix');
+/// What a dropped path is.
+enum ExtensionDropKind { vsix, developmentFolder, other }
 
-/// Shows each .vsix among [paths] through [showVsixInstallSheet]. Returns
-/// false when none was one (the workbench opens them as it would).
+Future<ExtensionDropKind> classifyExtensionDrop(String path) async {
+  if (path.toLowerCase().endsWith('.vsix') && await File(path).exists()) {
+    return ExtensionDropKind.vsix;
+  }
+  if (await FileSystemEntity.isDirectory(path) &&
+      await isExtensionFolder(path)) {
+    return ExtensionDropKind.developmentFolder;
+  }
+  return ExtensionDropKind.other;
+}
+
+/// Handles the extensions among [paths]: each .vsix through
+/// [showVsixInstallSheet], each extension folder by asking, then
+/// [onLoadDevelopmentFolder]. Returns false when none was an extension
+/// (the workbench opens them as it would).
 Future<bool> handleExtensionDrop(
   BuildContext context,
   List<String> paths, {
   required ExtensionManagementBackend backend,
+  required ValueChanged<String> onLoadDevelopmentFolder,
   String? locale,
   ValueChanged<InstalledExtension>? onInstalled,
 }) async {
-  final vsixes = [
-    for (final path in paths)
-      if (isVsixDrop(path) && await File(path).exists()) path,
-  ];
-  for (final path in vsixes) {
+  final kinds = [for (final path in paths) await classifyExtensionDrop(path)];
+  if (kinds.every((kind) => kind == ExtensionDropKind.other)) return false;
+  for (final (index, path) in paths.indexed) {
     if (!context.mounted) break;
-    final installed = await showVsixInstallSheet(
-      context,
-      path,
-      backend: backend,
-      locale: locale,
-    );
-    if (installed != null) onInstalled?.call(installed);
+    switch (kinds[index]) {
+      case ExtensionDropKind.vsix:
+        final installed = await showVsixInstallSheet(
+          context,
+          path,
+          backend: backend,
+          locale: locale,
+        );
+        if (installed != null) onInstalled?.call(installed);
+      case ExtensionDropKind.developmentFolder:
+        final l10n = context.l10n;
+        final choice = await showIdeDialog(
+          context,
+          message: l10n.extsDevFolderTitle,
+          detail: l10n.extsDevFolderDetail(p.basename(path)),
+          buttons: [l10n.extsDevFolderLoad],
+          type: IdeDialogType.question,
+        );
+        if (choice == 0) onLoadDevelopmentFolder(path);
+      case ExtensionDropKind.other:
+        break;
+    }
   }
-  return vsixes.isNotEmpty;
+  return true;
 }
 
 /// Shows what the .vsix at [path] is and installs it once confirmed:
@@ -114,12 +144,20 @@ class _VsixInstallSheetState extends State<VsixInstallSheet> {
       locale: widget.locale,
     );
     try {
-      final capability = analyzeExtensionPackage(package);
+      final capability = await analyzeExtensionPackage(package);
       final installed = await widget.backend.getInstalled();
       final current = installed
           .where((e) => e.key == package.manifest.key)
           .firstOrNull;
-      return _Preview(package, capability, current);
+      final available = {
+        for (final extension in installed)
+          if (extension.enabled) extension.key,
+      };
+      final dependencies = [
+        for (final dependency in package.manifest.extensionDependencies)
+          if (!available.contains(dependency.toLowerCase())) dependency,
+      ];
+      return _Preview(package, capability, current, dependencies);
     } finally {
       await package.close();
     }
@@ -384,6 +422,14 @@ class _VsixInstallSheetState extends State<VsixInstallSheet> {
                   platform.label,
                 ),
         ),
+        if (preview.dependencies.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Text(
+              l10n.extsVsixDependencies(preview.dependencies.join(', ')),
+              style: TextStyle(fontSize: 12, color: foreground),
+            ),
+          ),
         if (current != null)
           Padding(
             padding: const EdgeInsets.only(top: 4),
@@ -413,16 +459,16 @@ class _VsixInstallSheetState extends State<VsixInstallSheet> {
 }
 
 class _Preview {
-  _Preview(this.package, this.capability, this.current);
+  _Preview(this.package, this.capability, this.current, this.dependencies);
 
   final ExtensionPackage package;
   final CapabilityReport capability;
 
   /// The installed version it replaces.
   final InstalledExtension? current;
+  final List<String> dependencies;
 
   bool installable(ExtensionTargetPlatform platform) =>
-      capability.installable &&
       package.manifest.engineCompatible &&
       package.manifest.targetPlatform.isCompatibleWith(platform);
 }

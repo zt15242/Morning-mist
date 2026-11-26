@@ -40,7 +40,7 @@ import '../lsp/lsp_protocol.dart';
 import 'diagnostics.dart';
 import 'lsp_convert.dart';
 
-enum IdePanelTab { problems, references, debugConsole, terminal }
+enum IdePanelTab { problems, references, debugConsole, terminal, output }
 
 /// Locations Find References (or several definitions) produced.
 class IdeReferences {
@@ -202,6 +202,7 @@ class IdeBottomPanel extends StatelessWidget {
     this.terminal,
     this.terminalActions,
     this.debugConsole,
+    this.output,
   });
 
   final IdePanelTab tab;
@@ -235,6 +236,7 @@ class IdeBottomPanel extends StatelessWidget {
 
   /// Debug Console; no tab when debugging is unavailable.
   final Widget? debugConsole;
+  final Widget? output;
 
   @override
   Widget build(BuildContext context) {
@@ -304,6 +306,13 @@ class IdeBottomPanel extends StatelessWidget {
                                 selected: tab == IdePanelTab.references,
                                 onTap: () => onTab(IdePanelTab.references),
                               ),
+                              if (output != null)
+                                _Tab(
+                                  label: context.l10n.panelOutput,
+                                  tooltip: context.l10n.idePanelOutput,
+                                  selected: tab == IdePanelTab.output,
+                                  onTap: () => onTab(IdePanelTab.output),
+                                ),
                               if (debugConsole != null)
                                 _Tab(
                                   label: DebugStrings.of(context).debugConsole
@@ -355,6 +364,7 @@ class IdeBottomPanel extends StatelessWidget {
                 IdePanelTab.references => _references(context.l10n),
                 IdePanelTab.debugConsole =>
                   debugConsole ?? const SizedBox.shrink(),
+                IdePanelTab.output => output ?? const SizedBox.shrink(),
                 IdePanelTab.terminal =>
                   terminal ?? _message(context.l10n.panelTerminalUnavailable),
               },

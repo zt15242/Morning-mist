@@ -1,57 +1,17 @@
-# 扩展（VS Code 插件）
+# 桌面扩展
 
-BaoCode **不运行 VS Code 插件的代码**。Node 扩展宿主曾经接入过，后来因为它让
-工作台变重、变卡，在 `a572d6a`（2026-10-10）里整体移除了。现在扩展只用来装
-**颜色主题和文件图标主题**；语言功能走原生 LSP 客户端，调试走原生 DAP 客户端。
+在本地工作区打开 Fast IDE，进入扩展视图中的 **VS Code 扩展**。可从 Open VSX 安装，也可用命令面板的 **Install from VSIX…** 选择本地文件，或把 VSIX 拖到工作区窗口。安装的扩展及启用状态保存在应用的数据目录里。
 
-## 现在的扩展
+桌面工作台按需下载并校验固定版本的 VSCodium 运行时。打开已安装代码扩展的工作区后，扩展宿主按项目激活扩展。扩展命令出现在命令面板中，扩展的输出显示在 **输出** 面板。工作区信任设置决定哪些扩展可以激活。
 
-- 从 Open VSX 或拖入 `.vsix` 安装到 `<data>/extensions/`，用 VS Code 的布局
-  （`publisher.name-version/` 加 `extensions.json`）。不支持开发文件夹。
-- 只读取 manifest 的 `contributes.themes`、`iconThemes`、`colors`、`icons`
-  并应用到工作台（`lib/extensions/theme_extensions.dart`，主题本身在
-  `lib/theme/`）。
-- 能力判定（`lib/extensions/capabilities/capability_analysis.dart`）只看主题：
-  只有主题的算"支持"；有主题、也有代码或其他贡献点的算"部分支持"；没有主题的
-  算"不支持"，不能安装。
-- 扩展视图分两个页签："主题"和"语言服务器"。
+已有的原生语言服务器和调试器仍可从工作台使用。扩展所需的 VS Code API 因扩展而异，依赖 Webview 的界面目前只显示占位提示。宿主 API 实现进度见 [协议对照](extensions/EXTHOST_PARITY.md)。
 
-| 目录（`lib/extensions/`） | 内容 |
-| --- | --- |
-| `theme_extensions.dart` | 安装、列出、应用主题扩展 |
-| `gallery/` | Open VSX 客户端、安装/卸载后端 |
-| `vsix/` | 读 `.vsix`、manifest、引擎版本、目标平台 |
-| `capabilities/` | 能力判定 |
-| `ui/` | 扩展视图、详情页、`.vsix` 拖入 |
+## Salesforce CLI 扩展
 
-测试在 `test/extensions/` 下，目录结构同上。
+在含有 `sfdx-project.json` 的工作区安装 Salesforce CLI 和 Salesforce Services。若从 [Salesforce 官方发行页](https://github.com/forcedotcom/salesforcedx-vscode/releases) 下载 VSIX，可先导入同版本的 Services，再导入 CLI。扩展可用后，在命令面板搜索 Salesforce 或 SFDX。
 
-## 依赖插件的功能怎么办
+回归测试使用官方 68.12.0 的 Core 和 Services，在临时本地工作区校验安装、激活、命令发现和 `sf.config.list` 调用。运行测试时可将两个文件分别命名为 `core.vsix` 和 `services.vsix`，用 `BAOCODE_SALESFORCE_VSIX_DIR` 指向所在目录并设置 `BAOCODE_EXTHOST_DIR`。
 
-用户要某个插件，实际要的往往是它提供的某项能力。做法是**原生补上这项能力**，
-不把插件带进来。
-
-- **语言功能**：用 LSP。服务器清单来自 `assets/lsp/languages.json`（取自 Helix）
-  和 `assets/lsp/mason-registry.json`，可以用语言包或 `<data>/User/lsp.json`
-  覆盖，见 `lib/ide/lsp/packs/README.md`。
-- **调试**：DAP 客户端和调试视图在 `lib/debug/`，由 `lib/ide/ide_debug_host.dart`
-  接到工作台。适配器要由 BaoCode 自己注册（`DebuggerRegistry.setExtensions`）。
-  **目前一个都没有注册。**
-
-### 例：`ms-python.python`（2026-10-11）
-
-有用户要求支持 `ms-python.python`。结论是不内置，原因如下：
-
-- 它全是 JS 代码，没有扩展宿主就不会执行。
-- 它的补全、跳转、类型检查来自 Pylance。Pylance 的许可只允许在微软的 VS Code
-  里使用，Open VSX 上也没有。它还依赖 `ms-python.debugpy` 和
-  `ms-python.vscode-python-envs`。
-
-Python 能力的现状和缺口：
-
-| 能力 | 现状 | 原生方案 |
-| --- | --- | --- |
-| 补全、跳转、类型检查 | 有。默认服务器是 `ty`、`ruff`、`jedi`、`pylsp`、`zuban`；mason 里有 `pyright`、`basedpyright` | 可以考虑把 `basedpyright` 设为默认，最接近 Pylance |
-| 断点调试 | **没有**（没有注册适配器） | 注册 `python` 类型的调试器，用 `python -m debugpy.adapter` |
-| 选解释器、venv/conda | 没有 | 扫描 `.venv`、conda、PATH，选中的解释器同时交给 LSP 和调试器 |
-| 测试面板（pytest）、Jupyter | 没有 | 工作量大，暂不做 |
+```sh
+flutter test --run-skipped -t exthost test/extensions/acceptance/salesforce_exthost_test.dart
+```

@@ -16,7 +16,7 @@
 // UI to word; the product date is a [DateTime].
 
 /// The VS Code version the extension host runtime is (VSCodium REH
-/// 1.135.06055 is upstream 1.135.0; see docs/extensions/PROGRESS.md).
+/// 1.135.06055 is upstream 1.135.0; see docs/extensions/EXTHOST_PARITY.md).
 const extensionHostEngineVersion = '1.135.0';
 
 /// `IParsedVersion`.

@@ -8,6 +8,7 @@ import 'dart:async';
 import 'package:flutter/widgets.dart';
 
 import '../../../debug/ui/debug_view.dart';
+import '../../../extensions/window/output/output_panel.dart';
 import '../../../keybindings/keybinding_service.dart';
 import '../../../theme/app_theme.dart';
 import '../../../theme/workbench_theme.dart';
@@ -18,6 +19,7 @@ import '../../lsp_ui/problems_panel.dart';
 import '../../services/debug_view.dart';
 import '../../services/editors.dart';
 import '../../services/explorer.dart';
+import '../../services/extensions_view.dart';
 import '../../services/keybindings.dart';
 import '../../services/language.dart';
 import '../../services/layout.dart';
@@ -59,6 +61,10 @@ class PanelPart extends StatelessWidget {
       ]),
       builder: (context, _) {
         final host = services.get<WorkbenchHost>();
+        final output = services
+            .get<ExtensionsViewService>()
+            .workspaceExtensions
+            ?.output;
         final keys = services.get<KeybindingDispatchService>();
         return Focus(
           focusNode: layout.panelFocus,
@@ -119,6 +125,17 @@ class PanelPart extends StatelessWidget {
                     ),
                     null => null,
                   },
+                  output: output == null
+                      ? null
+                      : ExtensionOutputPanel(
+                          service: output,
+                          onOpenInEditor: (path) => unawaited(
+                            services.get<EditorService>().open(
+                              path,
+                              focusEditor: true,
+                            ),
+                          ),
+                        ),
                   debugConsole: switch (debugView.service) {
                     final debug? => DebugConsolePanel(service: debug),
                     null => null,

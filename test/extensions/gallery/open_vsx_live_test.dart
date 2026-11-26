@@ -33,9 +33,8 @@ void main() {
     addTearDown(package.close);
     expect(package.manifest.id, 'esbenp.prettier-vscode');
     expect(package.manifest.engineCompatible, isTrue);
-    // A formatter, not a theme: BaoCode does not take it.
-    final report = analyzeExtensionPackage(package);
-    expect(report.level, ExtensionCapabilityLevel.unsupported);
+    final report = await analyzeExtensionPackage(package);
+    expect(report.level, ExtensionCapabilityLevel.full);
 
     final rust = await client.resolveCompatible(
       'rust-lang.rust-analyzer',

@@ -27,6 +27,7 @@ workspace:
   - packages/bao_agent
   - packages/bao_conpty
   - packages/bao_editor
+  - packages/bao_exthost
   - packages/bao_iroh
   - packages/bao_link
   - packages/bao_markdown
@@ -45,6 +46,8 @@ workspace:
 dependencies:
   bao_agent:
     path: packages/bao_agent
+  bao_exthost:
+    path: packages/bao_exthost
   bao_editor:
     path: packages/bao_editor
   bao_link:
@@ -120,6 +123,7 @@ flutter:
   generate: true
 
   assets:
+    - assets/exthost/
     - assets/lsp/
     - assets/material_icons/
     - assets/material_icons/icons/

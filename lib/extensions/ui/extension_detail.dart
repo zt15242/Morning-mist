@@ -519,8 +519,13 @@ class _ExtensionDetailPageState extends State<ExtensionDetailPage> {
           large: true,
           prominent: false,
           label: installed.enabled ? l10n.extsDisable : l10n.extsEnable,
-          onPressed: () =>
-              unawaited(_model.setEnabled(widget.id, !installed.enabled)),
+          onPressed: () => unawaited(
+            _model.setEnabled(
+              widget.id,
+              !installed.enabled,
+              EnablementScope.global,
+            ),
+          ),
         ),
       );
       buttons.add(

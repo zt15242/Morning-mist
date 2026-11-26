@@ -18,6 +18,7 @@ import '../platform/machine_platform.dart';
 import '../protocol.dart';
 import '../rpc/rpc_peer.dart';
 import '../search/local_search.dart';
+import 'server_exthost.dart';
 import 'server_lsp.dart';
 import 'server_claude.dart';
 import 'server_cli.dart';
@@ -61,6 +62,11 @@ class RemoteServer {
       cli: _cli,
     );
     _tcp = ServerTcp(peer);
+    _exthost = ServerExtHost(
+      peer,
+      _streams,
+      directory: p.join(dataDir, 'exthost'),
+    );
     _lsp = ServerLsp(
       peer,
       _streams,
@@ -88,6 +94,7 @@ class RemoteServer {
   late final ServerCli _cli;
   late final ServerPty _pty;
   late final ServerTcp _tcp;
+  late final ServerExtHost _exthost;
   late final ServerLsp _lsp;
   late final ServerClaude _claude;
   final Map<String, LocalFiles> _files = {};
@@ -493,6 +500,7 @@ class RemoteServer {
       _pty.stopAll(),
       _streams.closeAll(),
       _tcp.closeAll(),
+      _exthost.stop(),
       _lsp.cancelAll(),
       _cli.close(),
     ]);

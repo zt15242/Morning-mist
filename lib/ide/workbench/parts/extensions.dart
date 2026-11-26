@@ -17,8 +17,7 @@ import '../../services/extensions_view.dart';
 import '../../services/language.dart';
 import '../../tab_strip_scroll.dart';
 
-/// The Extensions view: Themes and Language Servers, as tabs (the
-/// language servers alone without theme extensions).
+/// VS Code extensions and native language servers in the Extensions view.
 class ExtensionsViewPart extends StatelessWidget {
   const ExtensionsViewPart({
     super.key,
@@ -37,17 +36,17 @@ class ExtensionsViewPart extends StatelessWidget {
   Widget build(BuildContext context) => ListenableBuilder(
     listenable: service,
     builder: (context, _) {
-      final themes = service.themes;
+      final model = service.model;
       final tab = service.tab;
       final l10n = context.l10n;
       // On the side bar's card, as the other views are; not islands, under
       // the tabs, on the editor's color as the tab in front is.
-      final background = themes == null || islands
+      final background = model == null || islands
           ? null
           : themeColors['editor.background'];
       final body = switch (tab) {
         ExtensionsTab.themes => ExtensionsView(
-          model: themes!.model,
+          model: model!,
           onOpen: service.openPage,
           onInstallFromVsix: service.installFromVsix,
           onError: service.reportMessage,
@@ -61,13 +60,19 @@ class ExtensionsViewPart extends StatelessWidget {
           background: background,
         ),
       };
-      if (themes == null) return body;
+      if (model == null) return body;
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _ExtensionsTabs(
             tabs: [
-              (ExtensionsTab.themes, Codicons.symbolColor, l10n.extsTabThemes),
+              (
+                ExtensionsTab.themes,
+                Codicons.extensions,
+                service.workspaceExtensions == null
+                    ? l10n.extsTabThemes
+                    : l10n.extsTabVsCode,
+              ),
               (
                 ExtensionsTab.languageServers,
                 Codicons.extensions,
@@ -96,7 +101,7 @@ class ExtensionPageTab extends StatelessWidget {
     final entry = service.page!;
     final l10n = context.l10n;
     final key = entry.key;
-    final installed = service.themes!.model.installed
+    final installed = service.model!.installed
         ?.where((extension) => extension.key == key)
         .firstOrNull;
     final title = l10n.extsPageTitle(installed?.manifest.label ?? entry.label);
@@ -132,7 +137,7 @@ class ExtensionPageView extends StatelessWidget {
       color: themeColors['editor.background'],
       child: ExtensionDetailPage(
         key: ValueKey(entry.key),
-        model: service.themes!.model,
+        model: service.model!,
         id: entry.id,
         onError: service.reportMessage,
       ),

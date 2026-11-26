@@ -1,3 +1,6 @@
+import 'package:bao_exthost/bao_exthost.dart'
+    show ExtHostRuntimeErrorKind, ExtHostRuntimeException;
+
 import '../claude/claude_unavailable.dart';
 import '../files/ide_file.dart';
 import '../git/git_types.dart';
@@ -84,6 +87,12 @@ class RpcError {
     ReviewUnavailable(:final message) => _typed(error, 'reviewUnavailable', {
       'message': message,
     }),
+    ExtHostRuntimeException(:final kind, :final message, :final statusCode) =>
+      _typed(error, 'exthostRuntime', {
+        'kind': kind.name,
+        'message': message,
+        'statusCode': ?statusCode,
+      }),
     FormatException(:final message) => _typed(error, 'format', {
       'message': message,
     }),
@@ -164,6 +173,14 @@ class RpcError {
         detail: data['detail'] as String?,
       ),
       'reviewUnavailable' => ReviewUnavailable(text()),
+      'exthostRuntime' => ExtHostRuntimeException(
+        ExtHostRuntimeErrorKind.values.firstWhere(
+          (kind) => kind.name == data['kind'],
+          orElse: () => ExtHostRuntimeErrorKind.install,
+        ),
+        text(),
+        statusCode: data['statusCode'] as int?,
+      ),
       'format' => FormatException(text()),
       _ => RemoteException(message, type: data['remoteType'] as String?),
     };

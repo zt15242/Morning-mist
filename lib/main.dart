@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert' show jsonEncode;
 import 'dart:ui' show AppExitResponse;
 
+import 'package:bao_remote/local.dart' show ClaudeEnvironment;
 import 'package:flutter/foundation.dart' show kIsWeb, visibleForTesting;
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -37,6 +38,9 @@ import 'diagnostics/hang_watch.dart';
 import 'diagnostics/key_watch.dart';
 import 'diagnostics/diagnostics_upload.dart';
 import 'extensions/theme_extensions.dart';
+import 'extensions/workbench/workspace_extensions.dart';
+import 'extensions/workbench/jsonc_settings_file.dart';
+import 'extensions/workbench/window_file_pickers.dart';
 import 'ide/editor_minimap_setting.dart';
 import 'ide/editor_word_wrap.dart';
 import 'ide/git/git_repository.dart';
@@ -478,7 +482,35 @@ Future<void> main(List<String> arguments) async {
   // The theme extensions (lib/extensions/): color and file icon themes
   // from Open VSX or a .vsix, `workbench.iconTheme` followed as
   // settings.json changes.
-  final themeExtensions = files == null
+  final extensionsApp = files != null && AppPlatform.isDesktop
+      ? ExtensionsApp(
+          userSettings: JsoncSettingsFile(files.settings),
+          openExternal: openExternal,
+          filePickers: const WindowFilePickers(),
+          serverEnvironment: () async {
+            final shell = await ClaudeEnvironment.of();
+            return {'PATH': ?shell['PATH']};
+          },
+          language: () =>
+              (locale.setting ??
+                      switch (WidgetsBinding
+                          .instance
+                          .platformDispatcher
+                          .locale) {
+                        Locale(languageCode: 'zh') =>
+                          AppLocale.simplifiedChinese,
+                        _ => AppLocale.english,
+                      }) ==
+                  AppLocale.simplifiedChinese
+              ? 'zh-cn'
+              : 'en',
+        )
+      : null;
+  if (extensionsApp != null) {
+    unawaited(extensionsApp.applyInstalledThemes());
+    extensionsApp.followIconThemeSetting();
+  }
+  final themeExtensions = files == null || extensionsApp != null
       ? null
       : ThemeExtensions.inDataDirectory(
           DataDirectory.current.path,
@@ -499,6 +531,7 @@ Future<void> main(List<String> arguments) async {
     appLocale: locale,
     settings: settings,
     themeExtensions: themeExtensions,
+    extensionsApp: extensionsApp,
     // On the folder's host: this machine, or a remote one's.
     languagesFor: (folder) {
       final host = ProjectHost.of(folder);
@@ -848,6 +881,7 @@ class BaoCodeApp extends StatefulWidget {
     super.key,
     this.workspace,
     this.themeExtensions,
+    this.extensionsApp,
     this.languagesFor,
     this.gitFor,
     this.repositoriesIn,
@@ -880,6 +914,7 @@ class BaoCodeApp extends StatefulWidget {
 
   /// The installed theme extensions (the Extensions view's).
   final ThemeExtensions? themeExtensions;
+  final ExtensionsApp? extensionsApp;
 
   /// The language servers for a project the IDE opens; none when null.
   final LanguageFeatures Function(String root)? languagesFor;
@@ -962,6 +997,7 @@ class _BaoCodeAppState extends State<BaoCodeApp>
         stopModelProxy(),
         stopLspProcesses(),
         ?widget.themeExtensions?.dispose(),
+        ?widget.extensionsApp?.dispose(),
         stopPtyProcesses(),
         ?_settings.link?.stopAdvertising(),
       ]);
@@ -1177,6 +1213,7 @@ class _BaoCodeAppState extends State<BaoCodeApp>
               window: window,
               languagesFor: widget.languagesFor,
               themeExtensions: widget.themeExtensions,
+              extensionsApp: widget.extensionsApp,
               gitFor: widget.gitFor,
               repositoriesIn: widget.repositoriesIn,
               terminalBackend: widget.terminalBackend,

@@ -16,11 +16,11 @@ import '../settings/user_settings.dart';
 import '../theme/file_icon_theme.dart';
 import '../theme/icon_registry.dart';
 import '../theme/workbench_theme.dart';
-import 'capabilities/capability_analysis.dart';
 import 'gallery/extension_management_backend.dart';
 import 'gallery/open_vsx_client.dart';
 import 'ui/extensions_model.dart';
 import 'vsix/extension_files.dart';
+import 'vsix/extension_manifest.dart';
 import 'vsix/vsix_reader.dart';
 import 'vsix/zip_reader.dart';
 import 'window/json_state_store.dart';
@@ -171,7 +171,7 @@ class ThemeExtensions
         InstalledExtension(
           manifest: package.manifest,
           location: folder,
-          enabled: !disabled.contains(id.toLowerCase()),
+          enabledGlobally: !disabled.contains(id.toLowerCase()),
           preRelease: metadata['preRelease'] == true,
           fromGallery: metadata['source'] == 'gallery',
           installedAt: switch (metadata['installedTimestamp']) {
@@ -193,7 +193,7 @@ class ThemeExtensions
     final manifest = package.manifest;
     final String folder;
     try {
-      if (!hasThemes(manifest)) {
+      if (!_hasThemes(manifest)) {
         throw ThemeExtensionException(
           '${manifest.id} has no color theme or file icon theme',
         );
@@ -243,12 +243,25 @@ class ThemeExtensions
     return InstalledExtension(
       manifest: manifest,
       location: folder,
-      enabled: !_disabled.contains(manifest.key),
+      enabledGlobally: !_disabled.contains(manifest.key),
       preRelease: options.preRelease,
       fromGallery: options.fromGallery,
       installedAt: now,
     );
   });
+
+  @override
+  Future<InstalledExtension> installFromFolder(String path) =>
+      Future.error(const ThemeExtensionException('Import a theme VSIX file.'));
+
+  static bool _hasThemes(ExtensionManifestInfo manifest) {
+    final contributions = manifest.manifest['contributes'];
+    if (contributions is! Map) return false;
+    return ['themes', 'iconThemes'].any((key) {
+      final entries = contributions[key];
+      return entries is List && entries.isNotEmpty;
+    });
+  }
 
   /// Writes the .vsix's `extension/` entries under [target].
   static Future<void> _extract(ZipReader zip, String target) async {
@@ -283,7 +296,11 @@ class ThemeExtensions
   });
 
   @override
-  Future<void> setEnabled(String id, bool enabled) async {
+  Future<void> setEnabled(
+    String id,
+    bool enabled, {
+    EnablementScope scope = EnablementScope.global,
+  }) async {
     await enablement.load();
     final disabled = _disabled;
     final changed = enabled

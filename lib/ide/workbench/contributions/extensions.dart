@@ -34,7 +34,7 @@ class ExtensionsContribution extends WorkbenchRegistrations {
           id: 'workbench.extensions.action.installVSIX',
           category: 'Extensions',
           title: 'Install from VSIX...',
-          precondition: (_) => extensions.themes != null,
+          precondition: (_) => extensions.canInstall,
           run: (_, _) => unawaited(extensions.installFromVsix()),
         ),
         WorkbenchAction(

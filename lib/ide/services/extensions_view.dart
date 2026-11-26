@@ -9,6 +9,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 
 import '../../extensions/theme_extensions.dart';
+import '../../extensions/workbench/workspace_extensions.dart';
 import '../../extensions/ui/extensions_model.dart';
 import '../../extensions/ui/vsix_drop.dart';
 import '../../l10n/l10n.dart';
@@ -30,6 +31,7 @@ class ExtensionsViewService extends ChangeNotifier {
     required this.environment,
     required this.quickInput,
     required this._themes,
+    this._workspaceExtensions,
     required this._languageServers,
     required this._notify,
   });
@@ -42,14 +44,18 @@ class ExtensionsViewService extends ChangeNotifier {
   final ThemeExtensions? Function() _themes;
   final IdeExtensions? Function() _languageServers;
   ThemeExtensions? get themes => _themes();
+  final WorkspaceExtensions? Function()? _workspaceExtensions;
+  WorkspaceExtensions? get workspaceExtensions => _workspaceExtensions?.call();
+  ExtensionsModel? get model =>
+      workspaceExtensions?.extensionsModel ?? themes?.model;
+  bool get canInstall => workspaceExtensions != null || themes != null;
 
   /// [message] told as an error notification.
   final ValueChanged<String> _notify;
   void reportMessage(String message) => _notify(message);
 
   /// The view's tab: the language servers alone without theme extensions.
-  ExtensionsTab get tab =>
-      themes == null ? ExtensionsTab.languageServers : _tab;
+  ExtensionsTab get tab => !canInstall ? ExtensionsTab.languageServers : _tab;
   ExtensionsTab _tab = ExtensionsTab.themes;
   set tab(ExtensionsTab tab) {
     if (_tab == tab) return;
@@ -66,7 +72,7 @@ class ExtensionsViewService extends ChangeNotifier {
   /// The theme extension whose page has a tab among the editors', as
   /// VS Code's extension editor; and whether its tab is the one in front
   /// (another selected, it stays).
-  ExtensionEntry? get page => themes == null ? null : _page;
+  ExtensionEntry? get page => !canInstall ? null : _page;
   ExtensionEntry? _page;
   bool get pageShown => page != null && _pageShown;
   bool _pageShown = false;
@@ -99,33 +105,37 @@ class ExtensionsViewService extends ChangeNotifier {
 
   /// Install from VSIX...: one picked in the open panel.
   Future<void> installFromVsix() async {
-    final themes = this.themes;
-    if (themes == null) return;
+    final extensions = workspaceExtensions;
+    final backend = extensions?.management ?? themes;
+    if (backend == null) return;
     final paths = await WindowControls.pickOpenFiles(multiple: false);
     final context = host.context;
     if (paths.isEmpty || context == null || !context.mounted) return;
     await showVsixInstallSheet(
       context,
       paths.first,
-      backend: themes,
-      locale: themes.locale,
+      backend: backend,
+      locale: extensions?.app.language ?? themes?.locale,
     );
   }
 
-  /// Takes the .vsix files among [paths] dropped on the window: false when
-  /// there are none (they open as files do).
+  /// Takes the .vsix files among [paths] dropped on the window.
   bool drop(List<String> paths) {
-    final themes = this.themes;
+    final extensions = workspaceExtensions;
+    final backend = extensions?.management ?? themes;
     final context = host.context;
-    if (themes == null || context == null || !paths.any(isVsixDrop)) {
+    if (backend == null ||
+        context == null ||
+        !paths.any((path) => path.toLowerCase().endsWith('.vsix'))) {
       return false;
     }
     unawaited(
       handleExtensionDrop(
         context,
-        paths,
-        backend: themes,
-        locale: themes.locale,
+        paths.where((path) => path.toLowerCase().endsWith('.vsix')).toList(),
+        backend: backend,
+        locale: extensions?.app.language ?? themes?.locale,
+        onLoadDevelopmentFolder: (_) {},
       ),
     );
     return true;

@@ -97,8 +97,7 @@ class _ExtensionIconState extends State<ExtensionIcon> {
       color: themeColors['descriptionForeground'],
     );
     Widget image(Uint8List bytes) {
-      final svg =
-          bytes.length > 4 &&
+      final svg = bytes.length > 4 &&
           String.fromCharCodes(bytes.take(256)).contains('<svg');
       return svg
           ? SvgPicture.memory(bytes, width: size, height: size)
@@ -127,10 +126,7 @@ class _ExtensionIconState extends State<ExtensionIcon> {
     } else {
       child = fallback();
     }
-    return SizedBox.square(
-      dimension: size,
-      child: Center(child: child),
-    );
+    return SizedBox.square(dimension: size, child: Center(child: child));
   }
 }
 
@@ -151,24 +147,56 @@ class _ExtensionIconState extends State<ExtensionIcon> {
     icon: Codicons.warning,
     color: themeColors['editorWarning.foreground'],
   ),
-  ExtensionCapabilityLevel.unsupported => (
-    label: l10n.extsCapabilityUnsupported,
-    detail: l10n.extsCapabilityUnsupportedDetail,
+  ExtensionCapabilityLevel.needsWebview => (
+    label: l10n.extsCapabilityNeedsWebview,
+    detail: l10n.extsCapabilityNeedsWebviewDetail,
     icon: Codicons.circleSlash,
     color: themeColors['errorForeground'],
   ),
 };
 
 /// A finding, worded.
-String capabilityFindingText(
-  AppLocalizations l10n,
-  CapabilityFinding finding,
-) => switch (finding.kind) {
-  CapabilityFindingKind.code => l10n.extsFindingCode,
-  CapabilityFindingKind.contribution => l10n.extsFindingContribution(
-    finding.detail ?? '',
-  ),
-};
+String capabilityFindingText(AppLocalizations l10n, CapabilityFinding finding) {
+  final detail = finding.detail ?? '';
+  return switch (finding.kind) {
+    CapabilityFindingKind.webviewView => l10n.extsFindingWebviewView(detail),
+    CapabilityFindingKind.customEditor => l10n.extsFindingCustomEditor(detail),
+    CapabilityFindingKind.notebook => l10n.extsFindingNotebook(detail),
+    CapabilityFindingKind.notebookRenderer => l10n.extsFindingNotebookRenderer(
+      detail,
+    ),
+    CapabilityFindingKind.webviewPanelCode => l10n.extsFindingWebviewPanelCode(
+      detail,
+    ),
+    CapabilityFindingKind.webviewViewCode => l10n.extsFindingWebviewViewCode(
+      detail,
+    ),
+    CapabilityFindingKind.customEditorCode => l10n.extsFindingCustomEditorCode(
+      detail,
+    ),
+    CapabilityFindingKind.notebookCode => l10n.extsFindingNotebookCode(detail),
+    CapabilityFindingKind.browserOnly => l10n.extsFindingBrowserOnly,
+    CapabilityFindingKind.scanIncomplete => l10n.extsFindingScanIncomplete,
+  };
+}
+
+String coreFeatureText(AppLocalizations l10n, CoreFeature feature) =>
+    switch (feature) {
+      CoreFeature.languageFeatures => l10n.extsCoreLanguageFeatures,
+      CoreFeature.languageServer => l10n.extsCoreLanguageServer,
+      CoreFeature.syntaxHighlighting => l10n.extsCoreSyntaxHighlighting,
+      CoreFeature.snippets => l10n.extsCoreSnippets,
+      CoreFeature.debugging => l10n.extsCoreDebugging,
+      CoreFeature.themes => l10n.extsCoreThemes,
+      CoreFeature.tasks => l10n.extsCoreTasks,
+      CoreFeature.treeViews => l10n.extsCoreTreeViews,
+      CoreFeature.sourceControl => l10n.extsCoreSourceControl,
+      CoreFeature.testing => l10n.extsCoreTesting,
+      CoreFeature.jsonSchemas => l10n.extsCoreJsonSchemas,
+      CoreFeature.terminal => l10n.extsCoreTerminal,
+      CoreFeature.authentication => l10n.extsCoreAuthentication,
+      CoreFeature.localization => l10n.extsCoreLocalization,
+    };
 
 /// Why an `engines.vscode` is not accepted, worded.
 String engineNoticeText(AppLocalizations l10n, EngineNotice notice) =>
@@ -224,12 +252,15 @@ class CapabilityBadge extends StatelessWidget {
   }
 }
 
-/// The capability and its reasons, as the extension page and the VSIX
-/// sheet show them.
+/// The capability, its reasons and what still works, as the extension page
+/// and the VSIX sheet show them.
 class CapabilitySummary extends StatelessWidget {
-  const CapabilitySummary(this.report, {super.key});
+  const CapabilitySummary(this.report, {super.key, this.fromManifest = false});
 
   final CapabilityReport report;
+
+  /// The code was not checked (a gallery extension not installed).
+  final bool fromManifest;
 
   @override
   Widget build(BuildContext context) {
@@ -238,8 +269,7 @@ class CapabilitySummary extends StatelessWidget {
     final text = themeColors['foreground'];
     final muted = themeColors['descriptionForeground'];
     final reasons = [
-      for (final finding in report.findings)
-        capabilityFindingText(l10n, finding),
+      for (final finding in report.findings) capabilityFindingText(l10n, finding),
     ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -264,19 +294,38 @@ class CapabilitySummary extends StatelessWidget {
               children: [
                 Padding(
                   padding: const EdgeInsets.only(top: 1, right: 6),
-                  child: Icon(
-                    Codicons.circleSmallFilled,
-                    size: 12,
-                    color: muted,
-                  ),
+                  child: Icon(Codicons.circleSmallFilled, size: 12, color: muted),
                 ),
                 Expanded(
-                  child: Text(
-                    reason,
-                    style: TextStyle(fontSize: 12, color: text),
-                  ),
+                  child: Text(reason, style: TextStyle(fontSize: 12, color: text)),
                 ),
               ],
+            ),
+          ),
+        if (report.level == ExtensionCapabilityLevel.partial &&
+            report.coreFeatures.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 6),
+            child: Text(
+              l10n.extsStillWorks(
+                [
+                  for (final feature in report.coreFeatures)
+                    coreFeatureText(l10n, feature),
+                ].join(l10n.extsListSeparator),
+              ),
+              style: TextStyle(fontSize: 12, color: text),
+            ),
+          ),
+        if (fromManifest)
+          Padding(
+            padding: const EdgeInsets.only(top: 6),
+            child: Text(
+              l10n.extsCapabilityFromManifest,
+              style: TextStyle(
+                fontSize: 11,
+                fontStyle: FontStyle.italic,
+                color: muted,
+              ),
             ),
           ),
       ],
@@ -347,8 +396,7 @@ class _ExtensionActionButtonState extends State<ExtensionActionButton> {
               decoration: BoxDecoration(
                 color: background,
                 border: Border.all(
-                  color:
-                      colors.get('extensionButton.border') ??
+                  color: colors.get('extensionButton.border') ??
                       Colors.transparent,
                 ),
                 borderRadius: BorderRadius.circular(4),
@@ -457,8 +505,7 @@ class ExtensionRating extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color =
-        themeColors.get('extensionIcon.starForeground') ??
+    final color = themeColors.get('extensionIcon.starForeground') ??
         const Color(0xFFFF8E00);
     return Row(
       mainAxisSize: MainAxisSize.min,

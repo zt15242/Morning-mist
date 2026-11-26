@@ -18,20 +18,21 @@ InstalledExtension _installed(
   String version = '1.0.0',
   String? displayName,
   String? description,
-  bool enabled = true,
+  bool enabledGlobally = true,
   bool preRelease = false,
   bool fromGallery = true,
-  Map<String, Object?> manifest = const {},
+  InstalledExtensionKind kind = InstalledExtensionKind.user,
+  String? location,
 }) => InstalledExtension(
   manifest: fakeManifest(
     id,
     version: version,
     displayName: displayName,
     description: description,
-    manifest: manifest,
   ),
-  location: '/extensions/$id',
-  enabled: enabled,
+  location: location ?? '/extensions/$id',
+  kind: kind,
+  enabledGlobally: enabledGlobally,
   preRelease: preRelease,
   fromGallery: fromGallery,
 );
@@ -46,7 +47,7 @@ ExtensionsModel _model(FakeBackend backend, {FixtureHttp? http}) =>
       searchDelay: Duration.zero,
     );
 
-/// A search response for what the view asks for (size 50, themes).
+/// A search response for what the view asks for (size 50, no category).
 Map<String, Object?> _searchJson(List<Map<String, Object?>> extensions) => {
   'offset': 0,
   'totalSize': extensions.length,
@@ -75,7 +76,7 @@ void main() {
     expect(find.text('1.0.0'), findsNWidgets(2));
     // The two panes, each with how many it holds.
     expect(find.text('Installed'), findsOneWidget);
-    expect(find.text('Popular Themes'), findsOneWidget);
+    expect(find.text('Recommended'), findsOneWidget);
     expect(find.text('2'), findsOneWidget);
   });
 
@@ -97,6 +98,37 @@ void main() {
       final paragraph = tester.renderObject<RenderParagraph>(find.text(text));
       expect(paragraph.didExceedMaxLines, isFalse, reason: text);
     }
+  });
+
+  testWidgets('built-in extensions are under @builtin, not Installed, as '
+      'upstream', (tester) async {
+    final backend = FakeBackend(
+      installed: [
+        _installed('esbenp.prettier-vscode', displayName: 'Prettier'),
+        _installed(
+          'vscode.typescript-language-features',
+          displayName: 'TypeScript and JavaScript Language Features',
+          kind: InstalledExtensionKind.builtin,
+        ),
+      ],
+    );
+    final model = _model(backend);
+    await tester.pumpWidget(_app(ExtensionsView(model: model)));
+    await tester.pumpAndSettle();
+    expect(find.text('Prettier'), findsOneWidget);
+    expect(
+      find.text('TypeScript and JavaScript Language Features'),
+      findsNothing,
+    );
+    expect(model.installedEntries.map((e) => e.id), ['esbenp.prettier-vscode']);
+
+    model.setQuery('@builtin ');
+    await tester.pumpAndSettle();
+    expect(
+      find.text('TypeScript and JavaScript Language Features'),
+      findsOneWidget,
+    );
+    expect(find.text('Prettier'), findsNothing);
   });
 
   testWidgets('filters the installed list', (tester) async {
@@ -126,8 +158,7 @@ void main() {
   testWidgets('searches Open VSX and installs a result', (tester) async {
     final http = FixtureHttp(recorded: false)
       ..addJson(
-        '/api/-/search?category=Themes&offset=0&query=python&size=50'
-        '&sortBy=relevance'
+        '/api/-/search?offset=0&query=python&size=50&sortBy=relevance'
         '&sortOrder=desc',
         _searchJson([
           {
@@ -168,8 +199,7 @@ void main() {
   testWidgets('shows an error when installing fails', (tester) async {
     final http = FixtureHttp(recorded: false)
       ..addJson(
-        '/api/-/search?category=Themes&offset=0&query=python&size=50'
-        '&sortBy=relevance'
+        '/api/-/search?offset=0&query=python&size=50&sortBy=relevance'
         '&sortOrder=desc',
         _searchJson([
           {'namespace': 'ms-python', 'name': 'python', 'version': '2026.4.0'},
@@ -214,7 +244,7 @@ void main() {
     expect(find.text('No extensions found.'), findsWidgets);
   });
 
-  testWidgets('disables and enables from the manage menu', (tester) async {
+  testWidgets('disables globally and in the workspace', (tester) async {
     final backend = FakeBackend(
       installed: [
         _installed('esbenp.prettier-vscode', displayName: 'Prettier'),
@@ -226,21 +256,41 @@ void main() {
 
     await tester.tap(find.byTooltip('Manage'));
     await tester.pumpAndSettle();
+    await tester.tap(find.text('Disable (Workspace)'));
+    await tester.pumpAndSettle();
+    expect(
+      backend.calls,
+      contains('setEnabled esbenp.prettier-vscode false workspace'),
+    );
+    expect(find.text('Disabled (Workspace)'), findsOneWidget);
+
+    // Disabled globally, the row only says "Disabled", and the menu offers
+    // to enable it again.
+    await tester.tap(find.byTooltip('Manage'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Disable').last);
     await tester.pumpAndSettle();
-    expect(backend.calls, contains('setEnabled esbenp.prettier-vscode false'));
+    expect(
+      backend.calls,
+      contains('setEnabled esbenp.prettier-vscode false global'),
+    );
     expect(find.text('Disabled'), findsOneWidget);
 
     await tester.tap(find.byTooltip('Manage'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Enable'));
     await tester.pumpAndSettle();
-    expect(backend.calls, contains('setEnabled esbenp.prettier-vscode true'));
-    expect(find.text('Disabled'), findsNothing);
+    expect(
+      backend.calls,
+      contains('setEnabled esbenp.prettier-vscode true global'),
+    );
+    // The workspace still disables it, so the row still says so.
+    expect(find.text('Disabled (Workspace)'), findsOneWidget);
   });
 
   testWidgets('runs the view actions from the title bar', (tester) async {
     var installedFromVsix = 0;
+    var imported = 0;
     final backend = FakeBackend();
     final model = _model(backend);
     await tester.pumpWidget(
@@ -248,6 +298,7 @@ void main() {
         ExtensionsView(
           model: model,
           onInstallFromVsix: () => installedFromVsix++,
+          onImport: () => imported++,
         ),
       ),
     );
@@ -258,6 +309,12 @@ void main() {
     await tester.tap(find.text('Install from VSIX...'));
     await tester.pumpAndSettle();
     expect(installedFromVsix, 1);
+
+    await tester.tap(find.byTooltip('More Actions...'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Import from VS Code...'));
+    await tester.pumpAndSettle();
+    expect(imported, 1);
   });
 
   testWidgets('shows a capability badge for an extension that is not fully '
@@ -265,32 +322,31 @@ void main() {
     final backend = FakeBackend(
       installed: [
         _installed(
-          'acme.night',
-          displayName: 'Night',
-          manifest: {
-            'main': './out/extension.js',
-            'contributes': {
-              'themes': [
-                {'label': 'Night', 'uiTheme': 'vs-dark', 'path': './n.json'},
-              ],
-            },
-          },
+          'acme.tree-and-panel',
+          displayName: 'Tree and Panel',
+          location: 'test/fixtures/extensions/capabilities/tree-and-panel',
         ),
       ],
     );
     final model = _model(backend);
-    await tester.pumpWidget(_app(ExtensionsView(model: model)));
-    await tester.pumpAndSettle();
+    // The analysis reads the folder, so it needs real IO and real time.
+    await tester.runAsync(() async {
+      await model.refreshInstalled();
+      await Future<void>.delayed(const Duration(milliseconds: 300));
+    });
     expect(
-      model.capabilities['acme.night']?.level,
+      model.capabilities['acme.tree-and-panel']?.level,
       ExtensionCapabilityLevel.partial,
     );
+
+    await tester.pumpWidget(_app(ExtensionsView(model: model)));
+    await tester.pumpAndSettle();
     // A row shows only the badge's icon; its tooltip has the words.
     expect(find.text('Partly supported'), findsNothing);
     expect(
       find.byTooltip(
-        'Partly supported: Its themes apply; the rest of it does nothing in '
-        'BaoCode.',
+        'Partly supported: Runs, but some of its UI cannot be shown: '
+        'Morning Mist has no webviews.',
       ),
       findsOneWidget,
     );

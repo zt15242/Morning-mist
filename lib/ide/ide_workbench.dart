@@ -8,6 +8,10 @@ import '../chat/composer/composer_files.dart' show CodeReference, ComposerFile;
 import '../chat/open_editor.dart';
 import '../debug/service/debug_service.dart';
 import '../extensions/theme_extensions.dart';
+import '../extensions/runtime/runtime_status_item.dart';
+import '../extensions/trust/trust_ui.dart';
+import '../extensions/window/quick_input/quick_input_widget.dart';
+import '../extensions/workbench/workspace_extensions.dart';
 import '../keybindings/keybinding_service.dart';
 import '../l10n/l10n.dart';
 import '../settings/user_settings.dart';
@@ -35,6 +39,7 @@ import 'ide_status_bar.dart';
 import 'ide_welcome.dart';
 import 'ide_workspace.dart';
 import 'lsp/lsp_protocol.dart';
+import 'lsp_ui/problems_panel.dart' show IdePanelTab;
 import 'lsp_ui/lsp_convert.dart';
 import 'lsp_ui/workspace_edit.dart';
 import 'markdown/markdown_paste.dart';
@@ -105,6 +110,7 @@ class IdeWorkbench extends StatefulWidget implements WorkbenchOptions {
     this.textSearch = ideSearchText,
     this.extensions,
     this.themeExtensions,
+    this.extensionsApp,
     this.debugService,
     this.commitMessage = ideClaudeCommitMessage,
     this.pinned = false,
@@ -226,6 +232,7 @@ class IdeWorkbench extends StatefulWidget implements WorkbenchOptions {
   /// The color and file icon themes installed, which the Extensions view's
   /// Themes lists and installs; that tab is not there without them.
   final ThemeExtensions? themeExtensions;
+  final ExtensionsApp? extensionsApp;
 
   /// The debugger; the workbench makes the workspace's when null (a fake
   /// in widget tests).
@@ -469,6 +476,7 @@ class IdeWorkbenchState extends State<IdeWorkbench> {
         environment: _host,
         quickInput: _quickInput,
         themes: () => widget.themeExtensions,
+        workspaceExtensions: () => _workspaceExtensions,
         languageServers: () => widget.extensions,
         notify: (message) => _notifications.notify(IdeSeverity.error, message),
       ),
@@ -609,6 +617,11 @@ class IdeWorkbenchState extends State<IdeWorkbench> {
     widget.settings?.addListener(_settingsChanged);
     _restoreView();
     _binding.attach(widget.workspace);
+    _bindWorkspaceExtensions();
+    _quickInput.addListener(_closeExtensionInput);
+    _removeExtensionCommands = _commands.addSource(
+      () => _workspaceExtensions?.palette.commands() ?? const [],
+    );
     _lifecycle = AppLifecycleListener(
       onResume: () => unawaited(_git?.refresh()),
       // The window left: `onFocusChange` and `onWindowChange` save.
@@ -629,6 +642,91 @@ class IdeWorkbenchState extends State<IdeWorkbench> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     _language.localized();
+  }
+
+  WorkspaceExtensions? _workspaceExtensions;
+  VoidCallback? _removeExtensionCommands;
+  StatusbarEntryAccessor? _extensionRuntimeStatus;
+  StatusbarEntryAccessor? _extensionTrustStatus;
+
+  void _closeExtensionInput() {
+    if (_quickInput.isOpen) _workspaceExtensions?.quickInput.hideCurrent();
+  }
+
+  void _bindWorkspaceExtensions() {
+    _extensionRuntimeStatus?.dispose();
+    _extensionRuntimeStatus = null;
+    _extensionTrustStatus?.dispose();
+    _extensionTrustStatus = null;
+    _workspaceExtensions?.dispose();
+    _workspaceExtensions = null;
+    final app = widget.extensionsApp;
+    if (app == null) return;
+    final extensions = _workspaceExtensions = app.workspace(
+      widget.workspace.root,
+      terminals: widget.terminalBackend,
+    );
+    extensions.dialogContext = () => mounted && widget.visible ? context : null;
+    extensions.contextKeys.fallback = _contextKeys.getValue;
+    extensions.palette.reportError = _host.report;
+    extensions.quickInput
+      ..onShow = _quickInput.close
+      ..onHide = _host.focusSoon;
+    extensions.output.onRevealPanel = (preserveFocus) {
+      if (!mounted) return;
+      widget.workspace.layout.panel = IdePanelTab.output;
+      if (!preserveFocus) _host.focusPanel();
+    };
+    _extensionRuntimeStatus = _statusbar.addEntry(
+      'vscode.extensionRuntime',
+      StatusbarAlignment.right,
+      (context) => extensionRuntimeStatusItem(
+        app.runtime.state,
+        l10n: context.l10n,
+        onRetry: () => unawaited(extensions.startHost()),
+      ),
+      changes: app.runtime,
+    );
+    _extensionTrustStatus = _statusbar.addEntry(
+      'vscode.workspaceTrust',
+      StatusbarAlignment.left,
+      (context) {
+        final trust = extensions.trust;
+        if (trust == null) return null;
+        return workspaceTrustStatusItem(
+          trust,
+          context.l10n,
+          onTrust: () => unawaited(trust.requestWorkspaceTrust()),
+        );
+      },
+      changes: extensions,
+    );
+    if (_terminalView.terminals case final terminals?) {
+      extensions.terminals.bind(terminals);
+    }
+    final workspace = widget.workspace;
+    Future<void>? preparing;
+    extensions.prepareHost = () =>
+        preparing ??= extensions.attach(workspace, start: false);
+    unawaited(() async {
+      final installed = await app.installedManifests();
+      if (!mounted || _workspaceExtensions != extensions) return;
+      if (installed.any(
+        (manifest) =>
+            manifest['main'] is String ||
+            manifest['contributes'] is Map &&
+                (manifest['contributes'] as Map).keys.any(
+                  (key) => !const {
+                    'themes',
+                    'iconThemes',
+                    'colors',
+                    'icons',
+                  }.contains(key),
+                ),
+      )) {
+        await extensions.startHost();
+      }
+    }());
   }
 
   /// The keybindings of [IdeWorkbench.commands] the defaults do not have.
@@ -660,9 +758,11 @@ class IdeWorkbenchState extends State<IdeWorkbench> {
       _binding
         ..detach()
         ..attach(widget.workspace);
+      _bindWorkspaceExtensions();
       _scmService.readBranch();
     }
     if (widget.visible && !oldWidget.visible) {
+      unawaited(_workspaceExtensions?.showStartupTrustPrompt());
       _scmService.readBranch();
       _focusSoon();
     }
@@ -678,6 +778,11 @@ class IdeWorkbenchState extends State<IdeWorkbench> {
     _lifecycle?.dispose();
     // A quick pick or input box going with the workbench hides (the color
     // themes one applies the theme it started with again).
+    _removeExtensionCommands?.call();
+    _quickInput.removeListener(_closeExtensionInput);
+    _extensionRuntimeStatus?.dispose();
+    _extensionTrustStatus?.dispose();
+    _workspaceExtensions?.dispose();
     _binding.detach();
     disposeContributions(_contributions);
     _services.dispose();
@@ -838,6 +943,25 @@ class IdeWorkbenchState extends State<IdeWorkbench> {
                   child: IdeNotificationToasts(notifications: _notifications),
                 ),
               ),
+              if (_workspaceExtensions?.quickInput case final input?)
+                ListenableBuilder(
+                  listenable: input,
+                  builder: (context, _) => switch (input.current) {
+                    final current? => Positioned(
+                      left: 0,
+                      right: 0,
+                      top: WindowControls.drawsHeader
+                          ? 0
+                          : AppMetrics.titleBarHeight,
+                      child: ExtensionQuickInputView(
+                        key: ObjectKey(current),
+                        input: current,
+                        service: input,
+                      ),
+                    ),
+                    null => const SizedBox.shrink(),
+                  },
+                ),
               QuickInputPart(
                 service: _quickInput,
                 top: WindowControls.drawsHeader ? 0 : AppMetrics.titleBarHeight,
