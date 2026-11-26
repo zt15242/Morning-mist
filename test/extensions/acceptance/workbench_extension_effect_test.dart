@@ -3,9 +3,11 @@ library;
 
 import 'dart:io';
 
+import 'package:bao_editor/monaco/flutter/editor_surface.dart';
 import 'package:bao_exthost/bao_exthost.dart';
 import 'package:baocode/extensions/workbench/workspace_extensions.dart';
 import 'package:baocode/ide/ide_hover.dart';
+import 'package:baocode/ide/ide_menu.dart';
 import 'package:baocode/ide/ide_workbench.dart';
 import 'package:baocode/ide/ide_workspace.dart';
 import 'package:baocode/ide/lsp/lsp_protocol.dart';
@@ -13,6 +15,7 @@ import 'package:baocode/ide/lsp/language_features.dart';
 import 'package:baocode/ide/services/extensions_view.dart';
 import 'package:baocode/l10n/l10n.dart';
 import 'package:baocode/workspace/workspace.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -53,6 +56,18 @@ void main() {
                 ],
                 'commands': [
                   {'command': 'adaptation.open', 'title': 'Adaptation Action'},
+                  {
+                    'command': 'adaptation.file',
+                    'title': 'Extension File Action',
+                  },
+                  {
+                    'command': 'adaptation.selection',
+                    'title': 'Extension Selection Action',
+                  },
+                  {
+                    'command': 'adaptation.lastPath',
+                    'title': 'Last Action Path',
+                  },
                 ],
                 'menus': {
                   'editor/title': [
@@ -66,6 +81,14 @@ void main() {
                     {
                       'command': 'adaptation.open',
                       'when': 'resourceLangId == adaptation',
+                    },
+                    {
+                      'command': 'adaptation.file',
+                      'when': r'isFileSystemResource && !editorReadonly && !editorHasSelection && editorLangId == adaptation && resource =~ /\.adaptation$/ && fixture:has_target_org',
+                    },
+                    {
+                      'command': 'adaptation.selection',
+                      'when': 'isFileSystemResource && editorHasSelection && fixture:has_target_org',
                     },
                   ],
                 },
@@ -90,6 +113,9 @@ void main() {
 const vscode = require('vscode');
 exports.activate = ({ subscriptions }) => {
   subscriptions.push(vscode.commands.registerCommand('adaptation.open', () => vscode.window.activeTextEditor?.document.languageId));
+  let lastPath;
+  subscriptions.push(vscode.commands.registerCommand('adaptation.file', uri => { lastPath = uri.fsPath; }));
+  subscriptions.push(vscode.commands.registerCommand('adaptation.lastPath', () => lastPath));
   subscriptions.push(vscode.languages.registerHoverProvider('adaptation', {
     provideHover: () => new vscode.Hover('Hover from the extension'),
   }));
@@ -176,6 +202,50 @@ exports.activate = ({ subscriptions }) => {
       ),
       findsOneWidget,
     );
+    List<String> labels({bool selection = false, bool readOnly = false}) =>
+        service
+            .resourceMenu(
+              'editor/context',
+              path,
+              editorHasSelection: selection,
+              editorReadonly: readOnly,
+            )
+            .expand((group) => group.whereType<IdeMenuAction>())
+            .map((action) => action.label)
+            .toList();
+    expect(labels(), isNot(contains('Extension File Action')));
+    await tester.runAsync(
+      () => extensions.commands.executeCommand('setContext', [
+        'fixture:has_target_org',
+        true,
+      ]),
+    );
+    expect(labels(), contains('Extension File Action'));
+    expect(labels(readOnly: true), isNot(contains('Extension File Action')));
+    expect(labels(selection: true), contains('Extension Selection Action'));
+    expect(labels(selection: true), isNot(contains('Extension File Action')));
+    await tester.runAsync(() async {
+      await tester.tapAt(
+        tester.getTopLeft(find.byType(EditorSurface)) + const Offset(70, 14),
+        buttons: kSecondaryMouseButton,
+        kind: PointerDeviceKind.mouse,
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.text('Extension File Action'), findsOneWidget);
+      await tester.tap(find.text('Extension File Action'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      await eventually(
+        'right-click command received the file URI',
+        () => extensions.commands.executeCommand('adaptation.lastPath'),
+        timeout: const Duration(seconds: 5),
+      );
+      expect(
+        await extensions.commands.executeCommand('adaptation.lastPath'),
+        path,
+      );
+    });
     await tester.runAsync(() async {
       await tester.tap(
         find.byKey(const ValueKey('ide.activity.extensionViews')),

@@ -83,7 +83,11 @@ class EditorPart extends StatelessWidget {
         : const <IdeCommand>[];
     final List<MenuGroup> extensionActions =
         !pageShown && active != null && active.isFile
-        ? extensions.resourceMenuGroups('editor/title', active.path)
+        ? extensions.resourceMenuGroups(
+            'editor/title',
+            active.path,
+            editorReadonly: active.readOnly,
+          )
         : const [];
     final dockedToolbar =
         debug != null && debug.settings().toolBarLocation == 'docked';
@@ -231,8 +235,13 @@ class EditorPart extends StatelessWidget {
                                   key: editors.editorKey,
                                   workspace: workspace,
                                   active: active,
-                                  extensionMenu: (path) => extensions
-                                      .resourceMenu('editor/context', path),
+                                  extensionMenu: (document, hasSelection) =>
+                                      extensions.resourceMenu(
+                                        'editor/context',
+                                        document.path,
+                                        editorHasSelection: hasSelection,
+                                        editorReadonly: document.readOnly,
+                                      ),
                                   onError: host.report,
                                   onLspStatus: (_) {},
                                   onPositionChanged: editors.positionChanged,

@@ -10,6 +10,7 @@ import 'package:bao_exthost/bao_exthost.dart' show VsUri;
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 
+import '../../extensions/contextkey/workbench_context_keys.dart';
 import '../../extensions/theme_extensions.dart';
 import '../../extensions/menus/menu_service.dart';
 import '../../extensions/menus/menu_widgets.dart';
@@ -145,12 +146,16 @@ class ExtensionsViewService extends ChangeNotifier {
     String path, {
     bool directory = false,
     List<String>? selected,
+    bool? editorHasSelection,
+    bool? editorReadonly,
   }) => [
     for (final group in resourceMenuGroups(
       menu,
       path,
       directory: directory,
       selected: selected,
+      editorHasSelection: editorHasSelection,
+      editorReadonly: editorReadonly,
     ))
       [for (final action in group.actions) ?ideMenuEntryOf(action)],
   ];
@@ -160,20 +165,20 @@ class ExtensionsViewService extends ChangeNotifier {
     String path, {
     bool directory = false,
     List<String>? selected,
+    bool? editorHasSelection,
+    bool? editorReadonly,
   }) {
     final extensions = workspaceExtensions;
     if (extensions == null) return const [];
-    final uri = VsUri.file(path);
+    final windows = extensions.labels.windows;
+    final uri = VsUri.file(path, windows: windows);
     final language = extensions.languageIdFor(path);
     final context = extensions.contextKeys.createOverlay({
-      'resource': uri.toString(),
-      'resourceScheme': uri.scheme,
-      'resourceFilename': p.basename(path),
-      'resourceBasename': p.basenameWithoutExtension(path),
-      'resourceExtname': p.extension(path),
-      'resourcePath': path,
-      'resourceLangId': language,
+      ...resourceContextKeys(uri, languageId: language, windows: windows),
+      'resourceBasename': p.posix.basenameWithoutExtension(uri.path),
       if (menu.startsWith('editor/')) 'editorLangId': language,
+      'editorHasSelection': ?editorHasSelection,
+      'editorReadonly': ?editorReadonly,
       'explorerResourceIsFolder': directory,
     });
     return extensions.menus.menuItems(
@@ -181,7 +186,8 @@ class ExtensionsViewService extends ChangeNotifier {
       context,
       args: [
         uri,
-        if (selected != null) [for (final path in selected) VsUri.file(path)],
+        if (selected != null)
+          [for (final path in selected) VsUri.file(path, windows: windows)],
       ],
     );
   }

@@ -134,7 +134,11 @@ class IdeEditor extends StatefulWidget {
 
   final IdeWorkspace workspace;
   final IdeDocument active;
-  final List<List<IdeMenuEntry>> Function(String path)? extensionMenu;
+  final List<List<IdeMenuEntry>> Function(
+    IdeDocument document,
+    bool hasSelection,
+  )?
+  extensionMenu;
   final ValueChanged<Object> onError;
   final ValueChanged<String> onLspStatus;
   final ValueChanged<IdeEditorPosition> onPositionChanged;
@@ -2317,7 +2321,7 @@ class IdeEditorState extends State<IdeEditor> {
               ),
           ],
           if (widget.active.isFile)
-            ...?widget.extensionMenu?.call(widget.active.path),
+            ...?widget.extensionMenu?.call(widget.active, hasSelection),
           [wordWrapMenuAction(l10n)],
           [
             if (showCommands != null)
