@@ -22,6 +22,10 @@ import '../../workspace/window_controls.dart';
 import '../extensions/ide_extensions.dart';
 import '../extensions/ide_extensions_view.dart';
 import '../ide_quick_input.dart';
+import '../ide_workspace.dart';
+
+import 'package:bao_editor/monaco/vs/base/common/glob.dart' as glob;
+
 import '../ide_menu.dart';
 import '../workbench/contributions.dart';
 import '../workbench/environment.dart';
@@ -165,6 +169,76 @@ class ExtensionsViewService extends ChangeNotifier {
       ))
         [for (final action in group.actions) ?ideMenuEntryOf(action)],
     ];
+  }
+
+  Map<String, String> customEditors(IdeDocument document) {
+    final extensions = workspaceExtensions;
+    if (extensions == null ||
+        !extensions.webviews.renderLive ||
+        !document.isFile ||
+        document.readOnly ||
+        document.diff != null) {
+      return const {};
+    }
+    final matches = <String, String>{};
+    for (final extension in extensions.commands.extensions) {
+      final editors = extension.contributes['customEditors'];
+      if (editors is! List) continue;
+      for (final entry in editors) {
+        if (entry case {
+          'viewType': final String id,
+          'selector': final List selectors,
+        }) {
+          if (selectors.any((selector) {
+            if (selector case {'filenamePattern': final String pattern}) {
+              return glob.match(pattern, p.basename(document.path));
+            }
+            return false;
+          })) {
+            matches[id] = '${entry['displayName'] ?? id}';
+          }
+        }
+      }
+    }
+    return matches;
+  }
+
+  void pickCustomEditor(IdeDocument document) {
+    final editors = customEditors(document);
+    if (editors.isEmpty) return;
+    final items = {
+      for (final MapEntry(:key, :value) in editors.entries)
+        IdeQuickPickItem(label: value, description: key): key,
+    };
+    quickInput.showModel(
+      IdeQuickPick(
+        items: items.keys.toList(),
+        onDidAccept: (item) {
+          final id = items[item];
+          if (id != null) unawaited(_openCustomEditor(document, id));
+        },
+      ),
+    );
+  }
+
+  Future<void> _openCustomEditor(IdeDocument document, String id) async {
+    final extensions = workspaceExtensions;
+    if (extensions == null) return;
+    try {
+      await extensions.activateCustomEditor(id);
+      if (extensions != workspaceExtensions) return;
+      final provider = extensions.webviews.textEditors[id];
+      if (provider == null) throw StateError(id);
+      final surface = await provider(document.path, document.name);
+      if (extensions != workspaceExtensions) {
+        await surface.closePanel?.call();
+        return;
+      }
+      surface.saveDocument = () => extensions.workspaceSave(document);
+      extensions.webviews.reveal(surface.handle);
+    } catch (error) {
+      host.report(error);
+    }
   }
 
   bool get canInstall => workspaceExtensions != null || themes != null;

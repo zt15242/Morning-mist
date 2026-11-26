@@ -650,6 +650,13 @@ final class WorkspaceExtensions extends ChangeNotifier {
   ];
 
   /// [event] sent to every host.
+  Future<void> workspaceSave(IdeDocument document) async {
+    await _workspace?.save(document);
+  }
+
+  Future<void> activateCustomEditor(String viewType) =>
+      _activateByEvent('onCustomEditor:$viewType');
+
   Future<void> _activateByEvent(String event) =>
       Future.wait([for (final host in hosts) host.activateByEvent(event)]);
 

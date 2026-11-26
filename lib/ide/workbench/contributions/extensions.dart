@@ -4,6 +4,7 @@
 
 import 'dart:async';
 
+import '../../../l10n/l10n.dart';
 import '../../ide_workspace.dart';
 import '../../services/editors.dart';
 import '../../services/extensions_view.dart';
@@ -36,6 +37,25 @@ class ExtensionsContribution extends WorkbenchRegistrations {
           title: 'Install from VSIX...',
           precondition: (_) => extensions.canInstall,
           run: (_, _) => unawaited(extensions.installFromVsix()),
+        ),
+        WorkbenchAction(
+          id: 'workbench.action.reopenWith',
+          category: 'File',
+          title: 'Open with Extension Editor...',
+          titleFor: (services) =>
+              (services.get<WorkbenchHost>().context?.l10n ??
+                      englishLocalizations)
+                  .extsOpenWithExtensionEditor,
+          precondition: (services) =>
+              switch (services.find<IdeWorkspace>()?.active) {
+                final doc? => extensions.customEditors(doc).isNotEmpty,
+                null => false,
+              },
+          run: (services, _) {
+            if (services.find<IdeWorkspace>()?.active case final doc?) {
+              extensions.pickCustomEditor(doc);
+            }
+          },
         ),
         WorkbenchAction(
           id: 'workbench.action.selectIconTheme',

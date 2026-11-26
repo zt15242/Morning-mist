@@ -97,7 +97,8 @@ class _ExtensionIconState extends State<ExtensionIcon> {
       color: themeColors['descriptionForeground'],
     );
     Widget image(Uint8List bytes) {
-      final svg = bytes.length > 4 &&
+      final svg =
+          bytes.length > 4 &&
           String.fromCharCodes(bytes.take(256)).contains('<svg');
       return svg
           ? SvgPicture.memory(bytes, width: size, height: size)
@@ -126,7 +127,10 @@ class _ExtensionIconState extends State<ExtensionIcon> {
     } else {
       child = fallback();
     }
-    return SizedBox.square(dimension: size, child: Center(child: child));
+    return SizedBox.square(
+      dimension: size,
+      child: Center(child: child),
+    );
   }
 }
 
@@ -150,8 +154,8 @@ class _ExtensionIconState extends State<ExtensionIcon> {
   ExtensionCapabilityLevel.needsWebview => (
     label: l10n.extsCapabilityNeedsWebview,
     detail: l10n.extsCapabilityNeedsWebviewDetail,
-    icon: Codicons.circleSlash,
-    color: themeColors['errorForeground'],
+    icon: Codicons.warning,
+    color: themeColors['editorWarning.foreground'],
   ),
 };
 
@@ -269,7 +273,8 @@ class CapabilitySummary extends StatelessWidget {
     final text = themeColors['foreground'];
     final muted = themeColors['descriptionForeground'];
     final reasons = [
-      for (final finding in report.findings) capabilityFindingText(l10n, finding),
+      for (final finding in report.findings)
+        capabilityFindingText(l10n, finding),
     ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -294,10 +299,17 @@ class CapabilitySummary extends StatelessWidget {
               children: [
                 Padding(
                   padding: const EdgeInsets.only(top: 1, right: 6),
-                  child: Icon(Codicons.circleSmallFilled, size: 12, color: muted),
+                  child: Icon(
+                    Codicons.circleSmallFilled,
+                    size: 12,
+                    color: muted,
+                  ),
                 ),
                 Expanded(
-                  child: Text(reason, style: TextStyle(fontSize: 12, color: text)),
+                  child: Text(
+                    reason,
+                    style: TextStyle(fontSize: 12, color: text),
+                  ),
                 ),
               ],
             ),
@@ -396,7 +408,8 @@ class _ExtensionActionButtonState extends State<ExtensionActionButton> {
               decoration: BoxDecoration(
                 color: background,
                 border: Border.all(
-                  color: colors.get('extensionButton.border') ??
+                  color:
+                      colors.get('extensionButton.border') ??
                       Colors.transparent,
                 ),
                 borderRadius: BorderRadius.circular(4),
@@ -505,7 +518,8 @@ class ExtensionRating extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = themeColors.get('extensionIcon.starForeground') ??
+    final color =
+        themeColors.get('extensionIcon.starForeground') ??
         const Color(0xFFFF8E00);
     return Row(
       mainAxisSize: MainAxisSize.min,

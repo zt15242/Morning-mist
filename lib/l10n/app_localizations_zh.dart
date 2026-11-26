@@ -8366,7 +8366,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get extsCapabilityPartial => '部分支持';
 
   @override
-  String get extsCapabilityPartialDetail => '扩展可以运行，部分需要 Webview 的界面暂不可用。';
+  String get extsCapabilityPartialDetail => '部分功能依赖 Webview 或编辑器 API，兼容性因功能而异。';
 
   @override
   String extsEngineIncompatible(String current, String requested) {
@@ -14681,7 +14681,8 @@ class AppLocalizationsZh extends AppLocalizations {
   String get extsCapabilityNeedsWebview => '需要 webview';
 
   @override
-  String get extsCapabilityNeedsWebviewDetail => '此扩展的主要界面需要 Webview。';
+  String get extsCapabilityNeedsWebviewDetail =>
+      '此扩展的主要界面需要 Webview，可用功能取决于桌面平台和编辑器 API。';
 
   @override
   String get extsCapabilityFromManifest => '仅根据清单判断，未读取代码。';
@@ -15192,4 +15193,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String extsVsixDependencies(String dependencies) {
     return '此扩展依赖 $dependencies。如果 Open VSX 无法自动安装，请单独导入对应的 VSIX。';
   }
+
+  @override
+  String get extsOpenWithExtensionEditor => '使用扩展编辑器打开...';
 }

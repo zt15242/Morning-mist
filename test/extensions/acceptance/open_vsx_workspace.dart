@@ -126,6 +126,7 @@ final class OpenVsxWorkspace {
     SshHost? remote,
     String? remoteProject,
     ExtensionRuntimeService? runtime,
+    bool renderWebviews = false,
     Future<Map<String, String>> Function()? serverEnvironment,
   }) async {
     // The binding answers every HttpClient request with a 400: these
@@ -218,6 +219,7 @@ final class OpenVsxWorkspace {
     );
     addTearDown(parity.cancel);
 
+    extensions.webviews.renderLive = renderWebviews;
     await extensions.attach(workspace, start: false);
     await extensions.trust!.setWorkspaceTrust(true);
     for (final id in extensionIds) {

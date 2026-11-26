@@ -345,8 +345,8 @@ void main() {
     expect(find.text('Partly supported'), findsNothing);
     expect(
       find.byTooltip(
-        'Partly supported: Runs, but some of its UI cannot be shown: '
-        'Morning Mist has no webviews.',
+        'Partly supported: Some features require a Webview or editor API. '
+        'Compatibility varies by feature.',
       ),
       findsOneWidget,
     );

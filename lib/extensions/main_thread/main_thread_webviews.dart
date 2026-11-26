@@ -3,29 +3,8 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-// The Webview degradation (the goal's 五.15): BaoCode does not implement
-// Webviews, so the shapes below accept what extensions ask for, never show
-// one, and say so once per extension instead of quietly swallowing it.
-// Upstream behavior each degrades: VS Code
-// 08d4889f9ec4a1685d257b9b95de036c8e1ce1e5 (1.135.0)
-// src/vs/workbench/api/browser/mainThreadWebviews.ts (`$setHtml`,
-// `$setOptions`, `$postMessage`), mainThreadWebviewPanels.ts
-// (`$createWebviewPanel`, `$reveal`, `$setTitle`, `$setIconPath`,
-// `$registerSerializer`, `$disposeWebview`), mainThreadWebviewViews.ts
-// (`$registerWebviewViewProvider`, title, description, badge, `$show`) and
-// mainThreadCustomEditors.ts (`$registerTextEditorProvider`,
-// `$registerCustomEditorProvider`, `$onDidEdit`, `$onContentChange`), with
-// the extension hosts' sides: extHostWebviewPanels.ts (a panel's
-// `dispose()` runs `$onDidDisposeWebviewPanel`, which its `onDidDispose`
-// listener needs), extHostWebviewViews.ts and extHostCustomEditors.ts.
-//
-// Deviations, all intended by the goal: `$createWebviewPanel` answers
-// `$onDidDisposeWebviewPanel` immediately (the extension sees a panel that
-// closed at once); `$postMessage` answers false; `$onDidChangeWebviewPanelViewStates`
-// is accepted and ignored (no panel is left to change); a custom editor's
-// documents open in BaoCode's own editors; every degradation is recorded
-// (webview_placeholders.dart) for a placeholder and one line in the Output
-// panel's "Extension Host" channel.
+// Main-thread actors for extension Webviews. Custom editors use the text
+// editor fallback until their document lifecycle is wired to the workbench.
 
 import 'dart:async';
 
@@ -51,31 +30,34 @@ final class MainThreadWebviews extends MainThreadWebviewsUnsupported {
   static RpcActor customer(MainThreadContext context) =>
       MainThreadWebviewsActor(MainThreadWebviews(_uiOf(context)));
 
-  /// Remembered, never rendered.
   @override
-  void $setHtml(String handle, String value) => _ui.placeholders.html[handle] = value;
+  void $setHtml(String handle, String value) =>
+      _ui.placeholders.setHtml(handle, value);
 
-  /// Remembered, never rendered.
   @override
   void $setOptions(String handle, Map<String, Object?> options) =>
-      _ui.placeholders.options[handle] = options;
+      _ui.placeholders.setOptions(handle, options);
 
-  /// A message cannot be delivered: there is no webview to deliver it to.
   @override
   Future<bool> $postMessage(
     String handle,
     String value,
     List<RpcBuffer> buffers,
-  ) async => false;
+  ) async {
+    if (buffers.isNotEmpty) return false;
+    final surface = _ui.placeholders.placeholder(handle);
+    return surface?.postMessage(value) ?? false;
+  }
 }
 
-final class MainThreadWebviewPanels
-    extends MainThreadWebviewPanelsUnsupported {
-  MainThreadWebviewPanels(this._ui, this._notices, this._proxy);
+final class MainThreadWebviewPanels extends MainThreadWebviewPanelsUnsupported {
+  MainThreadWebviewPanels(this._ui, this._notices, this._proxy, this._webviews);
 
   final ExtensionWebviewUi _ui;
   final ExtensionWebviewNotices _notices;
   final ExtHostWebviewPanelsProxy _proxy;
+  final ExtHostWebviewsProxy _webviews;
+  final _handles = <String>{};
 
   /// The serializers extensions registered; never run (a restored panel is
   /// disposed like a fresh one).
@@ -83,13 +65,18 @@ final class MainThreadWebviewPanels
 
   static RpcActor customer(MainThreadContext context) {
     final ui = _uiOf(context);
-    return MainThreadWebviewPanelsActor(
-      MainThreadWebviewPanels(
-        ui,
-        ExtensionWebviewNotices(ui),
-        ExtHostWebviewPanelsProxy(context.rpc),
-      ),
+    final actor = MainThreadWebviewPanels(
+      ui,
+      ExtensionWebviewNotices(ui),
+      ExtHostWebviewPanelsProxy(context.rpc),
+      ExtHostWebviewsProxy(context.rpc),
     );
+    context.onDispose(() {
+      for (final handle in actor._handles) {
+        ui.placeholders.remove(handle);
+      }
+    });
+    return MainThreadWebviewPanelsActor(actor);
   }
 
   @override
@@ -107,6 +94,20 @@ final class MainThreadWebviewPanels
       viewType: viewType,
       title: title,
     );
+    _handles.add(handle);
+    if (_ui.placeholders.renderLive) {
+      if (initData['webviewOptions'] case final Map options) {
+        _ui.placeholders.setOptions(handle, options.cast());
+      }
+      placeholder.receiveMessage = (value) =>
+          _webviews.$onMessage(handle, value, const RpcObjectWithBuffers([]));
+      placeholder.closePanel = () async {
+        $disposeWebview(handle);
+        await _proxy.$onDidDisposeWebviewPanel(handle);
+      };
+      _ui.placeholders.reveal(handle);
+      return;
+    }
     _notices.notice(
       extension,
       _ui.strings.windowWebviewPanelDetail(placeholder.extensionName, title),
@@ -120,7 +121,10 @@ final class MainThreadWebviewPanels
   }
 
   @override
-  void $disposeWebview(String handle) => _ui.placeholders.remove(handle);
+  void $disposeWebview(String handle) {
+    _handles.remove(handle);
+    _ui.placeholders.remove(handle);
+  }
 
   @override
   void $reveal(String handle, Map<String, Object?> showOptions) =>
@@ -128,8 +132,7 @@ final class MainThreadWebviewPanels
 
   @override
   void $setTitle(String handle, String value) {
-    _ui.placeholders.title[handle] = value;
-    _ui.placeholders.placeholder(handle)?.title = value;
+    _ui.placeholders.setTitle(handle, value);
   }
 
   @override
@@ -145,16 +148,70 @@ final class MainThreadWebviewPanels
 }
 
 final class MainThreadWebviewViews extends MainThreadWebviewViewsUnsupported {
-  MainThreadWebviewViews(this._ui);
+  MainThreadWebviewViews(this._ui, this._proxy, this._webviews);
 
   final ExtensionWebviewUi _ui;
+  final ExtHostWebviewViewsProxy _proxy;
+  final ExtHostWebviewsProxy _webviews;
+  final _resolved = <String>{};
 
   /// The view types of the providers that registered
   /// (`$registerWebviewViewProvider`).
   final Map<String, Map<String, Object?>> providers = {};
 
-  static RpcActor customer(MainThreadContext context) =>
-      MainThreadWebviewViewsActor(MainThreadWebviewViews(_uiOf(context)));
+  static RpcActor customer(MainThreadContext context) {
+    final actor = MainThreadWebviewViews(
+      _uiOf(context),
+      ExtHostWebviewViewsProxy(context.rpc),
+      ExtHostWebviewsProxy(context.rpc),
+    );
+    if (actor._ui.placeholders.renderLive) {
+      context.listen(
+        actor._ui.placeholders.visibility.listen((event) {
+          final (type, visible) = event;
+          if (actor.providers.containsKey(type)) {
+            actor._setVisible(type, visible);
+          }
+        }),
+      );
+    }
+    context.onDispose(() {
+      for (final type in actor.providers.keys) {
+        actor._ui.placeholders.remove('view:$type');
+      }
+    });
+    return MainThreadWebviewViewsActor(actor);
+  }
+
+  void _setVisible(String type, bool visible) {
+    final surface = _ui.placeholders.viewOf(type);
+    if (surface == null) return;
+    final handle = surface.handle;
+    if (visible && _resolved.add(type)) {
+      unawaited(
+        _proxy
+            .$resolveWebviewView(
+              handle,
+              type,
+              _ui.placeholders.title[handle],
+              surface.state,
+            )
+            .catchError((Object error) {
+              _resolved.remove(type);
+              _ui.placeholders.logLine(
+                'Could not open extension Webview $type: $error',
+              );
+              _ui.placeholders.setFailure(handle, '$error');
+            }),
+      );
+    } else if (_resolved.contains(type)) {
+      unawaited(
+        _proxy
+            .$onDidChangeWebviewViewVisibility(handle, visible)
+            .catchError((Object _) {}),
+      );
+    }
+  }
 
   @override
   void $registerWebviewViewProvider(
@@ -163,20 +220,36 @@ final class MainThreadWebviewViews extends MainThreadWebviewViewsUnsupported {
     Map<String, Object?> options,
   ) {
     providers[viewType] = extension;
-    _ui.placeholders.showView(
+    final surface = _ui.placeholders.showView(
       viewType: viewType,
       extension: extension,
       title: viewType,
     );
+    if (!_ui.placeholders.renderLive) return;
+    surface.receiveMessage = (value) => _webviews.$onMessage(
+      surface.handle,
+      value,
+      const RpcObjectWithBuffers([]),
+    );
+    if (_ui.placeholders.viewVisible(viewType)) _setVisible(viewType, true);
   }
 
   @override
-  void $unregisterWebviewViewProvider(String viewType) =>
-      providers.remove(viewType);
+  void $unregisterWebviewViewProvider(String viewType) {
+    providers.remove(viewType);
+    final surface = _ui.placeholders.viewOf(viewType);
+    if (surface == null) return;
+    if (_resolved.remove(viewType)) {
+      unawaited(
+        _proxy.$disposeWebviewView(surface.handle).catchError((Object _) {}),
+      );
+    }
+    _ui.placeholders.remove(surface.handle);
+  }
 
   @override
   void $setWebviewViewTitle(String handle, String? value) =>
-      _ui.placeholders.title[handle] = value;
+      _ui.placeholders.setTitle(handle, value);
 
   @override
   void $setWebviewViewDescription(String handle, String? value) =>
@@ -191,9 +264,15 @@ final class MainThreadWebviewViews extends MainThreadWebviewViewsUnsupported {
       _ui.placeholders.reveal(handle);
 }
 
-final class MainThreadCustomEditors
-    extends MainThreadCustomEditorsUnsupported {
-  MainThreadCustomEditors(this._ui);
+final class MainThreadCustomEditors extends MainThreadCustomEditorsUnsupported {
+  MainThreadCustomEditors(this._ui, this._proxy, this._webviews, this._panels);
+
+  final ExtHostCustomEditorsProxy _proxy;
+  final ExtHostWebviewsProxy _webviews;
+  final ExtHostWebviewPanelsProxy _panels;
+  final _handles = <String>{};
+  final _textProviders = <String>{};
+  int _next = 0;
 
   final ExtensionWebviewUi _ui;
 
@@ -201,8 +280,60 @@ final class MainThreadCustomEditors
   /// BaoCode's own editors.
   final Map<String, Map<String, Object?>> providers = {};
 
-  static RpcActor customer(MainThreadContext context) =>
-      MainThreadCustomEditorsActor(MainThreadCustomEditors(_uiOf(context)));
+  static RpcActor customer(MainThreadContext context) {
+    final actor = MainThreadCustomEditors(
+      _uiOf(context),
+      ExtHostCustomEditorsProxy(context.rpc),
+      ExtHostWebviewsProxy(context.rpc),
+      ExtHostWebviewPanelsProxy(context.rpc),
+    );
+    context.onDispose(() {
+      for (final type in actor._textProviders) {
+        actor._ui.placeholders.textEditors.remove(type);
+      }
+      for (final handle in actor._handles) {
+        actor._ui.placeholders.remove(handle);
+      }
+    });
+    return MainThreadCustomEditorsActor(actor);
+  }
+
+  Future<WebviewPlaceholder> _openTextEditor(
+    Map<String, Object?> extension,
+    String viewType,
+    String path,
+    String title,
+  ) async {
+    final handle = 'custom-text-editor:${_next++}';
+    final model = _ui.placeholders;
+    final surface = model.showTextEditor(
+      handle: handle,
+      viewType: viewType,
+      extension: extension,
+      title: title,
+    );
+    _handles.add(handle);
+    surface.receiveMessage = (value) =>
+        _webviews.$onMessage(handle, value, const RpcObjectWithBuffers([]));
+    surface.closePanel = () async {
+      if (!_handles.remove(handle)) return;
+      model.remove(handle);
+      await _panels.$onDidDisposeWebviewPanel(handle);
+    };
+    try {
+      await _proxy.$resolveCustomEditor(VsUri.file(path), handle, viewType, {
+        'title': title,
+        'contentOptions': <String, Object?>{},
+        'options': <String, Object?>{},
+        'active': true,
+      }, 0);
+      return surface;
+    } catch (error) {
+      _handles.remove(handle);
+      model.remove(handle);
+      rethrow;
+    }
+  }
 
   @override
   void $registerTextEditorProvider(
@@ -211,7 +342,15 @@ final class MainThreadCustomEditors
     Map<String, Object?> options,
     Map<String, Object?> capabilities,
     bool serializeBuffersForPostMessage,
-  ) => _register(extension, viewType);
+  ) {
+    if (!_ui.placeholders.renderLive) {
+      _register(extension, viewType);
+      return;
+    }
+    _textProviders.add(viewType);
+    _ui.placeholders.textEditors[viewType] = (path, title) =>
+        _openTextEditor(extension, viewType, path, title);
+  }
 
   @override
   void $registerCustomEditorProvider(
@@ -235,7 +374,11 @@ final class MainThreadCustomEditors
   }
 
   @override
-  void $unregisterEditorProvider(String viewType) => providers.remove(viewType);
+  void $unregisterEditorProvider(String viewType) {
+    providers.remove(viewType);
+    _textProviders.remove(viewType);
+    _ui.placeholders.textEditors.remove(viewType);
+  }
 
   /// A resolved custom editor's edits: it never opened one.
   @override

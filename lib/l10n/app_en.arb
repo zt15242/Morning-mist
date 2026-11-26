@@ -6457,7 +6457,7 @@
   "extsCapabilityFull": "Fully supported",
   "extsCapabilityFullDetail": "Runs on the extension host without webviews.",
   "extsCapabilityPartial": "Partly supported",
-  "extsCapabilityPartialDetail": "Runs, but some of its UI cannot be shown: Morning Mist has no webviews.",
+  "extsCapabilityPartialDetail": "Some features require a Webview or editor API. Compatibility varies by feature.",
   "extsEngineIncompatible": "Needs VS Code {requested}; this is {current}.",
   "@extsEngineIncompatible": {
     "placeholders": {
@@ -10022,7 +10022,7 @@
   "extMenusMoreActions": "More Actions...",
   "extMenusPaletteCategory": "Extensions",
   "extsCapabilityNeedsWebview": "Needs a webview",
-  "extsCapabilityNeedsWebviewDetail": "Its main features are drawn in a webview, which Morning Mist does not have.",
+  "extsCapabilityNeedsWebviewDetail": "Its main features require a Webview. Available features depend on the desktop platform and editor API.",
   "extsCapabilityFromManifest": "From the manifest only; the code was not read.",
   "extsFindingWebviewView": "Webview view: {name}",
   "@extsFindingWebviewView": {
@@ -10546,5 +10546,6 @@
         "type": "String"
       }
     }
-  }
+  },
+  "extsOpenWithExtensionEditor": "Open with Extension Editor..."
 }

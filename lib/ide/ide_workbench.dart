@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:bao_editor/monaco/vs/editor/common/core/position.dart';
+import 'package:flutter/foundation.dart'
+    show kIsWeb, defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 
 import '../base/mouse_navigation.dart';
@@ -9,6 +11,8 @@ import '../chat/open_editor.dart';
 import '../debug/service/debug_service.dart';
 import '../extensions/theme_extensions.dart';
 import '../extensions/runtime/runtime_status_item.dart';
+import '../extensions/window/extension_webview.dart';
+import '../extensions/window/webview_placeholders.dart';
 import '../extensions/trust/trust_ui.dart';
 import '../extensions/window/quick_input/quick_input_widget.dart';
 import '../extensions/workbench/workspace_extensions.dart';
@@ -672,6 +676,17 @@ class IdeWorkbenchState extends State<IdeWorkbench> {
       extensions.languages,
       widget.workspace.nativeLanguages,
     );
+    extensions.webviews.renderLive =
+        !kIsWeb &&
+        (defaultTargetPlatform == TargetPlatform.macOS ||
+            defaultTargetPlatform == TargetPlatform.windows);
+    extensions.webviews.onRevealView = (id) {
+      if (mounted && widget.visible) unawaited(extensions.views.openView(id));
+    };
+    extensions.webviews.onRevealPanel = (surface) {
+      if (!mounted || !widget.visible) return;
+      unawaited(_showWebviewPanel(extensions.webviews, surface));
+    };
     _extensionsView.bindViews(extensions);
     extensions.dialogContext = () => mounted && widget.visible ? context : null;
     extensions.contextKeys.fallback = _contextKeys.getValue;
@@ -734,6 +749,75 @@ class IdeWorkbenchState extends State<IdeWorkbench> {
         await extensions.startHost();
       }
     }());
+  }
+
+  final _webviewRoutes = <WebviewPlaceholder, DialogRoute<void>>{};
+
+  Future<void> _showWebviewPanel(
+    ExtensionWebviewPlaceholders model,
+    WebviewPlaceholder surface,
+  ) async {
+    if (_webviewRoutes.containsKey(surface)) return;
+    final navigator = Navigator.of(context);
+    final route = DialogRoute<void>(
+      context: context,
+      builder: (context) => ListenableBuilder(
+        listenable: model,
+        builder: (context, _) => Dialog(
+          child: SizedBox(
+            width: 1000,
+            height: 720,
+            child: Column(
+              children: [
+                ListTile(
+                  title: Text(surface.title),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (surface.saveDocument case final save?)
+                        TextButton(
+                          onPressed: () =>
+                              unawaited(save().catchError(_host.report)),
+                          child: Text(context.l10n.commonSave),
+                        ),
+                      IconButton(
+                        tooltip: context.l10n.commonClose,
+                        onPressed: () => Navigator.of(context).pop(),
+                        icon: const Icon(Icons.close),
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: ExtensionWebview(model: model, surface: surface),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+    _webviewRoutes[surface] = route;
+    void modelChanged() {
+      if (model.placeholder(surface.handle) != surface && route.isActive) {
+        navigator.removeRoute(route);
+      }
+    }
+
+    model.addListener(modelChanged);
+    try {
+      await navigator.push(route);
+    } finally {
+      model.removeListener(modelChanged);
+      _webviewRoutes.remove(surface);
+      if (model.placeholder(surface.handle) == surface) {
+        try {
+          await surface.closePanel?.call();
+        } catch (error) {
+          if (mounted) _host.report(error);
+        }
+      }
+    }
   }
 
   /// The keybindings of [IdeWorkbench.commands] the defaults do not have.

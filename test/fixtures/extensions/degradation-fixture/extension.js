@@ -9,11 +9,17 @@ function activate(context) {
   context.subscriptions.push(
     vscode.window.registerWebviewViewProvider('degradation.webviewView', {
       resolveWebviewView(view) {
-        view.webview.html = '<p>never shown</p>';
+        view.webview.options = { enableScripts: true };
+        view.webview.html = '<p>fixture sidebar</p>';
+        view.webview.onDidReceiveMessage(message => { state.viewMessage = message; });
+        view.webview.postMessage({ ready: true });
       }
     }),
     vscode.window.registerCustomEditorProvider('degradation.preview', {
-      resolveCustomTextEditor() {}
+      resolveCustomTextEditor(document, panel) {
+        panel.webview.options = { enableScripts: true };
+        panel.webview.html = '<p>' + document.getText() + '</p>';
+      }
     }),
     vscode.workspace.registerNotebookSerializer('degradation-notebook', {
       deserializeNotebook() {

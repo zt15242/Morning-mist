@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../extensions/views/tree_view_widget.dart';
 import '../../../extensions/views/view_contributions.dart';
 import '../../../extensions/workbench/workspace_extensions.dart';
+import '../../../extensions/window/extension_webview.dart';
 import '../../../l10n/l10n.dart';
 import '../../../workspace/editor_launcher.dart';
 import '../../services/extensions_view.dart';
@@ -19,11 +20,33 @@ class ExtensionViewsPart extends StatefulWidget {
 
 class _ExtensionViewsPartState extends State<ExtensionViewsPart> {
   WorkspaceExtensions? _visibleIn;
+  Set<String> _visibleWebviews = const {};
 
-  void _sync(WorkspaceExtensions? extensions, Set<String> visible) {
+  void _sync(
+    WorkspaceExtensions? extensions,
+    List<ExtensionViewDescriptor> views,
+  ) {
+    final visible = {for (final view in views) view.id};
+    final webviews = {
+      for (final view in views)
+        if (view.type == ExtensionViewType.webview) view.id,
+    };
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted || widget.service.workspaceExtensions != extensions) return;
-      if (_visibleIn != extensions) _visibleIn?.views.setVisibleViews({});
+      if (_visibleIn != extensions) {
+        _visibleIn?.views.setVisibleViews({});
+        for (final id in _visibleWebviews) {
+          _visibleIn?.webviews.setViewVisible(id, false);
+        }
+        _visibleWebviews = const {};
+      }
+      for (final id in _visibleWebviews.difference(webviews)) {
+        extensions?.webviews.setViewVisible(id, false);
+      }
+      for (final id in webviews.difference(_visibleWebviews)) {
+        extensions?.webviews.setViewVisible(id, true);
+      }
+      _visibleWebviews = webviews;
       _visibleIn = extensions;
       extensions?.views.setVisibleViews(visible);
     });
@@ -34,6 +57,9 @@ class _ExtensionViewsPartState extends State<ExtensionViewsPart> {
     final visibleIn = _visibleIn;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       visibleIn?.views.setVisibleViews({});
+      for (final id in _visibleWebviews) {
+        visibleIn?.webviews.setViewVisible(id, false);
+      }
     });
     super.dispose();
   }
@@ -44,7 +70,7 @@ class _ExtensionViewsPartState extends State<ExtensionViewsPart> {
     builder: (context, _) {
       final extensions = widget.service.workspaceExtensions;
       final views = widget.service.contributedViews;
-      _sync(extensions, views.map((view) => view.id).toSet());
+      _sync(extensions, views);
       if (extensions == null) return const SizedBox.shrink();
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -72,7 +98,20 @@ class _ExtensionViewsPartState extends State<ExtensionViewsPart> {
           padding: const EdgeInsets.symmetric(horizontal: 8),
           child: Row(
             children: [
-              Expanded(child: Text(tree?.title ?? descriptor.name)),
+              Expanded(
+                child: tree != null
+                    ? Text(tree.title)
+                    : ListenableBuilder(
+                        listenable: extensions.webviews,
+                        builder: (context, _) {
+                          final model = extensions.webviews;
+                          final surface = model.viewOf(descriptor.id);
+                          return Text(
+                            model.title[surface?.handle] ?? descriptor.name,
+                          );
+                        },
+                      ),
+              ),
               ExtensionViewTitleActions(
                 viewId: descriptor.id,
                 menus: extensions.menus,
@@ -84,9 +123,23 @@ class _ExtensionViewsPartState extends State<ExtensionViewsPart> {
         ),
         Expanded(
           child: tree == null
-              ? Padding(
-                  padding: const EdgeInsets.all(8),
-                  child: Text(context.l10n.extViewWebviewUnsupported),
+              ? ListenableBuilder(
+                  listenable: extensions.webviews,
+                  builder: (context, _) {
+                    if (!extensions.webviews.renderLive) {
+                      return Padding(
+                        padding: const EdgeInsets.all(8),
+                        child: Text(context.l10n.extViewWebviewUnsupported),
+                      );
+                    }
+                    final surface = extensions.webviews.viewOf(descriptor.id);
+                    if (surface == null) return const SizedBox.shrink();
+                    return ExtensionWebview(
+                      key: ObjectKey(surface),
+                      model: extensions.webviews,
+                      surface: surface,
+                    );
+                  },
                 )
               : ExtensionTreeViewBody(
                   treeView: tree,

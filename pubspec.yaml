@@ -96,6 +96,7 @@ dependencies:
   super_sliver_list: ^0.4.1
   xml: ^7.0.1
   image: ^4.13.1
+  flutter_inappwebview: 6.1.5
 
 dev_dependencies:
   flutter_test:

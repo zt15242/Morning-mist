@@ -2361,7 +2361,7 @@
   "extsCapabilityFull": "完全支持",
   "extsCapabilityFullDetail": "可在扩展宿主中运行，无需 Webview。",
   "extsCapabilityPartial": "部分支持",
-  "extsCapabilityPartialDetail": "扩展可以运行，部分需要 Webview 的界面暂不可用。",
+  "extsCapabilityPartialDetail": "部分功能依赖 Webview 或编辑器 API，兼容性因功能而异。",
   "extsEngineIncompatible": "需要 VS Code {requested}，当前为 {current}。",
   "extsEngineMissing": "它没有说明需要哪个版本的 VS Code。",
   "extsEngineInvalid": "无效的引擎“{requested}”。",
@@ -4177,7 +4177,7 @@
   "extMenusMoreActions": "更多操作...",
   "extMenusPaletteCategory": "扩展",
   "extsCapabilityNeedsWebview": "需要 webview",
-  "extsCapabilityNeedsWebviewDetail": "此扩展的主要界面需要 Webview。",
+  "extsCapabilityNeedsWebviewDetail": "此扩展的主要界面需要 Webview，可用功能取决于桌面平台和编辑器 API。",
   "extsCapabilityFromManifest": "仅根据清单判断，未读取代码。",
   "extsFindingWebviewView": "Webview 视图：{name}",
   "extsFindingCustomEditor": "自定义编辑器：{name}",
@@ -4323,5 +4323,6 @@
         "type": "String"
       }
     }
-  }
+  },
+  "extsOpenWithExtensionEditor": "使用扩展编辑器打开..."
 }

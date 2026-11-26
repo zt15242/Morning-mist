@@ -8870,7 +8870,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get extsCapabilityPartialDetail =>
-      'Runs, but some of its UI cannot be shown: Morning Mist has no webviews.';
+      'Some features require a Webview or editor API. Compatibility varies by feature.';
 
   @override
   String extsEngineIncompatible(String current, String requested) {
@@ -15536,7 +15536,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get extsCapabilityNeedsWebviewDetail =>
-      'Its main features are drawn in a webview, which Morning Mist does not have.';
+      'Its main features require a Webview. Available features depend on the desktop platform and editor API.';
 
   @override
   String get extsCapabilityFromManifest =>
@@ -16064,4 +16064,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String extsVsixDependencies(String dependencies) {
     return 'Required extensions: $dependencies. If Open VSX cannot install them, import their VSIX files separately.';
   }
+
+  @override
+  String get extsOpenWithExtensionEditor => 'Open with Extension Editor...';
 }

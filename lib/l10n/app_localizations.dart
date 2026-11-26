@@ -14274,7 +14274,7 @@ abstract class AppLocalizations {
   /// No description provided for @extsCapabilityPartialDetail.
   ///
   /// In en, this message translates to:
-  /// **'Runs, but some of its UI cannot be shown: Morning Mist has no webviews.'**
+  /// **'Some features require a Webview or editor API. Compatibility varies by feature.'**
   String get extsCapabilityPartialDetail;
 
   /// No description provided for @extsEngineIncompatible.
@@ -25128,7 +25128,7 @@ abstract class AppLocalizations {
   /// No description provided for @extsCapabilityNeedsWebviewDetail.
   ///
   /// In en, this message translates to:
-  /// **'Its main features are drawn in a webview, which Morning Mist does not have.'**
+  /// **'Its main features require a Webview. Available features depend on the desktop platform and editor API.'**
   String get extsCapabilityNeedsWebviewDetail;
 
   /// No description provided for @extsCapabilityFromManifest.
@@ -25964,6 +25964,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Required extensions: {dependencies}. If Open VSX cannot install them, import their VSIX files separately.'**
   String extsVsixDependencies(String dependencies);
+
+  /// No description provided for @extsOpenWithExtensionEditor.
+  ///
+  /// In en, this message translates to:
+  /// **'Open with Extension Editor...'**
+  String get extsOpenWithExtensionEditor;
 }
 
 class _AppLocalizationsDelegate

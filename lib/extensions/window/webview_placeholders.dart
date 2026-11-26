@@ -1,16 +1,13 @@
-// The Webview degradation's model (the goal's 五.15): what the panel, view
-// and custom editor shapes record about the Webviews they never show, and
-// the notebook shapes about the notebooks, so the UI can name them and say
-// why nothing appears.
+// Webview lifecycle state shared by the extension host and Fast IDE.
+
+import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
-/// One extension's Webview that BaoCode does not show (`WebviewKind`).
+/// The kinds of surfaces a VS Code extension can request.
 enum WebviewKind { panel, view, customEditor, notebook }
 
-/// A Webview an extension asked for and BaoCode cannot show: kept for the
-/// placeholder the workbench shows in its place and the line the Output
-/// panel's "Extension Host" channel gets.
+/// One extension surface and its connection to the host.
 final class WebviewPlaceholder {
   WebviewPlaceholder({
     required this.handle,
@@ -35,6 +32,34 @@ final class WebviewPlaceholder {
 
   /// It was shown again after being hidden.
   bool revealed = false;
+
+  /// Wiring for live surfaces. Kept on the handle so a renderer never
+  /// sends messages to another extension or a replacement host.
+  Future<void> Function(String)? receiveMessage;
+  bool Function(String)? deliverMessage;
+  Future<void> Function()? closePanel;
+  Future<void> Function()? saveDocument;
+  Object? state;
+  int revision = 0;
+  String? failure;
+  final _queued = <String>[];
+
+  bool postMessage(String value) {
+    if (receiveMessage == null || value.length > 1024 * 1024) return false;
+    final deliver = deliverMessage;
+    if (deliver != null) return deliver(value);
+    if (_queued.length >= 100) return false;
+    _queued.add(value);
+    return true;
+  }
+
+  void attachRenderer(bool Function(String) deliver) {
+    deliverMessage = deliver;
+    for (final message in _queued) {
+      deliver(message);
+    }
+    _queued.clear();
+  }
 
   /// `IExtensionDescription.identifier`, or a `WebviewExtensionDescription`'s
   /// `id` (all a panel, view or custom editor is sent).
@@ -67,6 +92,76 @@ final class WebviewPlaceholder {
 /// Every Webview an extension asked for in a session.
 final class ExtensionWebviewPlaceholders extends ChangeNotifier {
   final Map<String, WebviewPlaceholder> _placeholders = {};
+  bool renderLive = false;
+  void Function(WebviewPlaceholder)? onRevealPanel;
+  void Function(String)? onRevealView;
+  final textEditors =
+      <
+        String,
+        Future<WebviewPlaceholder> Function(String path, String title)
+      >{};
+
+  WebviewPlaceholder showTextEditor({
+    required String handle,
+    required String viewType,
+    required Map<String, Object?> extension,
+    required String title,
+  }) => _add(
+    WebviewPlaceholder(
+      handle: handle,
+      kind: WebviewKind.customEditor,
+      extension: extension,
+      viewType: viewType,
+      title: title,
+    ),
+  );
+  final _visibleViews = <String>{};
+  bool _disposed = false;
+  final _visibility = StreamController<(String, bool)>.broadcast(sync: true);
+  Stream<(String, bool)> get visibility => _visibility.stream;
+  bool viewVisible(String id) => _visibleViews.contains(id);
+
+  void setViewVisible(String id, bool visible) {
+    final changed = visible ? _visibleViews.add(id) : _visibleViews.remove(id);
+    if (changed && !_visibility.isClosed) _visibility.add((id, visible));
+  }
+
+  void setTitle(String handle, String? value) {
+    title[handle] = value;
+    if (value != null) _placeholders[handle]?.title = value;
+    notifyListeners();
+  }
+
+  void setFailure(String handle, String failure) {
+    _placeholders[handle]?.failure = failure;
+    notifyListeners();
+  }
+
+  void setHtml(String handle, String value) {
+    html[handle] = value;
+    final surface = _placeholders[handle];
+    if (surface == null) return;
+    surface.revision++;
+    notifyListeners();
+  }
+
+  void setOptions(String handle, Map<String, Object?> value) {
+    final previous = options[handle];
+    options[handle] = value;
+    final surface = _placeholders[handle];
+    if (surface == null) return;
+    if (previous?['enableScripts'] != value['enableScripts']) {
+      surface.revision++;
+    }
+    notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    unawaited(_visibility.close());
+    super.dispose();
+  }
 
   /// The lines the Output panel's "Extension Host" channel gets, in
   /// order: one per Webview an extension asked for.
@@ -86,7 +181,7 @@ final class ExtensionWebviewPlaceholders extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// The HTML each webview was given, by handle (never rendered).
+  /// The HTML each webview was given, by handle.
   final Map<String, String> html = {};
 
   /// The content options each webview was given.
@@ -205,15 +300,26 @@ final class ExtensionWebviewPlaceholders extends ChangeNotifier {
     final placeholder = _placeholders[handle];
     if (placeholder == null) return;
     placeholder.revealed = true;
+    if (renderLive && placeholder.kind == WebviewKind.view) {
+      onRevealView?.call(placeholder.viewType);
+    }
+    if (renderLive &&
+        (placeholder.kind == WebviewKind.panel ||
+            placeholder.kind == WebviewKind.customEditor)) {
+      onRevealPanel?.call(placeholder);
+    }
     notifyListeners();
   }
 
   void remove(String handle) {
+    if (_disposed) return;
     if (_placeholders.remove(handle) == null) return;
     html.remove(handle);
     options.remove(handle);
     title.remove(handle);
     icon.remove(handle);
+    description.remove(handle);
+    badge.remove(handle);
     notifyListeners();
   }
 
