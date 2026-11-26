@@ -133,43 +133,62 @@ class KeybindingService extends ChangeNotifier {
 
   /// Extensions' keybindings, in upstream's order (built-in extensions'
   /// first, then by position in their lists and command).
-  List<ContributedKeybinding> get contributedKeybindings => _contributed;
-  List<ContributedKeybinding> _contributed = const [];
-  Set<String> _contributedCommands = const {};
+  List<ContributedKeybinding> get contributedKeybindings =>
+      _contributions[null]?.bindings ?? const [];
+  final _contributions =
+      <
+        Object?,
+        ({List<ContributedKeybinding> bindings, Set<String> commands})
+      >{};
 
-  /// Sets extensions' keybindings, and the commands extensions have (which
-  /// a keybinding may run).
+  /// A workbench scope keeps an extension's shortcuts in its own workspace.
   void setContributedKeybindings(
     List<ContributedKeybinding> keybindings, {
     Set<String> commands = const {},
+    Object? scope,
   }) {
-    if (listEquals(keybindings, _contributed) &&
-        setEquals(commands, _contributedCommands)) {
+    final previous = _contributions[scope];
+    if (listEquals(keybindings, previous?.bindings ?? const []) &&
+        setEquals(commands, previous?.commands ?? const {})) {
       return;
     }
-    _contributed = List.unmodifiable(keybindings);
-    _contributedCommands = Set.unmodifiable(commands);
+    if (keybindings.isEmpty && commands.isEmpty) {
+      _contributions.remove(scope);
+    } else {
+      _contributions[scope] = (
+        bindings: List.unmodifiable(keybindings),
+        commands: Set.unmodifiable(commands),
+      );
+    }
     _changed();
   }
 
   /// Whether BaoCode has [command]: a keybinding for one it has not (another
   /// editor's) is kept, but shown as not supported and never runs.
-  bool isSupported(String command) =>
+  bool isSupported(String command, {Object? scope}) =>
       _commands.containsKey(command) ||
       _extraCommands.contains(command) ||
-      _contributedCommands.contains(command);
+      (_contributions[scope]?.commands.contains(command) ?? false) ||
+      (_contributions[null]?.commands.contains(command) ?? false);
 
-  final Map<KeybindingPlatform, KeybindingResolver> _resolvers = {};
+  final _resolvers = <(KeybindingPlatform, Object?), KeybindingResolver>{};
 
   void _changed() {
     _resolvers.clear();
     notifyListeners();
   }
 
-  /// The resolver for [platform] (this one by default).
-  KeybindingResolver resolver([KeybindingPlatform? platform]) {
+  /// The resolver for [platform] (this one by default) and the workbench.
+  KeybindingResolver resolver([KeybindingPlatform? platform, Object? scope]) {
     final target = platform ?? this.platform;
-    return _resolvers[target] ??= KeybindingResolver(
+    final scoped = _contributions[scope]?.bindings;
+    final contributions = scope == null || scoped == null
+        ? contributedKeybindings
+        : [...contributedKeybindings, ...scoped];
+    return _resolvers[(
+      target,
+      scoped == null ? null : scope,
+    )] ??= KeybindingResolver(
       [
         for (final (index, entry) in [..._defaults, ..._extraDefaults].indexed)
           KeybindingItem(
@@ -178,7 +197,7 @@ class KeybindingService extends ChangeNotifier {
             platform: target,
             index: index,
           ),
-        for (final (index, contributed) in _contributed.indexed)
+        for (final (index, contributed) in contributions.indexed)
           KeybindingItem(
             entry: contributed.entry,
             source: KeybindingSource.defaults,
@@ -229,14 +248,15 @@ class KeybindingService extends ChangeNotifier {
     required ContextLookup context,
     bool Function(KeybindingItem item)? canRun,
     HardwareKeyboard? keyboard,
+    Object? scope,
   }) {
     if (event is KeyUpEvent) return const NoKeybinding();
     final chord = KeyChord.fromEvent(event, keyboard);
     if (chord == null) return const NoKeybinding();
-    final resolver = this.resolver();
+    final resolver = this.resolver(null, scope);
     final lookup = withPlatformKeys(context);
     bool runs(KeybindingItem item) =>
-        isSupported(item.command) && (canRun?.call(item) ?? true);
+        isSupported(item.command, scope: scope) && (canRun?.call(item) ?? true);
     var result = resolver.resolve(lookup, pending, chord, canRun: runs);
     if (result is NoKeybinding) {
       if (KeyChord.characterChordOf(event, keyboard) case final character?) {

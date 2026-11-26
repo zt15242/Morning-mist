@@ -70,6 +70,7 @@ import 'kernel/prompt_suggestions.dart';
 import 'workspace/session_tools.dart';
 import 'chat/composer/composer_polish.dart' show ComposerPolishSetting;
 import 'kernel/queued_messages.dart';
+import 'keybindings/key_chord.dart';
 import 'keybindings/keybindings_sync.dart';
 import 'link/link_host.dart';
 import 'link/link_quota.dart';
@@ -188,6 +189,7 @@ Future<void> main(List<String> arguments) async {
     AppEventWatch.start();
     FrameWatch.start();
     KeyWatch.start();
+    KeyChord.watchMacModifiers();
     MarkdownEditor.onInputLost = (message) => appEvent('input', message);
   }
   // The Windows app's own logs and the macOS app's hang reports go beside

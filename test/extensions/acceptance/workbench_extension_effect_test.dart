@@ -4,6 +4,7 @@ library;
 import 'dart:io';
 
 import 'package:bao_editor/monaco/flutter/editor_surface.dart';
+import 'package:bao_editor/monaco/flutter/keybinding_entry.dart';
 import 'package:bao_exthost/bao_exthost.dart';
 import 'package:baocode/extensions/workbench/workspace_extensions.dart';
 import 'package:baocode/ide/ide_hover.dart';
@@ -14,9 +15,11 @@ import 'package:baocode/ide/lsp/lsp_protocol.dart';
 import 'package:baocode/ide/lsp/language_features.dart';
 import 'package:baocode/ide/services/extensions_view.dart';
 import 'package:baocode/l10n/l10n.dart';
+import 'package:baocode/keybindings/keybinding_service.dart';
 import 'package:baocode/workspace/workspace.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../host/exthost_runtime.dart';
@@ -69,7 +72,19 @@ void main() {
                     'title': 'Last Action Path',
                   },
                 ],
+                'keybindings': [
+                  {
+                    'command': 'adaptation.shortcut',
+                    'key': 'ctrl+alt+7',
+                    'mac': 'cmd+alt+7',
+                    'when': 'editorTextFocus && fixture:has_target_org',
+                    'args': 'dispatched',
+                  },
+                ],
                 'menus': {
+                  'commandPalette': [
+                    {'command': 'adaptation.shortcut', 'when': 'false'},
+                  ],
                   'editor/title': [
                     {
                       'command': 'adaptation.open',
@@ -113,7 +128,9 @@ void main() {
 const vscode = require('vscode');
 exports.activate = ({ subscriptions }) => {
   subscriptions.push(vscode.commands.registerCommand('adaptation.open', () => vscode.window.activeTextEditor?.document.languageId));
-  let lastPath;
+  let lastPath, lastShortcut;
+  subscriptions.push(vscode.commands.registerCommand('adaptation.shortcut', arg => { lastShortcut = arg; }));
+  subscriptions.push(vscode.commands.registerCommand('adaptation.lastShortcut', () => lastShortcut));
   subscriptions.push(vscode.commands.registerCommand('adaptation.file', uri => { lastPath = uri.fsPath; }));
   subscriptions.push(vscode.commands.registerCommand('adaptation.lastPath', () => lastPath));
   subscriptions.push(vscode.languages.registerHoverProvider('adaptation', {
@@ -244,6 +261,28 @@ exports.activate = ({ subscriptions }) => {
       expect(
         await extensions.commands.executeCommand('adaptation.lastPath'),
         path,
+      );
+    });
+    await tester.runAsync(() async {
+      await tester.tapAt(
+        tester.getTopLeft(find.byType(EditorSurface)) + const Offset(70, 14),
+      );
+      final modifier =
+          KeybindingService.instance.platform == KeybindingPlatform.mac
+          ? LogicalKeyboardKey.metaLeft
+          : LogicalKeyboardKey.controlLeft;
+      await tester.sendKeyDownEvent(modifier);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.altLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.digit7);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft);
+      await tester.sendKeyUpEvent(modifier);
+      expect(
+        await eventually(
+          'extension shortcut argument',
+          () => extensions.commands.executeCommand('adaptation.lastShortcut'),
+          timeout: const Duration(seconds: 5),
+        ),
+        'dispatched',
       );
     });
     await tester.runAsync(() async {

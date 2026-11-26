@@ -68,7 +68,11 @@ final class ExtensionKeybindings {
   }) {
     for (final extension in extensions) {
       final value = extension.contributes['keybindings'];
-      final list = value is List ? value : value == null ? const [] : [value];
+      final list = value is List
+          ? value
+          : value == null
+          ? const []
+          : [value];
       for (var i = 0; i < list.length; i++) {
         _handle(extension, i + 1, list[i], commands);
       }
@@ -98,9 +102,8 @@ final class ExtensionKeybindings {
     Object? raw,
     CommandContributions commands,
   ) {
-    void reject(String m) => messages.add(
-      '${extension.id}: Invalid `contributes.keybindings`: $m',
-    );
+    void reject(String m) =>
+        messages.add('${extension.id}: Invalid `contributes.keybindings`: $m');
     if (raw is! Map) {
       reject('expected non-empty value.');
       return;
@@ -178,6 +181,7 @@ final class ExtensionKeybindingsBridge {
     required this.registry,
     required this.contextKeys,
     KeybindingService? keybindings,
+    this.scope,
   }) : keybindings = keybindings ?? KeybindingService.instance {
     registry.addListener(_update);
     _update();
@@ -186,6 +190,9 @@ final class ExtensionKeybindingsBridge {
   final ExtensionCommandRegistry registry;
   final ContextKeyValues contextKeys;
   final KeybindingService keybindings;
+  final Object? scope;
+
+  Set<String> get commands => _lastCommands;
 
   /// The rules last pushed.
   ExtensionKeybindings get current => _current;
@@ -204,17 +211,15 @@ final class ExtensionKeybindingsBridge {
   bool Function(ContextLookup) _applies(ExtensionKeybindingRule rule) {
     final when = rule.when;
     if (when == null) return _always;
-    return (context) =>
-        when.evaluate((key) => context(key) ?? contextKeys.getContextKeyValue(key));
+    return (context) => when.evaluate(
+      (key) => context(key) ?? contextKeys.getContextKeyValue(key),
+    );
   }
 
   void _update() {
     final extensions = registry.extensions;
-    final commands = {
-      ...registry.contributions.byId.keys,
-      for (final rule in _current.rules) rule.command,
-    };
-    if (!identical(extensions, _lastExtensions)) {
+    final changedExtensions = !identical(extensions, _lastExtensions);
+    if (changedExtensions) {
       _current = ExtensionKeybindings(
         extensions,
         commands: registry.contributions,
@@ -229,23 +234,24 @@ final class ExtensionKeybindingsBridge {
             registry.contributions.byId.containsKey(rule.command))
           rule.command,
     };
-    if (setEquals(commands, _lastCommands) &&
-        setEquals(runnable, _lastCommands)) {
-      return;
-    }
+    if (!changedExtensions && setEquals(runnable, _lastCommands)) return;
     _lastCommands = runnable;
-    keybindings.setContributedKeybindings([
-      for (final rule in _current.rules)
-        ContributedKeybinding(
-          entry: rule.entry,
-          extensionId: rule.extensionId,
-          applies: _applies(rule),
-        ),
-    ], commands: runnable);
+    keybindings.setContributedKeybindings(
+      [
+        for (final rule in _current.rules)
+          ContributedKeybinding(
+            entry: rule.entry,
+            extensionId: rule.extensionId,
+            applies: _applies(rule),
+          ),
+      ],
+      commands: runnable,
+      scope: scope,
+    );
   }
 
   void dispose() {
     registry.removeListener(_update);
-    keybindings.setContributedKeybindings(const []);
+    keybindings.setContributedKeybindings(const [], scope: scope);
   }
 }

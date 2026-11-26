@@ -20,6 +20,7 @@ import 'package:flutter/widgets.dart';
 import '../../chat/chat_keys.dart';
 import '../../keybindings/key_chord.dart';
 import '../../keybindings/keybinding_service.dart';
+import '../../keybindings/keybinding_resolver.dart' show KeybindingResolver;
 import '../../l10n/l10n.dart';
 import '../ide_commands.dart';
 import '../terminal/terminal_panel.dart' show terminalCommandsToSkipShell;
@@ -77,6 +78,9 @@ class KeybindingDispatchService implements WorkbenchDisposable {
   _Chord? _chord;
   Timer? _chordChecker;
 
+  KeybindingResolver editorResolver() =>
+      KeybindingService.instance.resolver(null, this);
+
   /// What [event] does after the chords [pending]: a command that is here
   /// and enabled, among the palette's.
   KeybindingResolution resolve(
@@ -88,6 +92,7 @@ class KeybindingDispatchService implements WorkbenchDisposable {
     return KeybindingService.instance.resolveEvent(
       event,
       pending: pending,
+      scope: this,
       // The extensions' keys (`setContext`) over the workbench's.
       context: contextKeys.getValue,
       canRun: (item) => byId[item.command]?.enabled ?? false,
@@ -224,7 +229,7 @@ class KeybindingDispatchService implements WorkbenchDisposable {
     }
     return switch (resolve(event)) {
       KeybindingFound(:final command) =>
-        HardwareKeyboard.instance.isMetaPressed ||
+        KeyChord.fromEvent(event)?.meta == true ||
             terminalCommandsToSkipShell.contains(command),
       MoreChordsNeeded() => event.logicalKey != LogicalKeyboardKey.escape,
       NoKeybinding() => false,

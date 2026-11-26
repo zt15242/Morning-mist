@@ -8,6 +8,7 @@ import '../chat/composer/composer_files.dart' show CodeReference, ComposerFile;
 import '../chat/open_editor.dart';
 import '../debug/service/debug_service.dart';
 import '../extensions/theme_extensions.dart';
+import '../extensions/keybindings/extension_keybindings.dart';
 import '../extensions/runtime/runtime_status_item.dart';
 import '../extensions/window/extension_webview.dart';
 import '../extensions/window/webview_placeholders.dart';
@@ -622,9 +623,21 @@ class IdeWorkbenchState extends State<IdeWorkbench> {
     _bindWorkspaceExtensions();
     _binding.attach(widget.workspace);
     _quickInput.addListener(_closeExtensionInput);
-    _removeExtensionCommands = _commands.addSource(
+    final removePaletteCommands = _commands.addSource(
       () => _workspaceExtensions?.palette.commands() ?? const [],
     );
+    final removeShortcutCommands = _commands.addSource(
+      () => [
+        if (_workspaceExtensions case final extensions?)
+          for (final id in _extensionKeybindings?.commands ?? const <String>{})
+            extensions.palette.keybindingCommand(id),
+      ],
+      palette: false,
+    );
+    _removeExtensionCommands = () {
+      removePaletteCommands();
+      removeShortcutCommands();
+    };
     _lifecycle = AppLifecycleListener(
       onResume: () => unawaited(_git?.refresh()),
       // The window left: `onFocusChange` and `onWindowChange` save.
@@ -649,6 +662,7 @@ class IdeWorkbenchState extends State<IdeWorkbench> {
 
   WorkspaceExtensions? _workspaceExtensions;
   VoidCallback? _removeExtensionCommands;
+  ExtensionKeybindingsBridge? _extensionKeybindings;
   StatusbarEntryAccessor? _extensionRuntimeStatus;
   StatusbarEntryAccessor? _extensionTrustStatus;
 
@@ -661,6 +675,8 @@ class IdeWorkbenchState extends State<IdeWorkbench> {
     _extensionRuntimeStatus = null;
     _extensionTrustStatus?.dispose();
     _extensionTrustStatus = null;
+    _extensionKeybindings?.dispose();
+    _extensionKeybindings = null;
     _extensionsView.bindViews(null);
     _workspaceExtensions?.dispose();
     _workspaceExtensions = null;
@@ -685,6 +701,11 @@ class IdeWorkbenchState extends State<IdeWorkbench> {
     _extensionsView.bindViews(extensions);
     extensions.dialogContext = () => mounted && widget.visible ? context : null;
     extensions.contextKeys.fallback = _contextKeys.getValue;
+    _extensionKeybindings = ExtensionKeybindingsBridge(
+      registry: extensions.commands,
+      contextKeys: extensions.contextKeys,
+      scope: _keybindings,
+    );
     extensions.palette.reportError = _host.report;
     extensions.quickInput
       ..onShow = _quickInput.close
@@ -870,6 +891,8 @@ class IdeWorkbenchState extends State<IdeWorkbench> {
     _extensionTrustStatus?.dispose();
     _binding.detach();
     widget.workspace.extensionLanguages = null;
+    _extensionKeybindings?.dispose();
+    _extensionKeybindings = null;
     _extensionsView.bindViews(null);
     _workspaceExtensions?.dispose();
     disposeContributions(_contributions);

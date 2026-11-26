@@ -264,6 +264,9 @@ class EditorPart extends StatelessWidget {
                                   keyResolver: services
                                       .get<KeybindingDispatchService>()
                                       .resolveEditorKey,
+                                  workbenchKeybindings: services
+                                      .get<KeybindingDispatchService>()
+                                      .editorResolver,
                                   onPaste: markdown.pasteInEditor,
                                   formatOnSave: config.formatOnSave,
                                   debug: debug,

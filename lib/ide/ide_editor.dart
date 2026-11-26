@@ -10,6 +10,7 @@ import '../chat/composer/composer_files.dart';
 import '../diagnostics/input_lag.dart';
 import '../keybindings/key_chord.dart';
 import '../keybindings/keybinding_service.dart';
+import '../keybindings/keybinding_resolver.dart' show KeybindingResolver;
 import '../l10n/command_titles.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_theme.dart';
@@ -127,6 +128,7 @@ class IdeEditor extends StatefulWidget {
     this.onShowHistory,
     this.onCompare,
     this.keyResolver,
+    this.workbenchKeybindings,
     this.onPaste,
     this.debug,
     this.agentEdits,
@@ -193,6 +195,7 @@ class IdeEditor extends StatefulWidget {
   /// widgets' included; a key whose keybinding is one of this resolver's
   /// other commands (or none) goes on to the workbench.
   final EditorKeyResolver? keyResolver;
+  final KeybindingResolver Function()? workbenchKeybindings;
 
   /// Takes a paste in [IdeDocument]'s editor before its text is pasted (a
   /// markdown document's files): whether it pasted.
@@ -839,7 +842,7 @@ class IdeEditorState extends State<IdeEditor> {
   _EditorKey _resolveKey(KeyEvent event) {
     final other = widget.keyResolver?.call(event);
     final service = KeybindingService.instance;
-    final resolver = service.resolver();
+    final resolver = widget.workbenchKeybindings?.call() ?? service.resolver();
     final context = service.withPlatformKeys(_keyContext);
     for (final chord in [
       KeyChord.fromEvent(event),
@@ -849,7 +852,7 @@ class IdeEditorState extends State<IdeEditor> {
       for (final item
           in resolver.itemsWithKeys(KeySequence([chord])).reversed) {
         final command = item.command;
-        if (!service.isSupported(command)) continue;
+        if (command != other && !service.isSupported(command)) continue;
         if (item.keys!.chords.length > 1) {
           if (other == editorChordPrefix) return (command: null, other: other);
           continue;

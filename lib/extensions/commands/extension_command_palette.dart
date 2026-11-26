@@ -67,6 +67,19 @@ final class ExtensionCommandPalette {
       ),
   ];
 
+  /// Keybindings may run commands hidden from the palette by its own menu.
+  IdeCommand keybindingCommand(String id) => IdeCommand(
+    id: id,
+    label: registry.contribution(id)?.title ?? id,
+    enabled: extensionCommandEnabled(
+      id,
+      contextKeys,
+      contributions: registry.contributions,
+    ),
+    run: () => _execute(id),
+    runWithArgs: (args) => _execute(id, [args]),
+  );
+
   /// The commands as the palette's lookup map (`IdeCommand`s by id).
   Map<String, IdeCommand> commandsById() => {
     for (final command in commands()) command.id: command,

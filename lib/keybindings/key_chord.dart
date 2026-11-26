@@ -22,6 +22,8 @@
 // - Scan code keys (`[KeyA]`) are read as the US layout's logical key.
 // - Keys upstream has no name for (media keys, …) cannot be bound.
 
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
@@ -69,10 +71,15 @@ class KeyChord {
 
   static final _modifier = RegExp(r'^(ctrl|shift|alt|option|cmd|meta|win)[+-]');
 
+  /// Starts reading the macOS event's flags before Flutter dispatches
+  /// the corresponding hardware event.
+  static void watchMacModifiers() => _MacModifiers.watch();
+
   /// The chord [event] presses (for a key down or repeat), with the
   /// modifiers [keyboard] holds now; null for a modifier alone.
   static KeyChord? fromEvent(KeyEvent event, [HardwareKeyboard? keyboard]) {
     final pressed = keyboard ?? HardwareKeyboard.instance;
+    final modifiers = _MacModifiers.forEvent(event);
     _WindowsVirtualKeys.watch();
     var key = _WindowsVirtualKeys.meant(event) ?? event.logicalKey;
     if (_modifierKeys.contains(key)) return null;
@@ -80,7 +87,7 @@ class KeyChord {
     // not reach the app (an input method keeps it, e.g. Pinyin's to switch
     // between Chinese and English), but the character says it was held.
     final shift =
-        pressed.isShiftPressed ||
+        (modifiers?.shift ?? pressed.isShiftPressed) ||
         (key == LogicalKeyboardKey.tab && event.character == '\u0019');
     // A key the US layout types with Shift (`}`, `!`) is the key under it
     // (`]`, `1`), as the shortcut is written.
@@ -88,10 +95,10 @@ class KeyChord {
     if (key == LogicalKeyboardKey.numpadEnter) key = LogicalKeyboardKey.enter;
     return KeyChord(
       key,
-      ctrl: pressed.isControlPressed,
+      ctrl: modifiers?.ctrl ?? pressed.isControlPressed,
       shift: shift,
-      alt: pressed.isAltPressed,
-      meta: pressed.isMetaPressed,
+      alt: modifiers?.alt ?? pressed.isAltPressed,
+      meta: modifiers?.meta ?? pressed.isMetaPressed,
     );
   }
 
@@ -105,7 +112,8 @@ class KeyChord {
     final character = event.character;
     if (character == null || character.length != 1) return null;
     final pressed = keyboard ?? HardwareKeyboard.instance;
-    var shift = pressed.isShiftPressed;
+    final modifiers = _MacModifiers.forEvent(event);
+    var shift = modifiers?.shift ?? pressed.isShiftPressed;
     var key = _characterKeys[character];
     if (key == null) {
       final base = _shiftedCharacters[character];
@@ -117,11 +125,11 @@ class KeyChord {
     }
     final chord = KeyChord(
       key,
-      ctrl: pressed.isControlPressed,
+      ctrl: modifiers?.ctrl ?? pressed.isControlPressed,
       shift: shift,
       // The layout's Option made the character: it is not a modifier here.
       alt: false,
-      meta: pressed.isMetaPressed,
+      meta: modifiers?.meta ?? pressed.isMetaPressed,
     );
     final own = fromEvent(event, pressed);
     return chord == own ? null : chord;
@@ -229,6 +237,60 @@ class KeySequence {
   String toString() => userSettingsLabel(KeybindingPlatform.mac);
 }
 
+/// Native flags for the matching macOS key event. A modifier can be in
+/// those flags even when Flutter's held-key state has no modifier event
+/// (for example, a shortcut sent by remote input or accessibility tools).
+abstract final class _MacModifiers {
+  static bool _watching = false;
+  // ignore: deprecated_member_use
+  static RawKeyDownEvent? _current;
+
+  static void watch() {
+    if (_watching || defaultTargetPlatform != TargetPlatform.macOS) return;
+    _watching = true;
+    // ignore: deprecated_member_use
+    RawKeyboard.instance.addListener(see);
+  }
+
+  // ignore: deprecated_member_use
+  static void see(RawKeyEvent event) {
+    // ignore: deprecated_member_use
+    if (event is! RawKeyDownEvent || event.data is! RawKeyEventDataMacOs) {
+      _current = null;
+      return;
+    }
+    _current = event;
+    // Flutter dispatches the matching KeyEvent synchronously after its
+    // raw-key listeners. Don't carry these flags over to any later key.
+    scheduleMicrotask(() {
+      if (identical(_current, event)) _current = null;
+    });
+  }
+
+  static ({bool ctrl, bool shift, bool alt, bool meta})? forEvent(
+    KeyEvent event,
+  ) {
+    final raw = _current;
+    if (raw == null ||
+        event is KeyUpEvent ||
+        raw.physicalKey != event.physicalKey) {
+      return null;
+    }
+    final data = raw.data;
+    return (
+      // The raw event supplies native flags missing from HardwareKeyboard.
+      // ignore: deprecated_member_use
+      ctrl: data.isControlPressed,
+      // ignore: deprecated_member_use
+      shift: data.isShiftPressed,
+      // ignore: deprecated_member_use
+      alt: data.isAltPressed,
+      // ignore: deprecated_member_use
+      meta: data.isMetaPressed,
+    );
+  }
+}
+
 /// What a Windows key down was as its virtual key has it, where the engine
 /// names it otherwise. The engine names the keypad's keys by scan code, so
 /// that its Ins (NumLock off), and an Insert another program sends without
@@ -308,7 +370,10 @@ abstract final class _WindowsVirtualKeys {
 /// would: for tests.
 @visibleForTesting
 // ignore: deprecated_member_use
-void debugSeeRawKeyEvent(RawKeyEvent event) => _WindowsVirtualKeys.see(event);
+void debugSeeRawKeyEvent(RawKeyEvent event) {
+  _WindowsVirtualKeys.see(event);
+  _MacModifiers.see(event);
+}
 
 final Set<LogicalKeyboardKey> _modifierKeys = {
   LogicalKeyboardKey.meta,

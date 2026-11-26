@@ -72,6 +72,38 @@ void main() {
           timeStamp: Duration.zero,
         );
 
+    testWidgets('uses native Mac flags for only the corresponding key', (
+      tester,
+    ) async {
+      const key = KeyDownEvent(
+        physicalKey: PhysicalKeyboardKey.keyP,
+        logicalKey: LogicalKeyboardKey.keyP,
+        timeStamp: Duration.zero,
+      );
+      expect(KeyChord.fromEvent(key), KeyChord.parse('p'));
+      debugSeeRawKeyEvent(
+        // ignore: deprecated_member_use
+        const RawKeyDownEvent(
+          // ignore: deprecated_member_use
+          data: RawKeyEventDataMacOs(
+            keyCode: 35,
+            modifiers:
+                // ignore: deprecated_member_use
+                RawKeyEventDataMacOs.modifierCommand |
+                // ignore: deprecated_member_use
+                RawKeyEventDataMacOs.modifierShift,
+          ),
+        ),
+      );
+      expect(KeyChord.fromEvent(key), KeyChord.parse('shift+cmd+p'));
+      expect(
+        KeyChord.fromEvent(down(LogicalKeyboardKey.keyA)),
+        KeyChord.parse('a'),
+      );
+      await tester.pump();
+      expect(KeyChord.fromEvent(key), KeyChord.parse('p'));
+    });
+
     testWidgets('reads the modifiers held', (tester) async {
       await tester.sendKeyDownEvent(LogicalKeyboardKey.metaLeft);
       await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
