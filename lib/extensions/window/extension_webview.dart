@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 
@@ -8,6 +9,11 @@ import 'webview_placeholders.dart';
 
 /// One extension's browser surface, with its own content and message origin.
 class ExtensionWebview extends StatefulWidget {
+  static bool get isSupported =>
+      !kIsWeb &&
+      (defaultTargetPlatform == TargetPlatform.macOS ||
+          defaultTargetPlatform == TargetPlatform.windows);
+
   const ExtensionWebview({
     super.key,
     required this.model,

@@ -10021,6 +10021,8 @@
   },
   "extMenusMoreActions": "More Actions...",
   "extMenusPaletteCategory": "Extensions",
+  "extsCapabilityUsesWebview": "Uses Webview",
+  "extsCapabilityUsesWebviewDetail": "This extension uses Webview for some of its UI. The desktop renderer is available, and features depend on the editor APIs the extension calls.",
   "extsCapabilityNeedsWebview": "Needs a webview",
   "extsCapabilityNeedsWebviewDetail": "Its main features require a Webview. Available features depend on the desktop platform and editor API.",
   "extsCapabilityFromManifest": "From the manifest only; the code was not read.",

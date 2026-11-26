@@ -43,16 +43,13 @@ class ListService {
 
   /// The lists' context keys (upstream `WorkbenchListFocusContextKey` and
   /// the others of listService.ts); null for others.
-  Object? contextKey(String key) {
-    final list = focused;
-    return switch (key) {
-      'listFocus' || 'listSupportsKeyboardNavigation' => list != null,
-      'listSupportsMultiselect' => list?.supportsMultiselect ?? false,
-      'listHasSelectionOrFocus' => list?.hasSelection ?? false,
-      _ when key.startsWith('treeElement') => list?.treeKey(key),
-      _ => null,
-    };
-  }
+  Object? contextKey(String key) => switch (key) {
+    'listFocus' || 'listSupportsKeyboardNavigation' => focused != null,
+    'listSupportsMultiselect' => focused?.supportsMultiselect ?? false,
+    'listHasSelectionOrFocus' => focused?.hasSelection ?? false,
+    _ when key.startsWith('treeElement') => focused?.treeKey(key),
+    _ => null,
+  };
 }
 
 /// An [IdeKeyboardList] as the commands see it.

@@ -11,7 +11,7 @@
 // src/vs/workbench/contrib/extensions/browser/extensionsWidgets.ts
 // (`InstallCountWidget`, `RatingsWidget`) and media/extensionActions.css.
 //
-// Deviations: the capability badge is BaoCode's (no webviews).
+// Deviations: BaoCode shows the extension's detected UI dependencies.
 
 import 'dart:typed_data';
 
@@ -24,6 +24,7 @@ import '../../theme/workbench_theme.dart' show themeColors;
 import '../capabilities/capability_analysis.dart';
 import '../gallery/open_vsx_client.dart';
 import '../vsix/engine_version.dart';
+import '../window/extension_webview.dart';
 import '../../ide/ide_hover.dart';
 
 /// `InstallCountWidget.getInstallLabel`: `9.4M`, `120K`, `950`.
@@ -137,27 +138,49 @@ class _ExtensionIconState extends State<ExtensionIcon> {
 /// The capability level's label, icon and color.
 ({String label, String detail, IconData icon, Color color}) capabilityStyle(
   AppLocalizations l10n,
-  ExtensionCapabilityLevel level,
-) => switch (level) {
-  ExtensionCapabilityLevel.full => (
-    label: l10n.extsCapabilityFull,
-    detail: l10n.extsCapabilityFullDetail,
-    icon: Codicons.check,
-    color: themeColors.get('testing.iconPassed') ?? const Color(0xFF73C991),
-  ),
-  ExtensionCapabilityLevel.partial => (
-    label: l10n.extsCapabilityPartial,
-    detail: l10n.extsCapabilityPartialDetail,
-    icon: Codicons.warning,
-    color: themeColors['editorWarning.foreground'],
-  ),
-  ExtensionCapabilityLevel.needsWebview => (
-    label: l10n.extsCapabilityNeedsWebview,
-    detail: l10n.extsCapabilityNeedsWebviewDetail,
-    icon: Codicons.warning,
-    color: themeColors['editorWarning.foreground'],
-  ),
-};
+  CapabilityReport report,
+) {
+  final usesWebview = report.webviewFindings.isNotEmpty;
+  if (ExtensionWebview.isSupported &&
+      usesWebview &&
+      report.findings.every(
+        (finding) => switch (finding.kind) {
+          CapabilityFindingKind.webviewView ||
+          CapabilityFindingKind.webviewPanelCode ||
+          CapabilityFindingKind.webviewViewCode ||
+          CapabilityFindingKind.customEditor ||
+          CapabilityFindingKind.customEditorCode => true,
+          _ => false,
+        },
+      )) {
+    return (
+      label: l10n.extsCapabilityUsesWebview,
+      detail: l10n.extsCapabilityUsesWebviewDetail,
+      icon: Codicons.preview,
+      color: themeColors['descriptionForeground'],
+    );
+  }
+  return switch (report.level) {
+    ExtensionCapabilityLevel.full => (
+      label: l10n.extsCapabilityFull,
+      detail: l10n.extsCapabilityFullDetail,
+      icon: Codicons.check,
+      color: themeColors.get('testing.iconPassed') ?? const Color(0xFF73C991),
+    ),
+    ExtensionCapabilityLevel.partial => (
+      label: l10n.extsCapabilityPartial,
+      detail: l10n.extsCapabilityPartialDetail,
+      icon: Codicons.warning,
+      color: themeColors['editorWarning.foreground'],
+    ),
+    ExtensionCapabilityLevel.needsWebview => (
+      label: l10n.extsCapabilityNeedsWebview,
+      detail: l10n.extsCapabilityNeedsWebviewDetail,
+      icon: Codicons.warning,
+      color: themeColors['editorWarning.foreground'],
+    ),
+  };
+}
 
 /// A finding, worded.
 String capabilityFindingText(AppLocalizations l10n, CapabilityFinding finding) {
@@ -216,16 +239,16 @@ String engineNoticeText(AppLocalizations l10n, EngineNotice notice) =>
 /// The capability as a small pill: icon and label, its detail on hover
 /// (a tooltip).
 class CapabilityBadge extends StatelessWidget {
-  const CapabilityBadge(this.level, {super.key, this.compact = false});
+  const CapabilityBadge(this.report, {super.key, this.compact = false});
 
-  final ExtensionCapabilityLevel level;
+  final CapabilityReport report;
 
   /// The icon only.
   final bool compact;
 
   @override
   Widget build(BuildContext context) {
-    final style = capabilityStyle(context.l10n, level);
+    final style = capabilityStyle(context.l10n, report);
     final icon = Icon(style.icon, size: 14, color: style.color);
     return IdeHover(
       message: '${style.label}: ${style.detail}',
@@ -269,7 +292,7 @@ class CapabilitySummary extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final style = capabilityStyle(l10n, report.level);
+    final style = capabilityStyle(l10n, report);
     final text = themeColors['foreground'];
     final muted = themeColors['descriptionForeground'];
     final reasons = [
@@ -281,7 +304,7 @@ class CapabilitySummary extends StatelessWidget {
       children: [
         Row(
           children: [
-            CapabilityBadge(report.level),
+            CapabilityBadge(report),
             const SizedBox(width: 8),
             Expanded(
               child: Text(

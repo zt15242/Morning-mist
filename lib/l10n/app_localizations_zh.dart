@@ -14678,6 +14678,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get extMenusPaletteCategory => '扩展';
 
   @override
+  String get extsCapabilityUsesWebview => '使用 Webview';
+
+  @override
+  String get extsCapabilityUsesWebviewDetail =>
+      '此扩展使用 Webview 显示部分界面。当前平台可以渲染 Webview，具体功能取决于扩展调用的编辑器 API。';
+
+  @override
   String get extsCapabilityNeedsWebview => '需要 webview';
 
   @override

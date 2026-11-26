@@ -25119,6 +25119,18 @@ abstract class AppLocalizations {
   /// **'Extensions'**
   String get extMenusPaletteCategory;
 
+  /// No description provided for @extsCapabilityUsesWebview.
+  ///
+  /// In en, this message translates to:
+  /// **'Uses Webview'**
+  String get extsCapabilityUsesWebview;
+
+  /// No description provided for @extsCapabilityUsesWebviewDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'This extension uses Webview for some of its UI. The desktop renderer is available, and features depend on the editor APIs the extension calls.'**
+  String get extsCapabilityUsesWebviewDetail;
+
   /// No description provided for @extsCapabilityNeedsWebview.
   ///
   /// In en, this message translates to:

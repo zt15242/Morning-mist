@@ -10,6 +10,8 @@ import 'dart:collection';
 import 'package:flutter/widgets.dart';
 
 import '../../../debug/ui/debug_toolbar.dart';
+import '../../../extensions/menus/menu_service.dart' show MenuGroup;
+import '../../../extensions/menus/menu_widgets.dart';
 import '../../../keybindings/keybinding_service.dart';
 import '../../../theme/workbench_theme.dart';
 import '../../../workspace/islands.dart';
@@ -79,6 +81,10 @@ class EditorPart extends StatelessWidget {
     final commands = active == null
         ? services.get<CommandService>().palette()
         : const <IdeCommand>[];
+    final List<MenuGroup> extensionActions =
+        !pageShown && active != null && active.isFile
+        ? extensions.resourceMenuGroups('editor/title', active.path)
+        : const [];
     final dockedToolbar =
         debug != null && debug.settings().toolBarLocation == 'docked';
     // Its tabs on the window's color over its card; their row there with
@@ -117,21 +123,29 @@ class EditorPart extends StatelessWidget {
                 page: page == null
                     ? null
                     : ExtensionPageTab(service: extensions),
-                actions: switch (options.agentEdits) {
-                  final edits? when !pageShown && active != null =>
-                    ListenableBuilder(
-                      listenable: edits,
-                      builder: (context, _) => switch (edits.of(active.path)) {
-                        final edit? when active.diff == null =>
-                          IdeAgentEditActions(
-                            edit: edit,
-                            hunks: edits.hunksOf(active.path),
-                          ),
-                        _ => const SizedBox.shrink(),
-                      },
-                    ),
-                  _ => null,
-                },
+                actions: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (extensionActions.isNotEmpty)
+                      IdeMenuActions(groups: extensionActions),
+                    switch (options.agentEdits) {
+                      final edits? when !pageShown && active != null =>
+                        ListenableBuilder(
+                          listenable: edits,
+                          builder: (context, _) =>
+                              switch (edits.of(active.path)) {
+                                final edit? when active.diff == null =>
+                                  IdeAgentEditActions(
+                                    edit: edit,
+                                    hunks: edits.hunksOf(active.path),
+                                  ),
+                                _ => const SizedBox.shrink(),
+                              },
+                        ),
+                      _ => const SizedBox.shrink(),
+                    },
+                  ],
+                ),
               ),
               // On the card, under the tabs.
               if (dockedToolbar) DebugToolbar(service: debug),

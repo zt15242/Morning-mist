@@ -4176,6 +4176,8 @@
   "windowAuthSignInRequest": "使用 {provider} 登录以使用 {extension} (1)",
   "extMenusMoreActions": "更多操作...",
   "extMenusPaletteCategory": "扩展",
+  "extsCapabilityUsesWebview": "使用 Webview",
+  "extsCapabilityUsesWebviewDetail": "此扩展使用 Webview 显示部分界面。当前平台可以渲染 Webview，具体功能取决于扩展调用的编辑器 API。",
   "extsCapabilityNeedsWebview": "需要 webview",
   "extsCapabilityNeedsWebviewDetail": "此扩展的主要界面需要 Webview，可用功能取决于桌面平台和编辑器 API。",
   "extsCapabilityFromManifest": "仅根据清单判断，未读取代码。",

@@ -4,7 +4,9 @@ library;
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:bao_exthost/bao_exthost.dart' show VsUri;
 import 'package:baocode/extensions/gallery/extension_management_backend.dart';
+import 'package:baocode/extensions/window/webview_placeholders.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 
@@ -77,17 +79,7 @@ void main() {
           'query.soql': 'SELECT Id FROM Account LIMIT 1',
         },
         settings: {'telemetry.telemetryLevel': 'off'},
-        serverEnvironment: () async {
-          final home = Directory.systemTemp.createTempSync(
-            'webview-salesforce-home-',
-          );
-          addTearDown(() => home.delete(recursive: true));
-          return {
-            'HOME': home.path,
-            'USERPROFILE': home.path,
-            'SFDX_DISABLE_TELEMETRY': 'true',
-          };
-        },
+        serverEnvironment: salesforceEnvironment,
         renderWebviews: true,
       );
       final extensions = workspace.extensions;
@@ -99,11 +91,14 @@ void main() {
         );
       }
       final source = await workspace.open('query.soql');
-      final open = await eventually('SOQL custom editor provider', () async {
-        await extensions.activateCustomEditor('soqlCustom.soql');
-        return webviews.textEditors['soqlCustom.soql'];
-      });
-      final surface = await open(source, 'query.soql');
+      await extensions.host!.refreshExtensions();
+      WebviewPlaceholder? opened;
+      webviews.onRevealPanel = (surface) => opened = surface;
+      await extensions.commands.executeCommand('soql.builder.toggle', [
+        VsUri.file(source),
+      ]);
+      final surface = await eventually('SOQL custom editor', () => opened);
+      expect(surface.viewType, 'soqlCustom.soql');
       final html = await eventually(
         'Salesforce SOQL Builder HTML',
         () => webviews.html[surface.handle],
@@ -118,4 +113,72 @@ void main() {
         ? 'Set BAOCODE_SALESFORCE_VSIX_DIR with services.vsix and soql.vsix'
         : openVsxSkip(),
   );
+  test(
+    'Salesforce Metadata Visualizer opens a Flow visualization from its command',
+    () async {
+      const source = 'force-app/main/default/flows/Hello.flow-meta.xml';
+      final workspace = await OpenVsxWorkspace.create(
+        extensionIds: const [],
+        files: {
+          'sfdx-project.json': '{"packageDirectories":[{"path":"force-app","default":true}],"sourceApiVersion":"67.0"}',
+          source: '''<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+            <apiVersion>67.0</apiVersion>
+            <label>Hello</label>
+            <processType>AutoLaunchedFlow</processType>
+            <start><locationX>0</locationX><locationY>0</locationY></start>
+            <status>Draft</status>
+          </Flow>''',
+        },
+        settings: {'telemetry.telemetryLevel': 'off'},
+        serverEnvironment: salesforceEnvironment,
+        renderWebviews: true,
+      );
+      final extensions = workspace.extensions;
+      for (final name in ['services', 'core', 'visualizer']) {
+        await extensions.management.install(
+          p.join(salesforce!, '$name.vsix'),
+          options: const ExtensionInstallOptions(withDependencies: false),
+        );
+      }
+      await extensions.host!.refreshExtensions();
+      await workspace.show(source);
+      await workspace.activated(
+        'salesforce.salesforcedx-metadata-visualizer-vscode',
+      );
+      final actions = await eventually('Visualize editor action', () {
+        final actions = extensions.menus
+            .menuItems('editor/title', extensions.contextKeys)
+            .expand((group) => group.actions);
+        return actions
+            .where((action) => action.title == 'Visualize')
+            .firstOrNull;
+      });
+      final result = await extensions.commands.executeCommand(
+        'sf.metadata.viz.showVisualizerFromEditorTitle',
+        [VsUri.file(workspace.path(source))],
+      );
+      expect(actions.title, 'Visualize');
+      final html = await eventually('Salesforce visualization ($result)', () {
+        return extensions.webviews.html.values
+            .where((html) => html.contains('<script'))
+            .firstOrNull;
+      });
+      expect(html, contains('vscode-resource.vscode-cdn.net'));
+    },
+    skip:
+        salesforce == null ||
+            !File(p.join(salesforce, 'visualizer.vsix')).existsSync()
+        ? 'Set BAOCODE_SALESFORCE_VSIX_DIR with services, core and visualizer VSIXs'
+        : openVsxSkip(),
+  );
+}
+
+Future<Map<String, String>> salesforceEnvironment() async {
+  final home = Directory.systemTemp.createTempSync('webview-salesforce-home-');
+  addTearDown(() => home.delete(recursive: true));
+  return {
+    'HOME': home.path,
+    'USERPROFILE': home.path,
+    'SFDX_DISABLE_TELEMETRY': 'true',
+  };
 }

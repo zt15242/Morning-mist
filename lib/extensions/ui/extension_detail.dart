@@ -373,13 +373,13 @@ class _ExtensionDetailPageState extends State<ExtensionDetailPage> {
                         count: gallery!.reviewCount,
                       ),
                     if (capability != null)
-                      CapabilityBadge(capability.level)
+                      CapabilityBadge(capability)
                     else
                       FutureBuilder<CapabilityReport?>(
                         future: _galleryCapability,
                         builder: (context, snapshot) => snapshot.data == null
                             ? const SizedBox.shrink()
-                            : CapabilityBadge(snapshot.data!.level),
+                            : CapabilityBadge(snapshot.data!),
                       ),
                   ],
                 ),

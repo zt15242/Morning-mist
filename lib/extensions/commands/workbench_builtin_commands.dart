@@ -172,6 +172,7 @@ void Function() registerWorkbenchBuiltinCommands(
   EditorCommandsPort? editor,
   ExtensionManagementCommandsPort? extensions,
   Future<void> Function()? restartExtensionHost,
+  Future<void> Function(VsUri, String)? openCustomEditor,
 }) {
   final stops = <void Function()>[];
   void reg(String id, BuiltinCommandHandler handler) =>
@@ -264,12 +265,23 @@ void Function() registerWorkbenchBuiltinCommands(
 
     reg('_workbench.open', open);
     reg('vscode.open', (args) => open([arg(args, 0)]));
-    regVoid('_workbench.openWith', (args) async {
+    Future<void> openWith(List<Object?> args) async {
       final resource = uriArg(arg(args, 0));
       if (resource == null) return;
+      final viewType = arg(args, 1);
+      if (viewType is String && viewType.isNotEmpty && viewType != 'default') {
+        if (openCustomEditor == null) {
+          throw UnsupportedError('Custom editor $viewType');
+        }
+        await openCustomEditor(resource, viewType);
+        return;
+      }
       final (:column, :options) = columnAndOptionsArg(arg(args, 2));
       await workbench.openEditor(resource, column: column, options: options);
-    });
+    }
+
+    regVoid('_workbench.openWith', openWith);
+    regVoid('vscode.openWith', openWith);
 
     Future<void> diff(List<Object?> args) async {
       final left = uriArg(arg(args, 0));

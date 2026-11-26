@@ -1,8 +1,6 @@
 import 'dart:async';
 
 import 'package:bao_editor/monaco/vs/editor/common/core/position.dart';
-import 'package:flutter/foundation.dart'
-    show kIsWeb, defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 
 import '../base/mouse_navigation.dart';
@@ -676,10 +674,7 @@ class IdeWorkbenchState extends State<IdeWorkbench> {
       extensions.languages,
       widget.workspace.nativeLanguages,
     );
-    extensions.webviews.renderLive =
-        !kIsWeb &&
-        (defaultTargetPlatform == TargetPlatform.macOS ||
-            defaultTargetPlatform == TargetPlatform.windows);
+    extensions.webviews.renderLive = ExtensionWebview.isSupported;
     extensions.webviews.onRevealView = (id) {
       if (mounted && widget.visible) unawaited(extensions.views.openView(id));
     };

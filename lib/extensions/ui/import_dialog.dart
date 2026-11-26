@@ -542,7 +542,7 @@ class _ExtensionImportDialogState extends State<ExtensionImportDialog> {
                           capability.level != ExtensionCapabilityLevel.full)
                         Padding(
                           padding: const EdgeInsets.only(left: 6),
-                          child: CapabilityBadge(capability.level),
+                          child: CapabilityBadge(capability),
                         ),
                     ],
                   ),

@@ -15532,6 +15532,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get extMenusPaletteCategory => 'Extensions';
 
   @override
+  String get extsCapabilityUsesWebview => 'Uses Webview';
+
+  @override
+  String get extsCapabilityUsesWebviewDetail =>
+      'This extension uses Webview for some of its UI. The desktop renderer is available, and features depend on the editor APIs the extension calls.';
+
+  @override
   String get extsCapabilityNeedsWebview => 'Needs a webview';
 
   @override

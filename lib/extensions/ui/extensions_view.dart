@@ -613,7 +613,7 @@ class ExtensionRow extends StatelessWidget {
                               capability.level != ExtensionCapabilityLevel.full)
                             Padding(
                               padding: const EdgeInsets.symmetric(horizontal: 3),
-                              child: CapabilityBadge(capability.level, compact: true),
+                              child: CapabilityBadge(capability, compact: true),
                             ),
                           if (busy != null)
                             ExtensionActionButton(

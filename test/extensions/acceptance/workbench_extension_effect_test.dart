@@ -5,6 +5,7 @@ import 'dart:io';
 
 import 'package:bao_exthost/bao_exthost.dart';
 import 'package:baocode/extensions/workbench/workspace_extensions.dart';
+import 'package:baocode/ide/ide_hover.dart';
 import 'package:baocode/ide/ide_workbench.dart';
 import 'package:baocode/ide/ide_workspace.dart';
 import 'package:baocode/ide/lsp/lsp_protocol.dart';
@@ -55,6 +56,13 @@ void main() {
                   {'command': 'adaptation.open', 'title': 'Adaptation Action'},
                 ],
                 'menus': {
+                  'editor/title': [
+                    {
+                      'command': 'adaptation.open',
+                      'group': 'navigation',
+                      'when': 'resourceLangId == adaptation',
+                    },
+                  ],
                   'editor/context': [
                     {
                       'command': 'adaptation.open',
@@ -162,6 +170,13 @@ exports.activate = ({ subscriptions }) => {
     });
     expect(service.resourceMenu('editor/context', path), isNotEmpty);
     await tester.pump();
+    expect(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is IdeActionButton && widget.tooltip == 'Adaptation Action',
+      ),
+      findsOneWidget,
+    );
     await tester.runAsync(() async {
       await tester.tap(find.byKey(const ValueKey(containerId)));
       await tester.pump();

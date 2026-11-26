@@ -11,6 +11,7 @@ import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 
 import '../../extensions/theme_extensions.dart';
+import '../../extensions/menus/menu_service.dart';
 import '../../extensions/menus/menu_widgets.dart';
 import '../../extensions/views/view_contributions.dart';
 import '../../extensions/workbench/workspace_extensions.dart';
@@ -102,6 +103,7 @@ class ExtensionsViewService extends ChangeNotifier {
 
   void bindViews(WorkspaceExtensions? extensions) {
     _boundExtensions?.views.removeListener(_viewsChanged);
+    _boundExtensions?.menus.removeListener(notifyListeners);
     _boundExtensions?.views.opener = null;
     _stopContext?.call();
     _boundExtensions = extensions;
@@ -109,6 +111,7 @@ class ExtensionsViewService extends ChangeNotifier {
     _revealedViews.clear();
     if (extensions == null) return;
     extensions.views.addListener(_viewsChanged);
+    extensions.menus.addListener(notifyListeners);
     _stopContext = extensions.contextKeys.onDidChangeContext(
       (_) => _viewsChanged(),
     );
@@ -142,6 +145,21 @@ class ExtensionsViewService extends ChangeNotifier {
     String path, {
     bool directory = false,
     List<String>? selected,
+  }) => [
+    for (final group in resourceMenuGroups(
+      menu,
+      path,
+      directory: directory,
+      selected: selected,
+    ))
+      [for (final action in group.actions) ?ideMenuEntryOf(action)],
+  ];
+
+  List<MenuGroup> resourceMenuGroups(
+    String menu,
+    String path, {
+    bool directory = false,
+    List<String>? selected,
   }) {
     final extensions = workspaceExtensions;
     if (extensions == null) return const [];
@@ -155,20 +173,17 @@ class ExtensionsViewService extends ChangeNotifier {
       'resourceExtname': p.extension(path),
       'resourcePath': path,
       'resourceLangId': language,
-      if (menu == 'editor/context') 'editorLangId': language,
+      if (menu.startsWith('editor/')) 'editorLangId': language,
       'explorerResourceIsFolder': directory,
     });
-    return [
-      for (final group in extensions.menus.menuItems(
-        menu,
-        context,
-        args: [
-          uri,
-          if (selected != null) [for (final path in selected) VsUri.file(path)],
-        ],
-      ))
-        [for (final action in group.actions) ?ideMenuEntryOf(action)],
-    ];
+    return extensions.menus.menuItems(
+      menu,
+      context,
+      args: [
+        uri,
+        if (selected != null) [for (final path in selected) VsUri.file(path)],
+      ],
+    );
   }
 
   Map<String, String> customEditors(IdeDocument document) {
@@ -225,17 +240,7 @@ class ExtensionsViewService extends ChangeNotifier {
     final extensions = workspaceExtensions;
     if (extensions == null) return;
     try {
-      await extensions.activateCustomEditor(id);
-      if (extensions != workspaceExtensions) return;
-      final provider = extensions.webviews.textEditors[id];
-      if (provider == null) throw StateError(id);
-      final surface = await provider(document.path, document.name);
-      if (extensions != workspaceExtensions) {
-        await surface.closePanel?.call();
-        return;
-      }
-      surface.saveDocument = () => extensions.workspaceSave(document);
-      extensions.webviews.reveal(surface.handle);
+      await extensions.openCustomTextEditor(document, id);
     } catch (error) {
       host.report(error);
     }

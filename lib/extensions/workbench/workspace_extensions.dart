@@ -654,6 +654,30 @@ final class WorkspaceExtensions extends ChangeNotifier {
     await _workspace?.save(document);
   }
 
+  Future<void> openCustomTextEditor(
+    IdeDocument document,
+    String viewType,
+  ) async {
+    if (!webviews.renderLive || !document.isFile || document.diff != null) {
+      throw UnsupportedError('Custom editor $viewType');
+    }
+    final workspace = _workspace;
+    if (workspace == null) return;
+    await activateCustomEditor(viewType);
+    if (_disposed || _workspace != workspace) return;
+    final provider = webviews.textEditors[viewType];
+    if (provider == null) {
+      throw UnsupportedError('Custom text editor $viewType');
+    }
+    final surface = await provider(document.path, document.name);
+    if (_disposed || _workspace != workspace) {
+      await surface.closePanel?.call();
+      return;
+    }
+    surface.saveDocument = () => workspaceSave(document);
+    webviews.reveal(surface.handle);
+  }
+
   Future<void> activateCustomEditor(String viewType) =>
       _activateByEvent('onCustomEditor:$viewType');
 
@@ -1215,6 +1239,23 @@ final class WorkspaceExtensions extends ChangeNotifier {
         editor: builtins,
         extensions: builtins,
         restartExtensionHost: _restartHosts,
+        openCustomEditor: (uri, viewType) async {
+          if (uri.scheme != 'file') {
+            throw UnsupportedError('Custom editor resource $uri');
+          }
+          final path = uri.fsPath();
+          await workspace.open(path);
+          if (_disposed || _workspace != workspace) return;
+          final document = workspace.documents
+              .where(
+                (doc) => doc.isFile && workspace.paths.equals(doc.path, path),
+              )
+              .firstOrNull;
+          if (document == null) {
+            throw StateError('Could not open $uri');
+          }
+          await openCustomTextEditor(document, viewType);
+        },
       ),
     );
     _stops.add(registerLanguageCommands(languageRoot, commands.builtins));
