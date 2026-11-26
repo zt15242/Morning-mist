@@ -238,7 +238,7 @@ class IdeWorkspace extends ChangeNotifier
   IdeWorkspace(
     this.root, {
     IdeFileService? files,
-    this.languages,
+    LanguageFeatures? languages,
     this._git,
     this.hasFolder = true,
     this._extensionDocuments,
@@ -250,7 +250,8 @@ class IdeWorkspace extends ChangeNotifier
     IdeRepositoryDetection? repositoryDetection,
     this.openWorktree,
     p.Context? paths,
-  }) : _detection = repositoryDetection,
+  }) : nativeLanguages = languages,
+       _detection = repositoryDetection,
        paths = paths == null
            ? p.context
            : p.Context(style: paths.style, current: root),
@@ -536,7 +537,9 @@ class IdeWorkspace extends ChangeNotifier
   /// When it is also a [LanguageDocumentSync] (the LSP manager), the
   /// workspace keeps it in sync: open, every change (incrementally), save
   /// and close; disposing the workspace shuts it down.
-  final LanguageFeatures? languages;
+  final LanguageFeatures? nativeLanguages;
+  LanguageFeatures? extensionLanguages;
+  LanguageFeatures? get languages => extensionLanguages ?? nativeLanguages;
 
   /// The extension host's view of this workspace's documents, when one
   /// runs: the workspace reports every open, change, save, dirty state,
@@ -724,7 +727,7 @@ class IdeWorkspace extends ChangeNotifier
   @override
   void refreshGit() => git?.scheduleRefresh();
 
-  LanguageDocumentSync? get _sync => switch (languages) {
+  LanguageDocumentSync? get _sync => switch (nativeLanguages) {
     final LanguageDocumentSync sync => sync,
     _ => null,
   };
@@ -1379,7 +1382,7 @@ class IdeWorkspace extends ChangeNotifier
     required int tabSize,
     required bool insertSpaces,
   }) async {
-    final languages = this.languages;
+    final languages = nativeLanguages;
     final sync = _sync;
     if (_disposed || languages == null || sync == null) {
       return const IdeFormatOutcome(null);

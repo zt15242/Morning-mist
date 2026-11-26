@@ -4,6 +4,8 @@
 
 import 'package:flutter/widgets.dart';
 
+import '../../../extensions/views/tree_view_widget.dart';
+
 import '../../../debug/ui/debug_strings.dart';
 import '../../../keybindings/default_keybindings.dart';
 import '../../../keybindings/keybinding_service.dart';
@@ -13,6 +15,7 @@ import '../../ide_hover.dart';
 import '../../ide_modern_ui.dart';
 import '../../services/debug_view.dart';
 import '../../services/layout.dart';
+import '../../services/extensions_view.dart';
 import '../../services/scm_service.dart';
 import '../environment.dart';
 import '../services.dart';
@@ -31,10 +34,21 @@ class ActivityBarPart extends StatelessWidget {
     final services = WorkbenchScope.of(context);
     final layout = services.get<LayoutService>();
     final scm = services.get<ScmService>();
+    final extensions = services.get<ExtensionsViewService>();
     return ListenableBuilder(
-      listenable: Listenable.merge([layout, scm, KeybindingService.instance]),
-      builder: (context, _) =>
-          _bar(context, layout, scm, services.get<WorkbenchEnvironment>()),
+      listenable: Listenable.merge([
+        layout,
+        scm,
+        extensions,
+        KeybindingService.instance,
+      ]),
+      builder: (context, _) => _bar(
+        context,
+        layout,
+        scm,
+        extensions,
+        services.get<WorkbenchEnvironment>(),
+      ),
     );
   }
 
@@ -42,6 +56,7 @@ class ActivityBarPart extends StatelessWidget {
     BuildContext context,
     LayoutService layout,
     ScmService scm,
+    ExtensionsViewService extensions,
     WorkbenchEnvironment environment,
   ) {
     Widget item(IdeSideView view, IconData icon, String label, {int? badge}) {
@@ -106,6 +121,31 @@ class ActivityBarPart extends StatelessWidget {
         Codicons.extensions,
         keys.titleWithKeybinding(l10n.extTitle, 'workbench.view.extensions'),
       ),
+      for (final container in extensions.containers)
+        _ActivityItem(
+          key: ValueKey(container.id),
+          iconWidget: container.icon == null
+              ? null
+              : extensionIconWidget(
+                  container.icon,
+                  size: IdeModernUI.activityIconSize,
+                ),
+          icon: Codicons.extensions,
+          label: container.title,
+          selected:
+              sidebarShowing &&
+              layout.view == IdeSideView.contributed &&
+              extensions.container == container.id,
+          onTap: () {
+            if (sidebarShowing &&
+                layout.view == IdeSideView.contributed &&
+                extensions.container == container.id) {
+              layout.layout.sidebar = false;
+            } else {
+              extensions.showContainer(container.id);
+            }
+          },
+        ),
     ];
     // Settings at its foot, as upstream's Manage gear: the chat's sidebar
     // has them, the IDE had no way to them but the palette.
@@ -128,13 +168,16 @@ class ActivityBarPart extends StatelessWidget {
           ),
           child: Column(
             children: [
-              for (final (index, item) in items.indexed) ...[
-                if (index > 0)
-                  const SizedBox(height: IdeModernUI.activityItemGap),
-                item,
-              ],
+              Expanded(
+                child: ListView.separated(
+                  padding: EdgeInsets.zero,
+                  itemCount: items.length,
+                  itemBuilder: (context, index) => items[index],
+                  separatorBuilder: (_, _) =>
+                      const SizedBox(height: IdeModernUI.activityItemGap),
+                ),
+              ),
               if (settings != null) ...[
-                const Spacer(),
                 _ActivityItem(
                   key: const ValueKey('ide.activity.settings'),
                   icon: Codicons.settingsGear,
@@ -164,9 +207,11 @@ class _ActivityItem extends StatefulWidget {
     required this.selected,
     required this.onTap,
     this.badge,
+    this.iconWidget,
   });
 
   final IconData icon;
+  final Widget? iconWidget;
   final String label;
   final bool selected;
   final VoidCallback onTap;
@@ -188,6 +233,7 @@ class _ActivityItemState extends State<_ActivityItem> {
     pointer: true,
     child: Semantics(
       button: true,
+      label: widget.label,
       selected: widget.selected,
       child: MouseRegion(
         cursor: SystemMouseCursors.click,
@@ -249,18 +295,20 @@ class _ActivityItemState extends State<_ActivityItem> {
             : IdeModernUI.flatActivityItemRadius,
       ),
     ),
-    child: Icon(
-      widget.icon,
-      size: WorkbenchStyle.islands
-          ? IdeModernUI.activityIconSize
-          : IdeModernUI.flatActivityIconSize,
-      color: widget.selected
-          ? IdeModernUI.activityActiveForeground
-          : _hover
-          ? IdeModernUI.activityHoverForeground
-          : WorkbenchStyle.islands
-          ? IdeModernUI.activityForeground
-          : IdeModernUI.flatActivityForeground,
-    ),
+    child:
+        widget.iconWidget ??
+        Icon(
+          widget.icon,
+          size: WorkbenchStyle.islands
+              ? IdeModernUI.activityIconSize
+              : IdeModernUI.flatActivityIconSize,
+          color: widget.selected
+              ? IdeModernUI.activityActiveForeground
+              : _hover
+              ? IdeModernUI.activityHoverForeground
+              : WorkbenchStyle.islands
+              ? IdeModernUI.activityForeground
+              : IdeModernUI.flatActivityForeground,
+        ),
   );
 }

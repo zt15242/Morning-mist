@@ -287,17 +287,26 @@ final class ExtensionHostService extends ChangeNotifier {
         final Object? other => '$other',
       };
 
+  Future<void> _refreshing = Future.value();
+
   /// The installed or enabled extensions changed: the running host gets
   /// them as `$deltaExtensions` (upstream's
   /// `AbstractExtensionService._deltaExtensions`). An extension whose
   /// activation started is neither removed nor replaced
   /// (`canRemoveExtension`): it waits in [pendingRestart] for the user to
   /// restart the extensions. A host not running scans afresh as it starts.
-  Future<void> refreshExtensions() async {
+  Future<void> refreshExtensions() {
+    final next = _refreshing.then((_) => _refreshExtensions());
+    _refreshing = next.then((_) {}, onError: (Object _, StackTrace _) {});
+    return next;
+  }
+
+  Future<void> _refreshExtensions() async {
     final rpc = manager.rpc;
     if (rpc == null || manager.state != ExtensionHostState.running) return;
     final server = await pool.server;
     final scanned = await _scan(server);
+    if (_disposed || manager.rpc != rpc) return;
     final (:toAdd, :toRemove, :kept, running: runs) = extensionsDelta(
       before: _extensions.value,
       after: scanned,
@@ -309,8 +318,6 @@ final class ExtensionHostService extends ChangeNotifier {
     if (toAdd.isEmpty && toRemove.isEmpty) return;
     final running = List<Map<String, Object?>>.unmodifiable(runs);
     _extensionsVersionId++;
-    _extensions.value = running;
-    configuration.setExtensions(running);
     final addActivationEvents = createActivationEventsMap(toAdd);
     await ExtHostExtensionServiceProxy(rpc).$deltaExtensions({
       'versionId': _extensionsVersionId,
@@ -320,6 +327,9 @@ final class ExtensionHostService extends ChangeNotifier {
       'myToRemove': [for (final e in toRemove) _identifier(e)],
       'myToAdd': [for (final e in toAdd) _identifier(e)],
     });
+    if (_disposed || manager.rpc != rpc) return;
+    configuration.setExtensions(running);
+    _extensions.value = running;
     for (final e in toAdd) {
       unawaited(
         _activateAddedExtensionIfNeeded(

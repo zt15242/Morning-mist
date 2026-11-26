@@ -217,6 +217,8 @@ class EditorPart extends StatelessWidget {
                                   key: editors.editorKey,
                                   workspace: workspace,
                                   active: active,
+                                  extensionMenu: (path) => extensions
+                                      .resourceMenu('editor/context', path),
                                   onError: host.report,
                                   onLspStatus: (_) {},
                                   onPositionChanged: editors.positionChanged,

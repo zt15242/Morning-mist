@@ -30,7 +30,6 @@ import '../../ide/ide_notifications.dart'
     show IdeNotificationAction, IdeSeverity;
 import '../../ide/file_service.dart' show IdeFileService;
 import '../../ide/ide_workspace.dart';
-import '../../ide/lsp/language_features.dart';
 import '../../ide/lsp/lsp_protocol.dart' show LspPosition, LspRange;
 import '../../ide/terminal/terminal_instance.dart' show TerminalBackend;
 import '../../l10n/l10n.dart';
@@ -70,6 +69,7 @@ import '../host/extension_server_pool_io.dart';
 import '../host/init_data.dart';
 import '../host/workspace_contains.dart';
 import '../language/language_customers.dart';
+import '../language/registry_language_features.dart';
 import '../language/language_selector.dart';
 import '../languages/language_registry.dart';
 import '../languages/language_status.dart';
@@ -497,7 +497,7 @@ final class WorkspaceExtensions extends ChangeNotifier {
     ..documents = documents;
 
   /// What the editor asks for completions, hovers, diagnostics….
-  LanguageFeatures get languages => languageRoot.language;
+  RegistryLanguageFeatures get languages => languageRoot.language;
 
   /// The language ids of files.
   final LanguageRegistry languageRegistry = LanguageRegistry();
@@ -1612,6 +1612,19 @@ final class WorkspaceExtensions extends ChangeNotifier {
     for (final id in _languageExtensions.difference(seen).toList()) {
       languageRegistry.unregisterExtension(id);
       _languageExtensions.remove(id);
+    }
+    final sync = _documentsAndEditors?.state;
+    if (sync != null) {
+      for (final document in documents.documents) {
+        if (document.uri.scheme != 'file' ||
+            documents.hasLanguageOverride(document.key)) {
+          continue;
+        }
+        final language = languageIdFor(document.uri.fsPath());
+        if (document.mirror.languageId != language) {
+          sync.languageChanged(document.key, language, remember: false);
+        }
+      }
     }
   }
 

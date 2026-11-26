@@ -39,6 +39,7 @@ import 'ide_status_bar.dart';
 import 'ide_welcome.dart';
 import 'ide_workspace.dart';
 import 'lsp/lsp_protocol.dart';
+import 'lsp/workbench_language_features.dart';
 import 'lsp_ui/problems_panel.dart' show IdePanelTab;
 import 'lsp_ui/lsp_convert.dart';
 import 'lsp_ui/workspace_edit.dart';
@@ -616,8 +617,8 @@ class IdeWorkbenchState extends State<IdeWorkbench> {
     widget.agentEdits?.open = _openAgentChange;
     widget.settings?.addListener(_settingsChanged);
     _restoreView();
-    _binding.attach(widget.workspace);
     _bindWorkspaceExtensions();
+    _binding.attach(widget.workspace);
     _quickInput.addListener(_closeExtensionInput);
     _removeExtensionCommands = _commands.addSource(
       () => _workspaceExtensions?.palette.commands() ?? const [],
@@ -658,6 +659,7 @@ class IdeWorkbenchState extends State<IdeWorkbench> {
     _extensionRuntimeStatus = null;
     _extensionTrustStatus?.dispose();
     _extensionTrustStatus = null;
+    _extensionsView.bindViews(null);
     _workspaceExtensions?.dispose();
     _workspaceExtensions = null;
     final app = widget.extensionsApp;
@@ -666,6 +668,11 @@ class IdeWorkbenchState extends State<IdeWorkbench> {
       widget.workspace.root,
       terminals: widget.terminalBackend,
     );
+    widget.workspace.extensionLanguages = WorkbenchLanguageFeatures(
+      extensions.languages,
+      widget.workspace.nativeLanguages,
+    );
+    _extensionsView.bindViews(extensions);
     extensions.dialogContext = () => mounted && widget.visible ? context : null;
     extensions.contextKeys.fallback = _contextKeys.getValue;
     extensions.palette.reportError = _host.report;
@@ -755,10 +762,10 @@ class IdeWorkbenchState extends State<IdeWorkbench> {
       _debugView.givenChanged();
     }
     if (oldWidget.workspace != widget.workspace) {
-      _binding
-        ..detach()
-        ..attach(widget.workspace);
+      _binding.detach();
+      oldWidget.workspace.extensionLanguages = null;
       _bindWorkspaceExtensions();
+      _binding.attach(widget.workspace);
       _scmService.readBranch();
     }
     if (widget.visible && !oldWidget.visible) {
@@ -782,8 +789,10 @@ class IdeWorkbenchState extends State<IdeWorkbench> {
     _quickInput.removeListener(_closeExtensionInput);
     _extensionRuntimeStatus?.dispose();
     _extensionTrustStatus?.dispose();
-    _workspaceExtensions?.dispose();
     _binding.detach();
+    widget.workspace.extensionLanguages = null;
+    _extensionsView.bindViews(null);
+    _workspaceExtensions?.dispose();
     disposeContributions(_contributions);
     _services.dispose();
     _workbenchFocus.dispose();

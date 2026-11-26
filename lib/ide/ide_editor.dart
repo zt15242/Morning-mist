@@ -13,6 +13,9 @@ import '../keybindings/keybinding_service.dart';
 import '../l10n/command_titles.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_theme.dart';
+import '../theme/codicons.dart';
+import 'ide_editor_features.dart';
+import 'ide_editor_views.dart';
 import '../theme/workbench_theme.dart' hide ColorScheme;
 
 import 'package:bao_editor/monaco/flutter/diff_editor.dart';
@@ -64,6 +67,8 @@ import 'ide_diff_options.dart';
 import 'ide_commands.dart';
 import 'ide_find_widget.dart';
 import 'ide_dates.dart';
+import 'ide_color_picker.dart';
+import 'ide_editor_colors.dart';
 import 'ide_hover.dart';
 import 'ide_menu.dart';
 import 'ide_notifications.dart';
@@ -115,6 +120,7 @@ class IdeEditor extends StatefulWidget {
     this.onOpenLocation,
     this.onShowReferences,
     this.onShowCommands,
+    this.extensionMenu,
     this.formatOnSave = false,
     this.gitBlame = true,
     this.onShowCommit,
@@ -128,6 +134,7 @@ class IdeEditor extends StatefulWidget {
 
   final IdeWorkspace workspace;
   final IdeDocument active;
+  final List<List<IdeMenuEntry>> Function(String path)? extensionMenu;
   final ValueChanged<Object> onError;
   final ValueChanged<String> onLspStatus;
   final ValueChanged<IdeEditorPosition> onPositionChanged;
@@ -207,6 +214,7 @@ class IdeEditorState extends State<IdeEditor> {
   late final FocusNode _focusNode = FocusNode(debugLabel: 'ide editor');
   // The surface's state implements EditorViewHost, which editor commands use.
   final GlobalKey _surfaceKey = GlobalKey();
+  final GlobalKey _areaKey = GlobalKey();
   late final ScrollController _scrollController = ScrollController();
   final TextEditingController _findController = TextEditingController();
   final TextEditingController _replaceController = TextEditingController();
@@ -351,6 +359,7 @@ class IdeEditorState extends State<IdeEditor> {
   void initState() {
     super.initState();
     _path = widget.active.path;
+    _focusNode.addListener(_shownViewChanged);
     _controller.addListener(_selectionChanged);
     _findController.addListener(_refreshFindResults);
     widget.workspace.addListener(_workspaceChanged);
@@ -482,6 +491,7 @@ class IdeEditorState extends State<IdeEditor> {
           _selectionChanged(now: true);
           if (textChanged) _refreshFindResults();
           _updateBlame(navigated: !textChanged);
+          _shownViewChanged();
         }
         if (textChanged) {
           widget.workspace.notifyDocumentEdited(doc);
@@ -490,6 +500,13 @@ class IdeEditorState extends State<IdeEditor> {
       });
       return controller;
     });
+    if (doc.readRevision == null &&
+        doc.diff == null &&
+        (doc.isFile || doc.isUntitled)) {
+      _showView(doc, _nativeController!);
+    } else {
+      _hideView();
+    }
     _workspaceChanged();
     _snapshot = doc.model.snapshot;
     _selectionChanged();
@@ -701,6 +718,14 @@ class IdeEditorState extends State<IdeEditor> {
   /// editor's own bindings; everything else (e.g. F8, workbench shortcuts)
   /// keeps bubbling.
   KeyEventResult _onEditorKey(KeyEvent event) {
+    final colors = _extensionFeatures?.ofDocument(widget.active)?.colors;
+    if (colors?.picker != null &&
+        event is KeyDownEvent &&
+        event.logicalKey == LogicalKeyboardKey.escape) {
+      colors!.closePicker();
+      return KeyEventResult.handled;
+    }
+
     if (_lineChangeShown != null &&
         event is KeyDownEvent &&
         event.logicalKey == LogicalKeyboardKey.escape) {
@@ -1012,7 +1037,88 @@ class IdeEditorState extends State<IdeEditor> {
     LogicalKeyboardKey.altRight,
   };
 
+  IdeEditorFeaturesRegistry? _extensionFeatures;
+
+  /// Each open document's view, for the workspace's [IdeEditorViews].
+  final Map<IdeDocument, IdeEditorView> _views = {};
+
+  /// The view shown, and the workspace's views it is shown in.
+  IdeEditorView? _shownView;
+  IdeEditorViews? _shownIn;
+  int _foldingRequest = 0;
+
+  void _showView(IdeDocument doc, EditorSurfaceController controller) {
+    var view = _views[doc];
+    if (view == null || !identical(view.controller, controller)) {
+      bool shown() => identical(_nativeController, controller);
+      view = _views[doc] = IdeEditorView(
+        document: doc,
+        controller: controller,
+        features: (_extensionFeatures ??= IdeEditorFeaturesRegistry(
+          types: widget.workspace.editorViews.decorationTypes,
+        )..setTheme(ideDecorationTheme(_themes.colors))).of(doc, controller),
+        visibleLines: () {
+          final state = _surfaceKey.currentState;
+          if (!shown() || state is! EditorSurfaceView) return null;
+          return (state as EditorSurfaceView).visibleLineRange;
+        },
+        hasFocus: () => shown() && _focusNode.hasFocus,
+        focus: () {
+          if (shown()) focus();
+        },
+        reveal: (start, end, {center = false}) {
+          if (!shown()) return;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            final state = _surfaceKey.currentState;
+            if (mounted && shown() && state is EditorSurfaceView) {
+              (state as EditorSurfaceView).revealRange(
+                start,
+                end,
+                center: center,
+              );
+            }
+          });
+          WidgetsBinding.instance.scheduleFrame();
+        },
+        setFoldingRanges: (ranges) {
+          if (!shown()) return;
+          final request = ++_foldingRequest;
+          final snapshot = controller.document.snapshot;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            final state = _surfaceKey.currentState;
+            if (mounted &&
+                request == _foldingRequest &&
+                shown() &&
+                identical(controller.document.snapshot, snapshot) &&
+                state is EditorSurfaceView) {
+              (state as EditorSurfaceView).setFoldingRanges(ranges);
+            }
+          });
+          WidgetsBinding.instance.scheduleFrame();
+        },
+      );
+    }
+    final views = widget.workspace.editorViews;
+    if (!identical(_shownIn, views)) _hideView();
+    if (!identical(_shownView, view)) _foldingRequest++;
+    _shownView = view;
+    _shownIn = views..show(view);
+  }
+
+  void _hideView() {
+    _foldingRequest++;
+    final view = _shownView;
+    _shownView = null;
+    if (view != null) _shownIn?.hide(view);
+    _shownIn = null;
+  }
+
+  void _shownViewChanged() {
+    if (_shownView case final view?) _shownIn?.changed(view);
+  }
+
   void _viewChanged() {
+    _shownViewChanged();
     _viewTick.value++;
     widget.onScrolled?.call();
     _language?.onViewChanged();
@@ -1103,6 +1209,7 @@ class IdeEditorState extends State<IdeEditor> {
   /// changes.
   void _colorThemeChanged() {
     if (!mounted) return;
+    _extensionFeatures?.setTheme(ideDecorationTheme(_themes.colors));
     _language?.semanticTokenStyler = _semanticTokenStyler;
     if (getThemeTypeSelector(_themes.colorTheme.type) == _monarchTheme) return;
     _theme = _loadMonarchTheme();
@@ -1272,6 +1379,8 @@ class IdeEditorState extends State<IdeEditor> {
           // Closed, or moved: shown where it was if it opens again.
           _keepViewState(entry.key, controller);
           _nativeControllers.remove(entry.key);
+          if (identical(_views.remove(entry.key), _shownView)) _hideView();
+          _extensionFeatures?.release(entry.key);
           _diffs.remove(entry.key)?.dispose();
           _agentDiffs.remove(entry.key)?.dispose();
           _lineChanges.remove(entry.key)?.dispose();
@@ -1346,6 +1455,10 @@ class IdeEditorState extends State<IdeEditor> {
   }
 
   void _disposeNativeControllers([IdeWorkspace? workspace]) {
+    _hideView();
+    _views.clear();
+    _extensionFeatures?.dispose();
+    _extensionFeatures = null;
     _disposeLanguageSession();
     _nativeController = null;
     _syntaxRequest++;
@@ -1979,6 +2092,7 @@ class IdeEditorState extends State<IdeEditor> {
     _findFocusNode.dispose();
     _replaceFocusNode.dispose();
     _controller.dispose();
+    _focusNode.removeListener(_shownViewChanged);
     _focusNode.dispose();
     _areaFocusNode.dispose();
     _scrollController.dispose();
@@ -2202,6 +2316,8 @@ class IdeEditorState extends State<IdeEditor> {
                 ],
               ),
           ],
+          if (widget.active.isFile)
+            ...?widget.extensionMenu?.call(widget.active.path),
           [wordWrapMenuAction(l10n)],
           [
             if (showCommands != null)
@@ -2801,54 +2917,117 @@ class IdeEditorState extends State<IdeEditor> {
     WorkbenchColors colors, {
     DiffEditorSide? side,
     ({List<EditorViewZone> zones, List<EditorDecoration> decorations})? agent,
-  }) => EditorSurface(
-    key: _surfaceKey,
-    controller: _nativeController!,
-    focusNode: _focusNode,
-    readOnly: widget.active.readOnly,
-    // A diff's sides keep their lines aligned unwrapped.
-    wrap: side == null && EditorWordWrap.on.value,
-    backgroundColor: colors['editor.background'],
-    selectionColor: colors['editor.selectionBackground'],
-    caretColor: colors['editorCursor.foreground'],
-    theme: EditorViewTheme.fromColors(colors.get),
-    styledLines: _language?.styledLines(_styledLines) ?? _styledLines,
-    decorations: [
-      ...?side?.decorations,
-      ...?agent?.decorations,
-      ...?_language?.decorations,
-      ..._snippetDecorations(_nativeController!, colors),
-      ..._findDecorations,
-      ..._blameDecorations(colors),
-      ..._debugDecorations(),
-      if (side == null) ..._lineChangeDecorations(colors),
-    ],
-    // A diff editor's editors fold nothing and have no minimap; others
-    // have one unless it is turned off (EditorMinimap).
-    viewZones: side?.zones ?? agent?.zones ?? const [],
-    scrollPosition: side?.scrollPosition,
-    // Side by side, the line numbers are by the split: no margin between.
-    glyphMargin: side == null || !side.sideBySide,
-    lineNumbersMinChars:
-        side?.lineNumbersMinChars ?? EditorViewGeometry.lineNumbersMinChars,
-    folding: side == null,
-    hiddenLines: side?.hiddenLines,
-    showMinimap: side == null && EditorMinimap.on.value,
-    // A diff's overview scrolls it.
-    verticalScrollbar: side == null,
-    onKeyEvent: _onEditorKey,
-    keyResolver: widget.keyResolver == null ? null : _resolveTextKey,
-    onHover: _language == null
-        ? null
-        : (offset, position) => _language?.onPointerHover(offset, position),
-    onContentPointerDown: _language?.onPointerDown,
-    onContextMenu: _showContextMenu,
-    onViewChanged: _viewChanged,
-    onChangeBarTap: side == null ? _lineChangeMarkPressed : null,
-    lineAnnotations: side == null ? _lineAnnotations(colors) : null,
-    contentCursor: _language?.link == null ? null : SystemMouseCursors.click,
-    style: _editorStyle(colors),
-  );
+  }) {
+    final features = _extensionFeatures?.ofDocument(widget.active);
+    return EditorSurface(
+      key: _surfaceKey,
+      controller: _nativeController!,
+      focusNode: _focusNode,
+      readOnly: widget.active.readOnly,
+      // A diff's sides keep their lines aligned unwrapped.
+      wrap: side == null && EditorWordWrap.on.value,
+      backgroundColor: colors['editor.background'],
+      selectionColor: colors['editor.selectionBackground'],
+      caretColor: colors['editorCursor.foreground'],
+      theme: EditorViewTheme.fromColors(colors.get),
+      styledLines: _language?.styledLines(_styledLines) ?? _styledLines,
+      decorations: [
+        ...?side?.decorations,
+        ...?agent?.decorations,
+        ...?_language?.decorations,
+        ..._snippetDecorations(_nativeController!, colors),
+        ..._findDecorations,
+        ..._blameDecorations(colors),
+        ..._debugDecorations(),
+        if (side == null) ..._lineChangeDecorations(colors),
+      ],
+      decorationProviders: [
+        if (features != null) ...[
+          features.decorations,
+          features.inlayHints,
+          features.links,
+          features.colors,
+        ],
+      ],
+      inlineSuggest: features?.inlineSuggest,
+      codeLens: features?.codeLens,
+      codeLensColors:
+          features?.codeLensColors ?? EditorCodeLensColors.from(colors.get),
+      codeLensIcon: (name) => Codicons.byName[name],
+      gutterIconBuilder: ideGutterIconBuilder,
+      // A diff editor's editors fold nothing and have no minimap; others
+      // have one unless it is turned off (EditorMinimap).
+      viewZones: side?.zones ?? agent?.zones ?? const [],
+      scrollPosition: side?.scrollPosition,
+      // Side by side, the line numbers are by the split: no margin between.
+      glyphMargin: side == null || !side.sideBySide,
+      lineNumbersMinChars:
+          side?.lineNumbersMinChars ?? EditorViewGeometry.lineNumbersMinChars,
+      folding: side == null,
+      hiddenLines: side?.hiddenLines,
+      showMinimap: side == null && EditorMinimap.on.value,
+      // A diff's overview scrolls it.
+      verticalScrollbar: side == null,
+      onKeyEvent: _onEditorKey,
+      keyResolver: widget.keyResolver == null ? null : _resolveTextKey,
+      onHover: (offset, position) {
+        _language?.onPointerHover(offset, position);
+        final links = features?.links;
+        final previous = links?.hovered;
+        links?.hover(widget.active.model.snapshot, offset);
+        if (!identical(previous, links?.hovered)) _rebuildSoon();
+      },
+      onContentPointerDown: (offset, event) {
+        if (features?.links.pointerDown(
+              widget.active.model.snapshot,
+              offset,
+              event,
+            ) ??
+            false) {
+          return true;
+        }
+        return _language?.onPointerDown(offset, event) ?? false;
+      },
+      onContextMenu: _showContextMenu,
+      onViewChanged: _viewChanged,
+      onChangeBarTap: side == null ? _lineChangeMarkPressed : null,
+      lineAnnotations: side == null ? _lineAnnotations(colors) : null,
+      contentCursor: _language?.link == null && features?.links.hovered == null
+          ? null
+          : SystemMouseCursors.click,
+      style: _editorStyle(colors),
+    );
+  }
+
+  /// The color picker open on a swatch, below where it was clicked (above
+  /// when there is no room), within the editor.
+  Widget _colorPicker(EditorColorPicker? picker, WorkbenchColors colors) {
+    final box = _areaKey.currentContext?.findRenderObject();
+    if (picker == null || box is! RenderBox || !box.hasSize) {
+      return const SizedBox.shrink();
+    }
+    final anchor = box.globalToLocal(picker.anchor);
+    final size = box.size;
+    final left = (anchor.dx - 12)
+        .clamp(0.0, math.max(0.0, size.width - IdeColorPicker.width))
+        .toDouble();
+    final below = anchor.dy + 12;
+    final top = below + IdeColorPicker.height <= size.height
+        ? below
+        : math.max(0.0, anchor.dy - 12 - IdeColorPicker.height);
+    return Stack(
+      children: [
+        Positioned(
+          left: left,
+          top: top,
+          child: TapRegion(
+            onTapOutside: (_) => picker.close(),
+            child: IdeColorPicker(picker: picker, colors: colors),
+          ),
+        ),
+      ],
+    );
+  }
 
   /// [_blame]'s lines, each after its end (`GitBlameEditorDecoration`).
   List<EditorDecoration> _blameDecorations(WorkbenchColors colors) {
@@ -3071,6 +3250,7 @@ class IdeEditorState extends State<IdeEditor> {
         child: ColoredBox(
           color: colors['editor.background'],
           child: Stack(
+            key: _areaKey,
             children: [
               Positioned.fill(
                 child: widget.nativeEditorEnabled
@@ -3160,6 +3340,15 @@ class IdeEditorState extends State<IdeEditor> {
                         ),
                       ),
                     ),
+                  ),
+                ),
+              if (_extensionFeatures?.ofDocument(widget.active)?.colors
+                  case final documentColors? when widget.nativeEditorEnabled)
+                Positioned.fill(
+                  child: ListenableBuilder(
+                    listenable: documentColors,
+                    builder: (context, _) =>
+                        _colorPicker(documentColors.picker, colors),
                   ),
                 ),
             ],

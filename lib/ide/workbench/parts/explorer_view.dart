@@ -23,6 +23,7 @@ import '../../ide_panes.dart';
 import '../../lsp_ui/document_symbols.dart';
 import '../../services/editors.dart';
 import '../../services/explorer.dart';
+import '../../services/extensions_view.dart';
 import '../../services/keybindings.dart';
 import '../../services/language.dart';
 import '../../services/scm_service.dart';
@@ -161,6 +162,15 @@ class ExplorerViewPart extends StatelessWidget {
                           : IdeExplorer(
                               key: explorer.tree,
                               controller: explorer.controller,
+                              extensionMenu: (path, directory, selected) =>
+                                  services
+                                      .get<ExtensionsViewService>()
+                                      .resourceMenu(
+                                        'explorer/context',
+                                        path,
+                                        directory: directory,
+                                        selected: selected,
+                                      ),
                               focusNode: explorer.focusNode,
                               isBound: (event) =>
                                   services

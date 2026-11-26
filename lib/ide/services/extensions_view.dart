@@ -6,9 +6,13 @@
 
 import 'dart:async';
 
+import 'package:bao_exthost/bao_exthost.dart' show VsUri;
 import 'package:flutter/foundation.dart';
+import 'package:path/path.dart' as p;
 
 import '../../extensions/theme_extensions.dart';
+import '../../extensions/menus/menu_widgets.dart';
+import '../../extensions/views/view_contributions.dart';
 import '../../extensions/workbench/workspace_extensions.dart';
 import '../../extensions/ui/extensions_model.dart';
 import '../../extensions/ui/vsix_drop.dart';
@@ -18,8 +22,10 @@ import '../../workspace/window_controls.dart';
 import '../extensions/ide_extensions.dart';
 import '../extensions/ide_extensions_view.dart';
 import '../ide_quick_input.dart';
+import '../ide_menu.dart';
 import '../workbench/contributions.dart';
 import '../workbench/environment.dart';
+import '../workbench/views.dart';
 import 'quick_input.dart';
 
 /// What the Extensions view shows.
@@ -48,6 +54,119 @@ class ExtensionsViewService extends ChangeNotifier {
   WorkspaceExtensions? get workspaceExtensions => _workspaceExtensions?.call();
   ExtensionsModel? get model =>
       workspaceExtensions?.extensionsModel ?? themes?.model;
+  WorkspaceExtensions? _boundExtensions;
+  VoidCallback? _stopContext;
+  String? _container;
+  String? get container => _container;
+  final Set<String> _revealedViews = {};
+
+  List<ExtensionViewDescriptor> get contributedViews {
+    final extensions = workspaceExtensions;
+    if (extensions == null || _container == null) return const [];
+    return [
+      for (final view in extensions.views.contributions.viewsIn(_container!))
+        if ((!view.hideByDefault || _revealedViews.contains(view.id)) &&
+            extensions.contextKeys.contextMatchesRules(view.when))
+          view,
+    ];
+  }
+
+  List<ViewContainerDescriptor> get containers {
+    final extensions = workspaceExtensions;
+    if (extensions == null) return const [];
+    final contributions = extensions.views.contributions;
+    return [
+      for (final container in contributions.containers)
+        if (contributions.viewsIn(container.id).isNotEmpty) container,
+      for (final (id, title) in [
+        (BuiltinViewContainers.explorer, host.context?.l10n.wbExplorer),
+        (BuiltinViewContainers.scm, host.context?.l10n.scmTitle),
+        (BuiltinViewContainers.debug, 'Debug'),
+        (BuiltinViewContainers.testing, 'Testing'),
+      ])
+        if (contributions.viewsIn(id).isNotEmpty)
+          ViewContainerDescriptor(
+            id: id,
+            title: title ?? id,
+            icon: null,
+            extensionId: '',
+            location: ViewContainerLocation.sidebar,
+            order: 0,
+          ),
+    ];
+  }
+
+  void bindViews(WorkspaceExtensions? extensions) {
+    _boundExtensions?.views.removeListener(_viewsChanged);
+    _boundExtensions?.views.opener = null;
+    _stopContext?.call();
+    _boundExtensions = extensions;
+    _container = null;
+    _revealedViews.clear();
+    if (extensions == null) return;
+    extensions.views.addListener(_viewsChanged);
+    _stopContext = extensions.contextKeys.onDidChangeContext(
+      (_) => _viewsChanged(),
+    );
+    extensions.views.opener = (id, {required focus}) async {
+      final view = extensions.views.contributions.view(id);
+      if (view == null) return;
+      _revealedViews.add(id);
+      showContainer(view.containerId);
+    };
+  }
+
+  void _viewsChanged() {
+    if (_container != null &&
+        !containers.any((entry) => entry.id == _container)) {
+      _container = null;
+      if (host.view == IdeSideView.contributed) {
+        host.showView(IdeSideView.explorer);
+      }
+    }
+    notifyListeners();
+  }
+
+  void showContainer(String id) {
+    _container = id;
+    host.showView(IdeSideView.contributed);
+    notifyListeners();
+  }
+
+  List<List<IdeMenuEntry>> resourceMenu(
+    String menu,
+    String path, {
+    bool directory = false,
+    List<String>? selected,
+  }) {
+    final extensions = workspaceExtensions;
+    if (extensions == null) return const [];
+    final uri = VsUri.file(path);
+    final language = extensions.languageIdFor(path);
+    final context = extensions.contextKeys.createOverlay({
+      'resource': uri.toString(),
+      'resourceScheme': uri.scheme,
+      'resourceFilename': p.basename(path),
+      'resourceBasename': p.basenameWithoutExtension(path),
+      'resourceExtname': p.extension(path),
+      'resourcePath': path,
+      'resourceLangId': language,
+      if (menu == 'editor/context') 'editorLangId': language,
+      'explorerResourceIsFolder': directory,
+    });
+    return [
+      for (final group in extensions.menus.menuItems(
+        menu,
+        context,
+        args: [
+          uri,
+          if (selected != null) [for (final path in selected) VsUri.file(path)],
+        ],
+      ))
+        [for (final action in group.actions) ?ideMenuEntryOf(action)],
+    ];
+  }
+
   bool get canInstall => workspaceExtensions != null || themes != null;
 
   /// [message] told as an error notification.
@@ -205,6 +324,7 @@ class ExtensionsViewService extends ChangeNotifier {
 
   @override
   void dispose() {
+    bindViews(null);
     _session?.dispose();
     super.dispose();
   }

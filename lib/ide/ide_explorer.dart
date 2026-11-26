@@ -538,8 +538,15 @@ class IdeExplorer extends StatefulWidget {
     this.onAddFolder,
     this.onRemoveFolder,
     this.background,
+    this.extensionMenu,
   });
 
+  final List<List<IdeMenuEntry>> Function(
+    String path,
+    bool isFolder,
+    List<String> selection,
+  )?
+  extensionMenu;
   final IdeExplorerController controller;
 
   /// What it is on; the side bar's by default.
@@ -1823,6 +1830,9 @@ class IdeExplorerState extends State<IdeExplorer>
       context,
       position: position,
       entries: ideMenuGroups([
+        ...?widget.extensionMenu?.call(path, isFolder, [
+          for (final target in targets) target.path,
+        ]),
         [
           if (isFolder) ...[
             IdeMenuAction(

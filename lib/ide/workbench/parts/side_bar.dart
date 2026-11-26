@@ -33,6 +33,7 @@ import '../style.dart';
 import '../views.dart';
 import 'explorer_view.dart';
 import 'extensions.dart';
+import 'extension_views.dart';
 
 class SideBarPart extends StatelessWidget {
   const SideBarPart({super.key, required this.options, this.border = true});
@@ -194,6 +195,9 @@ class SideBarPart extends StatelessWidget {
         ),
         null => const SizedBox.shrink(),
       },
+      IdeSideView.contributed => ExtensionViewsPart(
+        service: services.get<ExtensionsViewService>(),
+      ),
       IdeSideView.extensions => ExtensionsViewPart(
         service: services.get<ExtensionsViewService>(),
         language: services.get<LanguageService>(),

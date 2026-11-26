@@ -88,11 +88,7 @@ class TextEditorProperties {
 /// One editor the extension host knows: its id, the document it shows
 /// (which does not change while the id lives) and the app's editor state.
 class TextEditorEntry {
-  TextEditorEntry({
-    required this.id,
-    required this.document,
-    required this.ui,
-  });
+  TextEditorEntry({required this.id, required this.document, required this.ui});
 
   final String id;
   final OpenDocument document;
@@ -212,12 +208,13 @@ final class DocumentsAndEditorsState extends ChangeNotifier
   final _deltas = StreamController<Map<String, Object?>>.broadcast(sync: true);
 
   /// `$acceptEditorPropertiesChanged`'s `(id, props)`.
-  final _properties = StreamController<(String, Map<String, Object?>)>.broadcast(
-    sync: true,
-  );
+  final _properties =
+      StreamController<(String, Map<String, Object?>)>.broadcast(sync: true);
 
   /// `$acceptEditorPositionData`'s argument.
-  final _positions = StreamController<Map<String, Object?>>.broadcast(sync: true);
+  final _positions = StreamController<Map<String, Object?>>.broadcast(
+    sync: true,
+  );
 
   /// `$acceptModelChanged`'s `(document, event, isDirty)`.
   final _modelChanges =
@@ -402,11 +399,7 @@ final class DocumentsAndEditorsState extends ChangeNotifier
   }
 
   @override
-  void dirtyStateChanged(
-    String path,
-    EditorDocumentModel model,
-    bool isDirty,
-  ) {
+  void dirtyStateChanged(String path, EditorDocumentModel model, bool isDirty) {
     if (_disposed) return;
     final document = documents[_keyOf(path)];
     if (document == null || document.isDirty == isDirty) return;
@@ -434,10 +427,11 @@ final class DocumentsAndEditorsState extends ChangeNotifier
     if (_disposed) return;
     final key = _keyOf(path);
     _untitledKeys.remove(path);
-    for (final id in _entries.entries
-        .where((entry) => entry.value.document.key == key)
-        .map((entry) => entry.key)
-        .toList()) {
+    for (final id
+        in _entries.entries
+            .where((entry) => entry.value.document.key == key)
+            .map((entry) => entry.key)
+            .toList()) {
       _dropEditor(id);
     }
     final removed = documents.close(key);
@@ -447,10 +441,10 @@ final class DocumentsAndEditorsState extends ChangeNotifier
 
   /// The user (or an extension) changed a document's language mode; the
   /// language changed, so the extension host is told.
-  void languageChanged(String path, String languageId) {
+  void languageChanged(String path, String languageId, {bool remember = true}) {
     final document = documents[path];
     if (document == null) return;
-    documents.changeLanguage(path, languageId);
+    documents.changeLanguage(path, languageId, remember: remember);
     _languageChanges.add((document.uri, languageId));
   }
 
@@ -582,7 +576,9 @@ final class DocumentsAndEditorsState extends ChangeNotifier
       empty = false;
       final added = <Map<String, Object?>>[];
       for (final id in _pendingAddedEditors) {
-        if (_entries[id] case final entry?) added.add(_toTextEditorAddData(entry));
+        if (_entries[id] case final entry?) {
+          added.add(_toTextEditorAddData(entry));
+        }
       }
       delta['addedEditors'] = added;
       for (final id in _pendingAddedEditors) {
@@ -715,8 +711,7 @@ final class DocumentsAndEditorsState extends ChangeNotifier
     if (entry == null) return;
     final mirror = entry.document.mirror;
     entry.ui.setSelections([
-      for (final selection in selections)
-        _rawSelection(mirror, selection),
+      for (final selection in selections) _rawSelection(mirror, selection),
     ]);
     editorStateChanged(editorId);
   }
@@ -767,7 +762,10 @@ final class DocumentsAndEditorsState extends ChangeNotifier
   void revealRange(String editorId, Range range, int revealType) {
     final entry = _entries[editorId];
     if (entry == null) return;
-    entry.ui.revealRange(entry.document.mirror.toEditorRange(range), revealType);
+    entry.ui.revealRange(
+      entry.document.mirror.toEditorRange(range),
+      revealType,
+    );
   }
 
   // --- decorations ---

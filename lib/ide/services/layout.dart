@@ -212,6 +212,7 @@ class LayoutService extends ChangeNotifier
         IdeSideView.sourceControl => 'workbench.scm',
         IdeSideView.debug => 'workbench.debug.viewlet',
         IdeSideView.extensions => 'workbench.views.extensions.installed',
+        IdeSideView.contributed => null,
       };
     }
     if (panelFocus.hasFocus) return (panel ?? lastPanel).viewId;
@@ -228,7 +229,10 @@ class LayoutService extends ChangeNotifier
     chatWidth = size('chatWidth') ?? chatWidth;
     panelHeight = size('panelHeight');
     if (kept['view'] case final String name) {
-      _view = IdeSideView.values.asNameMap()[name] ?? _view;
+      final saved = IdeSideView.values.asNameMap()[name];
+      _view = saved == IdeSideView.contributed
+          ? IdeSideView.explorer
+          : saved ?? _view;
     }
   }
 
@@ -260,6 +264,7 @@ extension on IdeSideView {
     IdeSideView.sourceControl => 'workbench.view.scm',
     IdeSideView.debug => 'workbench.view.debug',
     IdeSideView.extensions => 'workbench.view.extensions',
+    IdeSideView.contributed => 'workbench.view.extension',
   };
 }
 

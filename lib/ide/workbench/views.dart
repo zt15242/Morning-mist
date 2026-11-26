@@ -2,4 +2,11 @@
 
 /// The side views of the activity bar. The outline is a pane of the
 /// explorer, as in VS Code.
-enum IdeSideView { explorer, search, sourceControl, debug, extensions }
+enum IdeSideView {
+  explorer,
+  search,
+  sourceControl,
+  debug,
+  extensions,
+  contributed,
+}

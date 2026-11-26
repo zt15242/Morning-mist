@@ -465,6 +465,8 @@ class RegistryLanguageFeatures extends ChangeNotifier
   final _subscriptions = <StreamSubscription<Object?>>[];
   final _workspaceEdits = StreamController<LspApplyEditRequest>.broadcast();
   final _origins = Expando<_Origin<Object>>();
+
+  bool ownsResult(Object result) => _origins[result] != null;
   final _retained = <String, List<DisposableResult>>{};
   _RenameSkeleton? _lastRename;
   ({String path, int version, Position position})? _lastRenameKey;

@@ -95,9 +95,8 @@ class OpenDocument {
   ExtHostDocumentMirror get document => mirror;
 
   /// `IModelAddedData` for `$acceptDocumentsAndEditorsDelta`.
-  Map<String, Object?> toModelAddedData() => mirror
-      .toModelAddedData(isDirty: isDirty, encoding: encoding)
-      .toJson();
+  Map<String, Object?> toModelAddedData() =>
+      mirror.toModelAddedData(isDirty: isDirty, encoding: encoding).toJson();
 
   /// The document's text without a leading U+FEFF, on one line, for the
   /// first-line language association.
@@ -212,10 +211,12 @@ final class ExtensionDocumentRegistry extends ChangeNotifier
   String? languageIdOf(String key) =>
       _byKey[key]?.mirror.languageId ?? _userLanguage[key];
 
-  /// The user changed [key]'s language id
-  /// (`MainThreadLanguages.$changeLanguage`).
-  void changeLanguage(String key, String languageId) {
-    _userLanguage[key] = languageId;
+  /// Whether the editor or extension explicitly chose a language for [key].
+  bool hasLanguageOverride(String key) => _userLanguage.containsKey(key);
+
+  /// Updates the editor's language and optionally keeps the explicit choice.
+  void changeLanguage(String key, String languageId, {bool remember = true}) {
+    if (remember) _userLanguage[key] = languageId;
     final document = _byKey[key];
     if (document == null) return;
     document.mirror.languageId = languageId;
@@ -285,5 +286,4 @@ final class ExtensionDocumentRegistry extends ChangeNotifier
     final key = documentKeyOf(uri);
     return _byKey.containsKey(key) ? key : null;
   }
-
 }
