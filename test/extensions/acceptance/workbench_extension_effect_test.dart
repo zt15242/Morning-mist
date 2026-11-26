@@ -25,7 +25,6 @@ void main() {
     tester,
   ) async {
     const extensionId = 'acme.adaptation';
-    const containerId = 'workbench.view.extension.adaptation';
     const fileName = 'first.adaptation';
     late Directory root;
     late ExtensionsApp app;
@@ -178,7 +177,14 @@ exports.activate = ({ subscriptions }) => {
       findsOneWidget,
     );
     await tester.runAsync(() async {
-      await tester.tap(find.byKey(const ValueKey(containerId)));
+      await tester.tap(
+        find.byKey(const ValueKey('ide.activity.extensionViews')),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.tap(find.text('Adaptation Tools'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
       await tester.pump();
     });
     await tester.runAsync(() async {

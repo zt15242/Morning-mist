@@ -7971,6 +7971,12 @@ abstract class AppLocalizations {
   /// **'Replaced {counts} with \'{value}\'.'**
   String searchReplacedWith(String counts, String value);
 
+  /// No description provided for @extActivityViews.
+  ///
+  /// In en, this message translates to:
+  /// **'Extension Views'**
+  String get extActivityViews;
+
   /// No description provided for @extTitle.
   ///
   /// In en, this message translates to:

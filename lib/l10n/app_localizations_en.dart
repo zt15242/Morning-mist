@@ -4929,6 +4929,9 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get extActivityViews => 'Extension Views';
+
+  @override
   String get extTitle => 'Extensions';
 
   @override

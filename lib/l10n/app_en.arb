@@ -3423,6 +3423,7 @@
       }
     }
   },
+  "extActivityViews": "Extension Views",
   "extTitle": "Extensions",
   "extTitleInstalled": "Extensions: Installed",
   "extTitleRecommended": "Extensions: Recommended",

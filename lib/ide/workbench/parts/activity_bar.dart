@@ -2,16 +2,18 @@
 // side bar's views, the one showing selected, Source Control's count of
 // changes on it; the app's Settings at its foot.
 
-import 'package:flutter/widgets.dart';
+import 'dart:async';
 
-import '../../../extensions/views/tree_view_widget.dart';
+import 'package:flutter/widgets.dart';
 
 import '../../../debug/ui/debug_strings.dart';
 import '../../../keybindings/default_keybindings.dart';
 import '../../../keybindings/keybinding_service.dart';
 import '../../../l10n/l10n.dart';
 import '../../../theme/codicons.dart';
+import '../../../theme/workbench_theme.dart' show themeColors;
 import '../../ide_hover.dart';
+import '../../ide_menu.dart';
 import '../../ide_modern_ui.dart';
 import '../../services/debug_view.dart';
 import '../../services/layout.dart';
@@ -83,6 +85,11 @@ class ActivityBarPart extends StatelessWidget {
     // (compositeBarActions.ts), then its badge's description.
     final keys = KeybindingService.instance;
     final l10n = context.l10n;
+    final containers = extensions.containers;
+    final selectedContainer =
+        sidebarShowing && layout.view == IdeSideView.contributed
+        ? extensions.container
+        : null;
     final items = [
       item(
         IdeSideView.explorer,
@@ -121,30 +128,32 @@ class ActivityBarPart extends StatelessWidget {
         Codicons.extensions,
         keys.titleWithKeybinding(l10n.extTitle, 'workbench.view.extensions'),
       ),
-      for (final container in extensions.containers)
-        _ActivityItem(
-          key: ValueKey(container.id),
-          iconWidget: container.icon == null
-              ? null
-              : extensionIconWidget(
-                  container.icon,
-                  size: IdeModernUI.activityIconSize,
+      if (containers.isNotEmpty)
+        Builder(
+          builder: (context) => _ActivityItem(
+            key: const ValueKey('ide.activity.extensionViews'),
+            icon: Codicons.more,
+            label: l10n.extActivityViews,
+            selected: selectedContainer != null,
+            onTap: () {
+              final box = context.findRenderObject()! as RenderBox;
+              unawaited(
+                showIdeMenu(
+                  context,
+                  position: box.localToGlobal(Offset(box.size.width, 0)),
+                  entries: [
+                    for (final container in containers)
+                      IdeMenuAction(
+                        container.title,
+                        checked: selectedContainer == container.id,
+                        onSelected: () =>
+                            extensions.showContainer(container.id),
+                      ),
+                  ],
                 ),
-          icon: Codicons.extensions,
-          label: container.title,
-          selected:
-              sidebarShowing &&
-              layout.view == IdeSideView.contributed &&
-              extensions.container == container.id,
-          onTap: () {
-            if (sidebarShowing &&
-                layout.view == IdeSideView.contributed &&
-                extensions.container == container.id) {
-              layout.layout.sidebar = false;
-            } else {
-              extensions.showContainer(container.id);
-            }
-          },
+              );
+            },
+          ),
         ),
     ];
     // Settings at its foot, as upstream's Manage gear: the chat's sidebar
@@ -207,11 +216,9 @@ class _ActivityItem extends StatefulWidget {
     required this.selected,
     required this.onTap,
     this.badge,
-    this.iconWidget,
   });
 
   final IconData icon;
-  final Widget? iconWidget;
   final String label;
   final bool selected;
   final VoidCallback onTap;
@@ -225,6 +232,7 @@ class _ActivityItem extends StatefulWidget {
 
 class _ActivityItemState extends State<_ActivityItem> {
   bool _hover = false;
+  bool _focusVisible = false;
 
   @override
   Widget build(BuildContext context) => IdeHover(
@@ -235,43 +243,57 @@ class _ActivityItemState extends State<_ActivityItem> {
       button: true,
       label: widget.label,
       selected: widget.selected,
-      child: MouseRegion(
-        cursor: SystemMouseCursors.click,
-        onEnter: (_) => setState(() => _hover = true),
-        onExit: (_) => setState(() => _hover = false),
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: widget.onTap,
-          child: SizedBox.square(
-            dimension: IdeModernUI.activityItemSize,
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                Center(child: _icon()),
-                if (widget.badge case final count? when count > 0)
-                  Positioned(
-                    top: 18,
-                    right: 3,
-                    child: Container(
-                      constraints: const BoxConstraints(minWidth: 16),
-                      height: 16,
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: IdeModernUI.activityBadgeBackground,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        ideBadgeLabel(count),
-                        style: TextStyle(
-                          fontSize: 10,
-                          height: 1,
-                          color: IdeModernUI.activityBadgeForeground,
+      child: FocusableActionDetector(
+        onShowFocusHighlight: (value) => setState(() => _focusVisible = value),
+        actions: {
+          ActivateIntent: CallbackAction<ActivateIntent>(
+            onInvoke: (_) {
+              widget.onTap();
+              return null;
+            },
+          ),
+        },
+        child: MouseRegion(
+          cursor: SystemMouseCursors.click,
+          onEnter: (_) => setState(() => _hover = true),
+          onExit: (_) => setState(() => _hover = false),
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: widget.onTap,
+            child: SizedBox.square(
+              dimension: IdeModernUI.activityItemSize,
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Center(child: _icon()),
+                  if (widget.badge case final count? when count > 0)
+                    Positioned(
+                      top: 18,
+                      right: 3,
+                      child: Container(
+                        constraints: const BoxConstraints(minWidth: 16),
+                        height: 16,
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: IdeModernUI.activityBadgeBackground,
+                          border: _focusVisible
+                              ? Border.all(color: themeColors['focusBorder'])
+                              : null,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          ideBadgeLabel(count),
+                          style: TextStyle(
+                            fontSize: 10,
+                            height: 1,
+                            color: IdeModernUI.activityBadgeForeground,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -295,20 +317,18 @@ class _ActivityItemState extends State<_ActivityItem> {
             : IdeModernUI.flatActivityItemRadius,
       ),
     ),
-    child:
-        widget.iconWidget ??
-        Icon(
-          widget.icon,
-          size: WorkbenchStyle.islands
-              ? IdeModernUI.activityIconSize
-              : IdeModernUI.flatActivityIconSize,
-          color: widget.selected
-              ? IdeModernUI.activityActiveForeground
-              : _hover
-              ? IdeModernUI.activityHoverForeground
-              : WorkbenchStyle.islands
-              ? IdeModernUI.activityForeground
-              : IdeModernUI.flatActivityForeground,
-        ),
+    child: Icon(
+      widget.icon,
+      size: WorkbenchStyle.islands
+          ? IdeModernUI.activityIconSize
+          : IdeModernUI.flatActivityIconSize,
+      color: widget.selected
+          ? IdeModernUI.activityActiveForeground
+          : _hover
+          ? IdeModernUI.activityHoverForeground
+          : WorkbenchStyle.islands
+          ? IdeModernUI.activityForeground
+          : IdeModernUI.flatActivityForeground,
+    ),
   );
 }

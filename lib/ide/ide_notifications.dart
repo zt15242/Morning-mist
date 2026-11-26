@@ -141,8 +141,8 @@ class IdeNotification {
 
   bool get hasActions => primary.isNotEmpty || secondary.isNotEmpty;
 
-  /// Only one without actions can be collapsed again.
-  bool get canCollapse => !hasActions;
+  /// Primary actions stay visible. A secondary menu works in either state.
+  bool get canCollapse => primary.isEmpty;
 
   /// Kept as a toast until closed: when asked, errors with actions, and
   /// ones the user expanded.
@@ -691,14 +691,17 @@ class _NotificationItemState extends State<_NotificationItem> {
         child: LayoutBuilder(
           builder: (context, constraints) {
             final messageStyle = _messageStyle;
+            final error = notification.severity == IdeSeverity.error;
+            final previewLines = error ? 3 : 1;
             final painter = TextPainter(
               text: TextSpan(text: notification.message, style: messageStyle),
-              maxLines: 1,
-              textDirection: TextDirection.ltr,
+              maxLines: previewLines,
+              textDirection: Directionality.of(context),
+              textScaler: MediaQuery.textScalerOf(context),
             )..layout(maxWidth: math.max(0, constraints.maxWidth - 30 - 66));
             final overflows = painter.didExceedMaxLines;
             painter.dispose();
-            final toolbar = _hover || expanded;
+            final toolbar = error || _hover || expanded;
             return Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -716,7 +719,7 @@ class _NotificationItemState extends State<_NotificationItem> {
                     Expanded(
                       child: SelectableText(
                         notification.message,
-                        maxLines: expanded ? null : 1,
+                        maxLines: expanded ? null : previewLines,
                         style: messageStyle,
                       ),
                     ),
@@ -761,47 +764,38 @@ class _NotificationItemState extends State<_NotificationItem> {
                     padding: const EdgeInsets.only(top: 4),
                     child: _ProgressBar(progress),
                   ),
-                if (expanded &&
-                    (notification.source != null ||
-                        notification.primary.isNotEmpty))
+                if ((error || expanded) && notification.source != null)
                   Padding(
-                    padding: const EdgeInsets.only(top: 6),
-                    child: Row(
+                    padding: const EdgeInsets.only(left: 30, top: 4),
+                    child: Text(
+                      context.l10n.notificationsSource(notification.source!),
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: IdeNotificationColors.description,
+                      ),
+                    ),
+                  ),
+                if (expanded && notification.primary.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(left: 30, top: 6, right: 4),
+                    child: Wrap(
+                      alignment: WrapAlignment.end,
+                      spacing: 4,
+                      runSpacing: 4,
                       children: [
-                        Expanded(
-                          child: Padding(
-                            padding: const EdgeInsets.only(left: 24),
-                            child: Text(
-                              notification.source == null
-                                  ? ''
-                                  : context.l10n.notificationsSource(
-                                      notification.source!,
-                                    ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: IdeNotificationColors.description,
-                              ),
-                            ),
-                          ),
-                        ),
                         for (final (index, action)
                             in notification.primary.indexed)
-                          Padding(
-                            padding: const EdgeInsets.only(right: 4),
-                            child: action.menu == null
-                                ? IdeButton(
-                                    label: action.label,
-                                    secondary: index > 0,
-                                    onPressed: () => _run(action),
-                                  )
-                                : _SplitButton(
-                                    action: action,
-                                    secondary: index > 0,
-                                    onRun: _run,
-                                  ),
-                          ),
+                          action.menu == null
+                              ? IdeButton(
+                                  label: action.label,
+                                  secondary: index > 0,
+                                  onPressed: () => _run(action),
+                                )
+                              : _SplitButton(
+                                  action: action,
+                                  secondary: index > 0,
+                                  onRun: _run,
+                                ),
                       ],
                     ),
                   ),

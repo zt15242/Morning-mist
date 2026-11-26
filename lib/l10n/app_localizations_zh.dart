@@ -4607,6 +4607,9 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get extActivityViews => '扩展视图';
+
+  @override
   String get extTitle => '扩展';
 
   @override

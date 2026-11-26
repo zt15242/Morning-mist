@@ -164,6 +164,44 @@ void main() {
       notifications.dispose();
     });
 
+    testWidgets('extension errors show their source and can be expanded', (
+      tester,
+    ) async {
+      final message = List.filled(
+        5,
+        'Authorize the Salesforce org again.',
+      ).join(' ');
+      final notification = notifications.notify(
+        IdeSeverity.error,
+        message,
+        source: 'Salesforce CLI',
+        secondary: [IdeNotificationAction('Manage Extension', () {})],
+      );
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Align(
+              alignment: Alignment.bottomRight,
+              child: SizedBox(
+                width: 300,
+                child: IdeNotificationToasts(notifications: notifications),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.textContaining('Salesforce CLI'), findsOneWidget);
+      final text = find.widgetWithText(SelectableText, message);
+      expect(tester.widget<SelectableText>(text).maxLines, 3);
+      await tester.tap(find.byIcon(Codicons.chevronUp));
+      await tester.pump();
+      expect(notification.expanded, isTrue);
+      expect(tester.widget<SelectableText>(text).maxLines, isNull);
+      await tester.pumpWidget(const SizedBox());
+      notifications.dispose();
+    });
+
     testWidgets('an action closes its notification and runs', (tester) async {
       final ran = <String>[];
       notifications.notify(

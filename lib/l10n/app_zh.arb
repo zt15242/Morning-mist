@@ -1311,6 +1311,7 @@
   "searchConfirmReplaceWith": "是否将 {counts} 替换为“{value}”?",
   "searchReplaced": "已替换 {counts}。",
   "searchReplacedWith": "已将 {counts} 替换为“{value}”。",
+  "extActivityViews": "扩展视图",
   "extTitle": "扩展",
   "extTitleInstalled": "扩展: 已安装",
   "extTitleRecommended": "扩展: 推荐",
