@@ -642,6 +642,39 @@ void main() {
     fresh.kernel.dispose();
   });
 
+  test('Ultra upgrades Fast only when both switches are on', () async {
+    await providers.save(_codex);
+    const modelId = '@codex/gpt-5';
+    final (:kernel, :launches, :clis, environments: _) = start(providers, {
+      'model': modelId,
+      'effort': 'high',
+      modelSettingKey(KernelChoiceKind.ultra, modelId): 'ultra',
+    });
+    kernel.prepare();
+    await pumpEventQueue();
+    final fast = (kernel as SelectsFast).fast;
+    final ultra = (kernel as SelectsUltra).ultra;
+    expect(ultra.selected, 'ultra');
+    expect(ultra.optionsFor('@gw/gpt-5'), isEmpty);
+    expect(launches.single.model, 'gpt-5(high)');
+
+    fast.select(modelId, 'fast');
+    await pumpEventQueue();
+    expect(
+      clis.single.requests('set_model').last['model'],
+      'gpt-5(high;ultrafast)',
+    );
+
+    ultra.select(modelId, 'ultra');
+    await pumpEventQueue();
+    expect(clis.single.requests('set_model').last['model'], 'gpt-5(high;fast)');
+
+    fast.select(modelId, 'fast');
+    await pumpEventQueue();
+    expect(clis.single.requests('set_model').last['model'], 'gpt-5(high)');
+    kernel.dispose();
+  });
+
   test('Fast restores for this chat and its model only', () async {
     await providers.save(_fastGateway);
     final (:kernel, :launches, :clis, environments: _) = start(providers, {

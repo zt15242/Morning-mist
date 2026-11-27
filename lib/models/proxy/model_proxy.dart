@@ -400,6 +400,22 @@ class ModelProxy {
     }
   }
 
+  static (String, String?) _speedAndEffort(String suffix) {
+    if (suffix.endsWith(ultrafastModelSuffix)) {
+      return (
+        suffix.substring(0, suffix.length - ultrafastModelSuffix.length).trim(),
+        'ultrafast',
+      );
+    }
+    if (suffix.endsWith(fastModelSuffix)) {
+      return (
+        suffix.substring(0, suffix.length - fastModelSuffix.length).trim(),
+        'priority',
+      );
+    }
+    return (suffix, null);
+  }
+
   /// Follows [body]'s request to [provider] for the [UsageLedger].
   UsageMeter _meter(
     ModelProvider provider,
@@ -410,19 +426,14 @@ class ModelProxy {
   ) {
     final requested = parseSuffix('${body['model'] ?? ''}');
     final suffix = requested.hasSuffix ? requested.rawSuffix.trim() : '';
-    final fast = suffix.endsWith(fastModelSuffix);
-    final effort =
-        (fast
-                ? suffix.substring(0, suffix.length - fastModelSuffix.length)
-                : suffix)
-            .trim();
+    final (effort, tier) = _speedAndEffort(suffix);
     return UsageMeter(
       provider: provider.id,
       providerName: provider.name,
       protocol: provider.protocol.name,
       model: requested.modelName.trim(),
       effort: effort.isEmpty ? null : effort,
-      fast: fast,
+      fast: tier != null,
       stream: body['stream'] == true,
       session:
           request.headers.value(UsageHeaders.session) ??
@@ -447,14 +458,9 @@ class ModelProxy {
     final requested = parseSuffix('${body['model'] ?? ''}');
     final modelId = requested.modelName.trim();
     final suffix = requested.hasSuffix ? requested.rawSuffix.trim() : '';
-    final fast = suffix.endsWith(fastModelSuffix);
+    final (effort, tier) = _speedAndEffort(suffix);
     // The effort picked goes with the model's name: none, or `none`, and
     // reasoning is not asked for.
-    final effort =
-        (fast
-                ? suffix.substring(0, suffix.length - fastModelSuffix.length)
-                : suffix)
-            .trim();
     final thinking = effort.isNotEmpty && effort != ThinkingLevel.none;
     final stream = body['stream'] == true;
     if (provider.protocol == ProviderProtocol.antigravity) {
@@ -492,12 +498,13 @@ class ModelProxy {
       if (thinking) {
         outgoing['reasoning'] = {'effort': effort, 'summary': reasoningSummary};
       }
-      if (fast &&
+      if (tier != null &&
           (provider.protocol == ProviderProtocol.openaiResponses ||
               provider.protocol == ProviderProtocol.codex) &&
-          !body.containsKey('service_tier') &&
-          !body.containsKey('speed')) {
-        outgoing['service_tier'] = 'priority';
+          (tier == 'ultrafast' ||
+              (!body.containsKey('service_tier') &&
+                  !body.containsKey('speed')))) {
+        outgoing['service_tier'] = tier;
       }
     }
     if (provider.promptCacheKey) {

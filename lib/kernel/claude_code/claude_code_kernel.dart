@@ -105,6 +105,7 @@ class ClaudeCodeKernel
         SelectsEffort,
         SelectsContextSize,
         SelectsFast,
+        SelectsUltra,
         ProvidesCommands,
         SuggestsFiles,
         ReportsContext,
@@ -168,6 +169,7 @@ class ClaudeCodeKernel
     final efforts = '${KernelChoiceKind.effort.name}@';
     final contexts = '${KernelChoiceKind.context.name}@';
     final speeds = '${KernelChoiceKind.fast.name}@';
+    final ultraSpeeds = '${KernelChoiceKind.ultra.name}@';
     for (final MapEntry(:key, :value) in settings.entries) {
       if (key.startsWith(efforts)) {
         _pickedEfforts[key.substring(efforts.length)] = value;
@@ -177,10 +179,15 @@ class ClaudeCodeKernel
         }
       } else if (key.startsWith(speeds)) {
         _pickedFast[key.substring(speeds.length)] = value == 'fast';
+      } else if (key.startsWith(ultraSpeeds)) {
+        _pickedUltra[key.substring(ultraSpeeds.length)] = value == 'ultra';
       }
     }
     if (_model case final model? when !_pickedFast.containsKey(model)) {
       _pickedFast[model] = settings[KernelChoiceKind.fast.name] == 'fast';
+    }
+    if (_model case final model? when !_pickedUltra.containsKey(model)) {
+      _pickedUltra[model] = settings[KernelChoiceKind.ultra.name] == 'ultra';
     }
     // A provider's model goes by what was picked for it, else its own
     // (#914): a session resumed on one, on the context it had; a new one
@@ -444,6 +451,7 @@ class ClaudeCodeKernel
   final Map<String, String> _pickedEfforts = {};
   final Map<String, int> _pickedWindows = {};
   final Map<String, bool> _pickedFast = {};
+  final Map<String, bool> _pickedUltra = {};
 
   /// The [_window] the process was started with: the CLI takes it only
   /// at start, so another is taken up by a restart (see [_applyWindow]).
@@ -574,6 +582,7 @@ class ClaudeCodeKernel
           info,
           effort: effort,
           fast: _pickedFast[_model] ?? false,
+          ultra: _pickedUltra[_model] ?? false,
         ),
         null when parseModelRef(_model) != null => null,
         null => _model,
@@ -3503,6 +3512,7 @@ class ClaudeCodeKernel
               info,
               effort: effort,
               fast: _pickedFast[id] ?? false,
+              ultra: _pickedUltra[id] ?? false,
             ),
           },
         ),
@@ -3550,8 +3560,17 @@ class ClaudeCodeKernel
       if (provider.protocolOf(info)
           case ProviderProtocol.openaiResponses || ProviderProtocol.codex) ...[
         requestedModel(provider, info, fast: true),
-        for (final effort in info.effortLevels)
+        requestedModel(provider, info, fast: true, ultra: true),
+        for (final effort in info.effortLevels) ...[
           requestedModel(provider, info, effort: effort, fast: true),
+          requestedModel(
+            provider,
+            info,
+            effort: effort,
+            fast: true,
+            ultra: true,
+          ),
+        ],
       ],
     ],
   }.toList();
@@ -4003,6 +4022,7 @@ class ClaudeCodeKernel
                   info,
                   effort: id,
                   fast: _pickedFast[model] ?? false,
+                  ultra: _pickedUltra[model] ?? false,
                 ),
               },
             )
@@ -4062,12 +4082,35 @@ class ClaudeCodeKernel
                   info,
                   effort: _effortFor(info),
                   fast: _pickedFast[model]!,
+                  ultra: _pickedUltra[model] ?? false,
                 ),
               },
             ),
           ]);
         }
       }
+    },
+  );
+
+  @override
+  late final ModelSetting ultra = _ModelSetting(
+    toggle: true,
+    optionsFor: (model) => fast.optionsFor(model).isEmpty
+        ? const []
+        : const [
+            KernelOption(
+              'ultra',
+              'Ultra',
+              Icons.electric_bolt_rounded,
+              'Use Ultrafast when Fast is also on',
+            ),
+          ],
+    selected: () => _pickedUltra[_model] == true ? 'ultra' : 'standard',
+    selectedFor: (model) => _pickedUltra[model] == true ? 'ultra' : 'standard',
+    select: (model, id) {
+      if (id != 'ultra' || ultra.optionsFor(model).isEmpty) return;
+      _pickedUltra[model] = _pickedUltra[model] != true;
+      _selectModel(model);
     },
   );
 

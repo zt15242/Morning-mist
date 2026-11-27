@@ -123,17 +123,19 @@ String customHeadersEnvironment(Map<String, String> headers) => [
 ].join('\n');
 
 const fastModelSuffix = ';fast';
+const ultrafastModelSuffix = ';ultrafast';
 
 /// The model [model] of [provider] as Claude Code is told to ask for it:
 /// for one spoken to through the proxy ([ModelProvider.protocolOf]), the
 /// effort after it in parentheses (`gpt-5(high)`, `gpt-5(none)` for no
 /// reasoning), which the proxy takes off and asks the upstream for. Fast
-/// appends `;fast` inside those parentheses.
+/// appends a speed suffix inside those parentheses.
 String requestedModel(
   ModelProvider provider,
   ProviderModel model, {
   String? effort,
   bool fast = false,
+  bool ultra = false,
 }) {
   final protocol = provider.protocolOf(model);
   final useFast =
@@ -143,7 +145,8 @@ String requestedModel(
   if (!protocol.proxied || (effort == null && !useFast)) {
     return model.id;
   }
-  return '${model.id}(${effort ?? ''}${useFast ? fastModelSuffix : ''})';
+  final speed = useFast ? (ultra ? ultrafastModelSuffix : fastModelSuffix) : '';
+  return '${model.id}(${effort ?? ''}$speed)';
 }
 
 /// What a provider's session lets through an `availableModels` of the

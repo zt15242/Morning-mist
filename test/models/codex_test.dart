@@ -1777,6 +1777,14 @@ void main() {
         expect(fast['reasoning'], containsPair('effort', 'high'));
         expect(fast['service_tier'], 'priority');
 
+        expect((await ask(model: 'gpt-5(high;ultrafast)')).status, 200);
+        final ultra = jsonDecode(
+          openai.to('/backend-api/codex/responses').last.body,
+        ) as Map;
+        expect(ultra['model'], 'gpt-5');
+        expect(ultra['reasoning'], containsPair('effort', 'high'));
+        expect(ultra['service_tier'], 'ultrafast');
+
         expect(
           (await ask(model: 'gpt-5(high;fast)', serviceTier: 'auto')).status,
           200,

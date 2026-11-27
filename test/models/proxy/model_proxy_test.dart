@@ -487,9 +487,13 @@ void main() {
   });
 
   group('Fast mode', () {
-    for (final fast in [false, true]) {
+    for (final (suffix, tier) in [
+      ('', null),
+      (';fast', 'priority'),
+      (';ultrafast', 'ultrafast'),
+    ]) {
       test(
-        'Responses uses Fast only when the model requests it ($fast)',
+        'Responses forwards the speed encoded in the model ($tier)',
         () async {
           provider = provider.copyWith(
             protocol: ProviderProtocol.openaiResponses,
@@ -498,7 +502,7 @@ void main() {
           await post(
             await messages(),
             {
-              'model': fast ? 'gpt-5(high;fast)' : 'gpt-5(high)',
+              'model': 'gpt-5(high$suffix)',
               'stream': true,
               'messages': [
                 {'role': 'user', 'content': 'hi'},
@@ -509,7 +513,7 @@ void main() {
           final sent = upstream.requests.single.body! as Map;
           expect(sent['model'], 'gpt-5');
           expect(sent['reasoning'], containsPair('effort', 'high'));
-          expect(sent['service_tier'], fast ? 'priority' : isNull);
+          expect(sent['service_tier'], tier);
         },
       );
     }

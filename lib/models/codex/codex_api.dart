@@ -140,8 +140,9 @@ Map<String, Object?> prepareCodexRequest(Map<String, Object?> request) {
     ),
     _ => false,
   };
-  // Priority (fast) only: it knows no other tier.
-  if (request['service_tier'] != 'priority') request.remove('service_tier');
+  if (!const {'priority', 'ultrafast'}.contains(request['service_tier'])) {
+    request.remove('service_tier');
+  }
   request['include'] = [
     'reasoning.encrypted_content',
     if (webSearch) 'web_search_call.action.sources',

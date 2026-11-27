@@ -143,7 +143,7 @@ abstract interface class KernelChoiceSource {
   void select(String id);
 }
 
-enum KernelChoiceKind { model, mode, permission, effort, context, fast }
+enum KernelChoiceKind { model, mode, permission, effort, context, fast, ultra }
 
 abstract interface class SelectsModel {
   KernelChoiceSource get model;
@@ -232,6 +232,11 @@ abstract interface class SelectsContextSize {
 /// Whether supported upstream models use the Fast service tier for this chat.
 abstract interface class SelectsFast {
   ModelSetting get fast;
+}
+
+/// Whether Fast uses the Ultrafast tier for the selected model.
+abstract interface class SelectsUltra {
+  ModelSetting get ultra;
 }
 
 abstract interface class ProvidesCommands {
